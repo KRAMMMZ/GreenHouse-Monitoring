@@ -1,0 +1,54 @@
+.login {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    min-height: 100vh;
+    position: relative; /* Required for pseudo-element positioning */
+   
+}
+
+.login::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("./src/assets/bg.jpg");
+    background-size: cover;
+    background-position: center;
+    filter: brightness(50%) blur(8px); /* Reduce brightness and add blur */
+   
+}
+/* Login card */
+.card {
+    width: 100%;
+    max-width: 400px; /* Limit card width */
+    border-radius: 30px !important;
+    padding: 20px;
+    z-index: 1; /* Ensure the card is above the overlay */
+}
+ 
+
+/* Logo image */
+.logo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 10px;
+}
+
+/* Input icons */
+.input-icon {
+    margin-right: 15px; /* Space between icon and text field */
+}
+
+.no-underline {
+    text-decoration: none;
+  
+  }
+
+.no-underline:hover{
+    text-decoration: underline;
+    
+}
