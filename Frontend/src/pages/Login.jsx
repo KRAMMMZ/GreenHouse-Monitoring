@@ -8,63 +8,45 @@ import {
   InputAdornment,
   IconButton,
 } from "@mui/material";
-import { Link } from "react-router-dom";
 import { FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
-import "bootstrap/dist/css/bootstrap.min.css";
+import { useAuth } from "../contexts/AuthContext"; // Import AuthContext
 import "../../public/login.css";
-import { useNavigate } from "react-router-dom";
-import { handleLogin } from "../utils/LoginUtils.js"; // Import the handleLogin function
 
 function Login() {
+  const { login, loading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [usernameError, setUsernameError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const navigate = useNavigate();
 
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
 
-  const handleUsernameChange = (e) => {
-    setUsername(e.target.value);
-    if (e.target.value) {
-      setUsernameError(""); // Remove error message when typing
-    }
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    await login(username, password);
   };
 
-  const handlePasswordChange = (e) => {
-    setPassword(e.target.value);
-    if (e.target.value) {
-      setPasswordError(""); // Remove error message when typing
-    }
-  };
+  // Determine if the button should be disabled
+  const isButtonDisabled = !username || !password;
 
   return (
     <div className="login">
       <Card className="card rad">
         <CardContent>
           <div className="text-center mb-4">
-            <img src="./src/assets/react.svg" alt="Logo" className="logo" />
+            <img src="./src/assets/agreemo-symbol.png" alt="Logo" className="logo" />
             <Typography variant="h5">AGREEMO</Typography>
           </div>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleLogin(username, password, setUsernameError, setPasswordError, navigate, setPassword); // Pass setPassword
-            }}
-          >
+          <form onSubmit={handleFormSubmit}>
             <label className="mb-1">Email: </label>
             <div className="mb-3">
               <TextField
                 fullWidth
                 variant="outlined"
                 value={username}
-                onChange={handleUsernameChange} // Call the change handler here
+                onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter your email"
-                error={!!usernameError} // Highlight field if error exists
-                helperText={usernameError} // Display error message
                 slotProps={{
                   input: {
                     startAdornment: (
@@ -84,9 +66,8 @@ function Login() {
                 type={showPassword ? "text" : "password"}
                 variant="outlined"
                 value={password}
-                onChange={handlePasswordChange} // Call the change handler here
-                error={!!passwordError} // Highlight field if error exists
-                helperText={passwordError} // Display error message
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
                 slotProps={{
                   input: {
                     startAdornment: (
@@ -107,18 +88,18 @@ function Login() {
                     ),
                   },
                 }}
-                placeholder="Enter your password"
               />
             </div>
 
-            <Button type="submit" variant="contained" color="primary" fullWidth>
-              Login
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              fullWidth
+              disabled={isButtonDisabled || loading}
+            >
+              {loading ? "Logging in..." : "Login"}
             </Button>
-            <div className="d-flex justify-content-end mt-2">
-              <Link to="/" className="no-underline">
-                Forgot Password?
-              </Link>
-            </div>
           </form>
         </CardContent>
       </Card>

@@ -1,30 +1,35 @@
-import React, { createContext, useContext, useState } from "react";
-import { auth } from "../firebase"; // Make sure your Firebase is configured
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { auth } from "../firebase"; // Ensure this points to your Firebase config
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 
-// Create the AuthContext
 const AuthContext = createContext();
 
-// AuthContext Provider
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // Store logged-in user info
-  const [loading, setLoading] = useState(false); // Track loading state for async actions
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true); // Auth loading
+
   const navigate = useNavigate();
 
-  // Login function
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+      setAuthLoading(false); // Set auth-specific loading state
+    });
+    return unsubscribe;
+  }, []);
+
   const login = async (email, password) => {
-    setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      setUser(userCredential.user); // Set the logged-in user
+      setUser(userCredential.user);
       Swal.fire({
         icon: "success",
         title: "Login Successful",
         text: "Welcome back!",
       });
-      navigate("/dashboard"); // Navigate to Dashboard after login
+      navigate("/dashboard");
     } catch (error) {
       Swal.fire({
         icon: "error",
@@ -32,23 +37,19 @@ export const AuthProvider = ({ children }) => {
         text: "Invalid email or password.",
       });
       console.error("Login Error:", error.message);
-    } finally {
-      setLoading(false);
     }
   };
 
-  // Logout function
   const logout = async () => {
-    setLoading(true);
     try {
       await signOut(auth);
-      setUser(null); // Clear user state
+      setUser(null);
       Swal.fire({
         icon: "success",
         title: "Logged Out",
         text: "You have been logged out successfully.",
       });
-      navigate("/"); // Navigate back to login
+      navigate("/");
     } catch (error) {
       Swal.fire({
         icon: "error",
@@ -56,23 +57,19 @@ export const AuthProvider = ({ children }) => {
         text: "Something went wrong. Please try again.",
       });
       console.error("Logout Error:", error.message);
-    } finally {
-      setLoading(false);
     }
   };
 
-  // Context value
   const value = {
     user,
-    loading,
+    authLoading,
     login,
     logout,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{!authLoading && children}</AuthContext.Provider>;
 };
 
-// Custom hook to use AuthContext
 export const useAuth = () => {
   return useContext(AuthContext);
 };
