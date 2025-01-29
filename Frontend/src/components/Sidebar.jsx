@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { styled, useTheme } from "@mui/material/styles";
 import MuiDrawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
@@ -14,8 +14,10 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import { Typography } from "@mui/material";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
+import GroupIcon from '@mui/icons-material/Group';
+import GrainIcon from '@mui/icons-material/Grain';
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 const drawerWidth = 300;
@@ -79,24 +81,39 @@ const DrawerHeader = styled("div")(({ theme }) => ({
 
 const menuItems = [
   { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
-  { text: "Reports", icon: <BarChartIcon />, path: "/reports" },
   { text: "Graphs", icon: <ShowChartIcon />, path: "/graphs" },
+  { text: "Harvests", icon: <GrainIcon />, path: "/harvests" }, 
+  { text: "User Management", icon: <GroupIcon />, path: "/userManagement" },
+  { text: "Reports", icon: <BarChartIcon />, path: "/reports" },
+   
 ];
 
 function Sidebar({ open, setOpen }) {
   const theme = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout } = useAuth();
   const [selectedItem, setSelectedItem] = useState(null);
 
-  const handleNavigation = (path, index) => {
-    setSelectedItem(index);
+  // Load selected menu item from localStorage on mount
+  useEffect(() => {
+    const storedItem = localStorage.getItem("selectedMenuItem");
+    if (storedItem) {
+      setSelectedItem(storedItem);
+    }
+  }, []);
+
+  // Update selected menu item when clicking
+  const handleNavigation = (path) => {
+    setSelectedItem(path);
+    localStorage.setItem("selectedMenuItem", path);
     navigate(path);
   };
 
   const handleLogout = async () => {
     try {
       await logout();
+      localStorage.removeItem("selectedMenuItem"); // Clear selection on logout
     } catch (error) {
       console.error("Logout Error:", error);
     }
@@ -104,35 +121,88 @@ function Sidebar({ open, setOpen }) {
 
   return (
     <Drawer variant="permanent" open={open}>
-  <DrawerHeader sx={{ px: open ? 4 : 2, py: 2 }}>
-    <Typography variant="h5" noWrap sx={{ color: "#FFFFFF", marginTop: 2 }}>
-      AGREEMO
-    </Typography>
-    <IconButton
-      sx={{
-        color: "#ffffff",
-        marginLeft: "auto",
-        transform: open ? "translateX(0)" : "translateX(-8px)",
-      }}
-      onClick={setOpen}
-    >
-      {open ? (
-        <ChevronLeftIcon sx={{ fontSize: 30, marginTop: 2 }} />
-      ) : (
-        <ChevronRightIcon sx={{ fontSize: 30, marginTop: 2, marginLeft: 0 }} />
-      )}
-    </IconButton>
-  </DrawerHeader>
-  <Divider sx={{ my: 1, backgroundColor: "#FFFFFF" }} />
+      <DrawerHeader sx={{ px: open ? 4 : 2, py: 2 }}>
+        <Typography variant="h5" noWrap sx={{ color: "#FFFFFF", marginTop: 2 }}>
+          AGREEMO
+        </Typography>
+        <IconButton
+          sx={{
+            color: "#ffffff",
+            marginLeft: "auto",
+            transform: open ? "translateX(0)" : "translateX(-8px)",
+          }}
+          onClick={setOpen}
+        >
+          {open ? (
+            <ChevronLeftIcon sx={{ fontSize: 30, marginTop: 2 }} />
+          ) : (
+            <ChevronRightIcon sx={{ fontSize: 30, marginTop: 2, marginLeft: 0 }} />
+          )}
+        </IconButton>
+      </DrawerHeader>
+      <Divider sx={{ my: 2, backgroundColor: "#FFFFFF" }} />
 
-  {/* Container with flex layout */}
-  <List sx={{ mx: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
-    {/* Menu items */}
-    <div style={{ flexGrow: 1 }}>
-      {menuItems.map((item, index) => (
-        <ListItem key={item.text} disablePadding sx={{ display: "flex", justifyContent: "center" }}>
+      <List sx={{ mx: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div style={{ flexGrow: 1 }}>
+          {menuItems.map((item) => (
+            <ListItem key={item.text} disablePadding sx={{ display: "flex", justifyContent: "center" }}>
+              <ListItemButton
+                onClick={() => handleNavigation(item.path)}
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "100%",
+                  px: 1,
+                  py: 1,
+                  mb: 1,
+                  borderRadius: "16px",
+                  backgroundColor: selectedItem === item.path ? "#f8eeec" : "transparent",
+                  "&:hover": {
+                    backgroundColor: "#4169E1",
+                  },
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mx: open ? 2 :0 ,
+                    justifyContent: "center",
+                    color: selectedItem === item.path ? "#000000" : "#FFFFFF",
+                    "& svg": {
+                      fontSize: 25,
+                      verticalAlign: "middle",
+                    },
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.text}
+                  sx={{
+                    opacity: open ? 1 : 0,
+                    color: selectedItem === item.path ? "#000000" : "#FFFFFF",
+                    whiteSpace: "nowrap",
+                    transition: "opacity 0.3s",
+                    marginLeft: open ? 1 : 0,
+                    "& .MuiTypography-root": {
+                      fontSize: "1.2rem",
+                      fontWeight: 500,
+                      verticalAlign: "middle",
+                    },
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </div>
+
+        <Divider sx={{ my: 1, backgroundColor: "#FFFFFF" }} />
+
+        <ListItem disablePadding sx={{ display: "flex", justifyContent: "center" }}>
           <ListItemButton
-            onClick={() => handleNavigation(item.path, index)}
+            onClick={handleLogout}
             sx={{
               display: "flex",
               flexDirection: "row",
@@ -141,9 +211,7 @@ function Sidebar({ open, setOpen }) {
               width: "100%",
               px: 1,
               py: 1,
-              mb: 1,
               borderRadius: "16px",
-              backgroundColor: selectedItem === index ? "#f8eeec" : "transparent",
               "&:hover": {
                 backgroundColor: "#4169E1",
               },
@@ -152,93 +220,22 @@ function Sidebar({ open, setOpen }) {
             <ListItemIcon
               sx={{
                 minWidth: 0,
-                ml: open ? 4 : 0,
-                mr: open ? 2 : 0,
+               mx: open ? 4 :0 ,
                 justifyContent: "center",
-                color: selectedItem === index ? "#000000" : "#FFFFFF",
+                color: "#FFFFFF",
                 "& svg": {
-                  fontSize: 25,
+                  fontSize: 30,
                   verticalAlign: "middle",
                 },
               }}
             >
-              {item.icon}
+              <ExitToAppIcon />
             </ListItemIcon>
-            <ListItemText
-              primary={item.text}
-              sx={{
-                opacity: open ? 1 : 0,
-                color: selectedItem === index ? "#000000" : "#FFFFFF",
-                whiteSpace: "nowrap",
-                transition: "opacity 0.3s",
-                marginLeft: open ? 1 : 0,
-                "& .MuiTypography-root": {
-                  fontSize: "1.2rem",
-                  fontWeight: 500,
-                  verticalAlign: "middle",
-                },
-              }}
-            />
+            <ListItemText primary="Logout" sx={{ opacity: open ? 1 : 0, color: "#FFFFFF" }} />
           </ListItemButton>
         </ListItem>
-      ))}
-    </div>
-
-    <Divider sx={{ my: 1, backgroundColor: "#FFFFFF" }} />
-
-    {/* Logout item at the bottom */}
-    <ListItem disablePadding sx={{ display: "flex", justifyContent: "center" }}>
-      <ListItemButton
-        onClick={handleLogout}
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          width: "100%",
-          px: 1,
-          py: 1,
-          borderRadius: "16px",
-          "&:hover": {
-            backgroundColor: "#4169E1",
-          },
-        }}
-      >
-        <ListItemIcon
-          sx={{
-            minWidth: 0,
-            ml: open ? 4 : 0,
-            mr: open ? 2 : 0,
-            justifyContent: "center",
-            color: "#FFFFFF",
-            "& svg": {
-              fontSize: 30,
-              verticalAlign: "middle",
-            },
-          }}
-        >
-          <ExitToAppIcon />
-        </ListItemIcon>
-        <ListItemText
-          primary="Logout"
-          sx={{
-            opacity: open ? 1 : 0,
-            color: "#FFFFFF",
-            whiteSpace: "nowrap",
-            transition: "opacity 0.3s",
-            marginLeft: open ? 1 : 0,
-            "& .MuiTypography-root": {
-              fontSize: "1.2rem",
-              fontWeight: 500,
-              verticalAlign: "middle",
-            },
-          }}
-        />
-      </ListItemButton>
-    </ListItem>
-  </List>
-</Drawer>
-
+      </List>
+    </Drawer>
   );
 }
 

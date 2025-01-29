@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { Box } from "@mui/material";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -7,7 +12,9 @@ import Sidebar from "./components/Sidebar";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Reports from "./pages/Reports";
+import UserManagement from "./pages/UserManagement";
 import Graphs from "./pages/Graphs";
+import Harvests from "./pages/Harvests";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./contexts/AuthContext";
 import Loading from "./components/LoadingAlert";
@@ -45,7 +52,6 @@ function App() {
 const AuthRoutes = ({ open, setOpen }) => {
   const { user } = useAuth();
 
-   
   return (
     <Box sx={{ display: "flex", height: "100vh", width: "100vw" }}>
       {user && <Sidebar open={open} setOpen={setOpen} />}
@@ -62,8 +68,12 @@ const AuthRoutes = ({ open, setOpen }) => {
               easing: theme.transitions.easing.sharp,
               duration: theme.transitions.duration.standard,
             }),
-          marginLeft: user ? `${open ? drawerWidth : closedDrawerWidth}px` : "0",
-          width: user ? `calc(100% - ${open ? drawerWidth : closedDrawerWidth}px)` : "100%",
+          marginLeft: user
+            ? `${open ? drawerWidth : closedDrawerWidth}px`
+            : "0",
+          width: user
+            ? `calc(100% - ${open ? drawerWidth : closedDrawerWidth}px)`
+            : "100%",
         }}
       >
         <Routes>
@@ -83,14 +93,6 @@ const AuthRoutes = ({ open, setOpen }) => {
                 }
               />
               <Route
-                path="/reports"
-                element={
-                  <ProtectedRoute>
-                    <Reports />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
                 path="/graphs"
                 element={
                   <ProtectedRoute>
@@ -98,6 +100,32 @@ const AuthRoutes = ({ open, setOpen }) => {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/harvests"
+                element={
+                  <ProtectedRoute>
+                    <Harvests />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/userManagement"
+                element={
+                  <ProtectedRoute>
+                    <UserManagement />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/reports"
+                element={
+                  <ProtectedRoute>
+                    <Reports />
+                  </ProtectedRoute>
+                }
+              />
+
               <Route path="*" element={<Navigate to="/dashboard" />} />
             </>
           )}
