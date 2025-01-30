@@ -7,6 +7,7 @@ import {
   Typography,
   InputAdornment,
   IconButton,
+  Link,
 } from "@mui/material";
 import { FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext"; // Import AuthContext
@@ -90,6 +91,11 @@ function Login() {
                 }}
               />
             </div>
+            <div className="d-flex justify-content-end mt-2  mb-4">
+              <Link href="/forgot-password" variant="body2" color="primary">
+                Forgot your password?
+              </Link>
+            </div>
 
             <Button
               type="submit"
@@ -97,6 +103,7 @@ function Login() {
               color="primary"
               fullWidth
               disabled={isButtonDisabled || loading}
+              sx={{padding:1.5}}
             >
               {loading ? "Logging in..." : "Login"}
             </Button>

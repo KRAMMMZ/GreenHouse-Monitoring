@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
       Swal.fire({
         icon: "error",
         title: "Login Failed",
-        text: "Invalid email or password.",
+        text: "Invalid Credentials.",
       });
       console.error("Login Error:", error.message);
     }

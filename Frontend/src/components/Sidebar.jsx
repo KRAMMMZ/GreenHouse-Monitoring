@@ -15,6 +15,7 @@ import { Typography } from "@mui/material";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import GroupIcon from '@mui/icons-material/Group';
+import ReportIcon from '@mui/icons-material/Report';
 import GrainIcon from '@mui/icons-material/Grain';
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -81,12 +82,12 @@ const DrawerHeader = styled("div")(({ theme }) => ({
 
 const menuItems = [
   { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
-  { text: "Graphs", icon: <ShowChartIcon />, path: "/graphs" },
+  { text: "Graphs", icon: <BarChartIcon />, path: "/graphs" },
   { text: "Harvests", icon: <GrainIcon />, path: "/harvests" }, 
   { text: "User Management", icon: <GroupIcon />, path: "/userManagement" },
-  { text: "Reports", icon: <BarChartIcon />, path: "/reports" },
+  { text: "Reports", icon: <ReportIcon />, path: "/reports" },
    
-];
+]; 
 
 function Sidebar({ open, setOpen }) {
   const theme = useTheme();
