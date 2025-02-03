@@ -2,7 +2,7 @@
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, Label } from 'recharts';
 import { Paper, Typography } from '@mui/material';
 
-const RejectionPieChart = () => {
+const RejectionPieChartDUMMY = () => {
   // Placeholder data for rejected items
   const rejectionData = [
     { name: 'Too Small', value: 12 },
@@ -24,7 +24,7 @@ const RejectionPieChart = () => {
         Rejection Analysis
       </Typography>
       <div style={{ 
-      height: 300, width: '690px' ,
+      height: 300, width: '100%' ,
         position: 'relative',
       }}>
         <ResponsiveContainer width="100%" height="100%">
@@ -83,4 +83,4 @@ const RejectionPieChart = () => {
   );
 };
 
-export default RejectionPieChart;
+export default RejectionPieChartDUMMY;

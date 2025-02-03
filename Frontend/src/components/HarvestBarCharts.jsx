@@ -11,7 +11,7 @@ const HarvestBarChart = () => {
       <Typography variant="h6" gutterBottom>
         Harvest History
       </Typography>
-      <div style={{ height: 300, width: '690px' , backgroundColor: "#d8d8d8", borderRadius: "20px" }}>
+      <div style={{ height: 300, width: '100%' , backgroundColor: "#d8d8d8", borderRadius: "20px" }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={harvestHistory}
@@ -27,14 +27,15 @@ const HarvestBarChart = () => {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey="accepted" fill="#82ca9d" name="Accepted Items" />
-            <Bar dataKey="rejected" fill="#ff8042" name="Rejected Items" />
-            <Bar dataKey="totalYield" fill="#8884d8" name="Total Yield" />
+            <Bar dataKey="accepted" fill="#ff6b35" name="Accepted Items" />
+            <Bar dataKey="rejected" fill="#1d3557" name="Rejected Items" />
+            <Bar dataKey="totalYield" fill="#4169E1" name="Total Yield" />
           </BarChart>
         </ResponsiveContainer>
       </div>
     </Paper>
-  );
+  );   
+
 };
 
 export default HarvestBarChart;

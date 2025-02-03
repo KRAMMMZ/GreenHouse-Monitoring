@@ -21,28 +21,50 @@ const useTotalHarvests = () => {
   return harvestItems;
 };
 
-const useHarvestItems = () => {
-  const [harvestItems, setHarvestItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+// New hook to get total harvests for today
+const useTotalHarvestsToday = () => {
+  const [harvestItemsToday, setHarvestItemsToday] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axios.get("http://localhost:3001/harvests");
-        // Access the harvestTable property from the response data
-        setHarvestItems(response.data.harvestTable || []);
+        setHarvestItemsToday(response.data.totalHarvestsToday || 0);
+ 
+
       } catch (error) {
-        console.error("Error fetching harvest items:", error);
-        setHarvestItems([]);
-      } finally {
-        setLoading(false);
+        console.error("Error fetching total harvests for today:", error);
+        setHarvestItemsToday(0);
       }
     };
 
     fetchData();
   }, []);
 
-  return { harvestItems, loading };
+  return harvestItemsToday;
 };
 
-export { useTotalHarvests, useHarvestItems };
+const useHarvestItems = () => {
+  const [harvestItems, setHarvestItems] = useState([]);
+  const [harvestLoading, setHarvestLoading] = useState(true); // Use a meaningful name
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get("http://localhost:3001/harvests");
+        setHarvestItems(response.data.harvestTable || []); // Ensure fallback to an array
+      } catch (error) {
+        console.error("Error fetching harvest items:", error);
+        setHarvestItems([]);
+      } finally {
+        setHarvestLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  return { harvestItems, harvestLoading };
+};
+
+export { useTotalHarvests, useTotalHarvestsToday,  useHarvestItems };

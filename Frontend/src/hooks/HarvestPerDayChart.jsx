@@ -15,6 +15,7 @@ const getTodayDateString = () => {
 
 const useAcceptedPerDay = () => {
   const [accepted, setAccepted] = useState(0);
+  const [acceptedLoading, setAcceptedLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,6 +31,8 @@ const useAcceptedPerDay = () => {
       } catch (error) {
         console.error("Error fetching accepted items:", error);
         setAccepted(0);
+      } finally {
+        setAcceptedLoading(false);
       }
     };
 
@@ -41,11 +44,12 @@ const useAcceptedPerDay = () => {
     };
   }, []);
 
-  return accepted;
+  return {accepted, acceptedLoading };
 };
 
 const useRejectedItemsPerDay = () => {
   const [rejected, setRejected] = useState(0);
+  const [rejectedLoading, setRejectedLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,6 +65,8 @@ const useRejectedItemsPerDay = () => {
       } catch (error) {
         console.error("Error fetching rejected items:", error);
         setRejected(0);
+      }finally {
+        setRejectedLoading(false);
       }
     };
 
@@ -72,12 +78,12 @@ const useRejectedItemsPerDay = () => {
     };
   }, []);
 
-  return rejected;
+  return { rejected, rejectedLoading};
 };
 
 const useTotalYield = () => {
   const [totalYield, setTotalYield] = useState(0);
-
+  const [totalYieldLoading, setTotalYieldLoading] = useState(true);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -92,6 +98,8 @@ const useTotalYield = () => {
       } catch (error) {
         console.error("Error fetching total yield:", error);
         setTotalYield(0);
+      } finally {
+        setTotalYieldLoading(false);
       }
     };
 
@@ -103,7 +111,7 @@ const useTotalYield = () => {
     };
   }, []);
 
-  return totalYield;
+  return {totalYield, totalYieldLoading};
 };
 
 export { useAcceptedPerDay, useRejectedItemsPerDay, useTotalYield };

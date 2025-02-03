@@ -1,100 +1,132 @@
 import React, { useState } from "react";
-import {
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Skeleton,
-  Typography,
-  Box
-} from "@mui/material";
+import { Typography, TextField } from "@mui/material";
+import HarvestSkeliton from "../skelitons/HarvestSkeliton";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Modal from "@mui/material/Modal";
+import { useAuth } from "../contexts/AuthContext"; // Import your auth context
+import axios from "axios";
+import Swal from "sweetalert2";
+
+const style = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 400,
+  bgcolor: "#d8d8d8",
+  color: "#000",
+  boxShadow: 24,
+  p: 4,
+  borderRadius: 2,
+   
+};
 
 function UserManagement() {
-  const [loading] = useState(true); // Simulate loading state
+  const [loading] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [oldPass, setOldPass] = useState("");
+  const [newPass, setNewPass] = useState("");
+  const [confirmPass, setConfirmPass] = useState("");
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+  const { user } = useAuth();
+  const loginId = user?.login_id;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (newPass !== confirmPass) {
+        Swal.fire("Error", "New passwords don't match!", "error");
+        return;
+    }
+
+    const storedUser = JSON.parse(localStorage.getItem("user")); // Retrieve stored user data
+    const loginId = storedUser?.login_id; // Ensure loginId is retrieved
+
+    if (!loginId) {
+        Swal.fire("Error", "User not found. Please log in again.", "error");
+        return;
+    }
+
+    try {
+        const response = await axios.put(
+            `http://localhost:3001/admin/${loginId}`, 
+            { oldPass, newPass }, 
+            { headers: { "Content-Type": "application/json" } }
+        );
+
+        if (response.data.success) {
+            Swal.fire("Success", "Password changed successfully!", "success");
+            handleClose();
+            setOldPass("");
+            setNewPass("");
+            setConfirmPass("");
+        }
+    } catch (error) {
+        Swal.fire("Error", error.response?.data?.message || "Password change failed", "error");
+        console.error("Change Password Error:", error);
+    }
+};
+
 
   return (
     <div className="container-fluid p-3">
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: "bold", mb: 4 }}>
-    
+        <div className="d-flex align-items-center justify-content-between">
+        <Typography variant="h4" gutterBottom sx={{ fontWeight: "bold", mb: 4 }}>
           USER MANAGEMENT
-       
-      </Typography>
-
-      <Paper
-        sx={{
-          width: "100%",
-          overflow: "hidden",
-          borderRadius: "10px",
-          boxShadow: 3,
-          padding: 2,
-        }}
-      >
-        <TableContainer>
-          <Table sx={{ minWidth: 650, backgroundColor: "#d8d8d8" }}>
-            <TableHead>
-              <TableRow sx={{ backgroundColor: "#4169E1", borderRadius: "10px" }}>
-                {["Name", "Email", "Role", "Status", "Last Login"].map((header) => (
-                  <TableCell
-                    key={header}
-                    align="center"
-                    sx={{
-                      fontWeight: "bold",
-                      color: "#fff",
-                      fontSize: "1.1rem",
-                      py: 2.5
-                    }}
-                  >
-                    {loading ? (
-                      <Skeleton
-                        variant="text"
-                        sx={{ 
-                          width: '70%', 
-                          mx: 'auto',
-                          bgcolor: "rgba(255, 255, 255, 0.8)"
-                        }}
-                      />
-                    ) : (
-                      header
-                    )}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {(loading ? Array.from(new Array(5)) : []).map((_, index) => (
-                <TableRow key={index} hover sx={{ borderRadius: "10px" }}>
-                  {[...Array(5)].map((_, cellIndex) => (
-                    <TableCell
-                      key={cellIndex}
-                      align="center"
-                      sx={{ fontSize: "1.0rem", py: 1.5 }}
-                    >
-                      <Skeleton
-                        variant="text"
-                        sx={{ width: '80%', mx: 'auto' }}
-                      />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        {loading && (
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-            <Skeleton
-              variant="rectangular"
-              width={300}
-              height={40}
-              sx={{ borderRadius: "4px" }}
-            />
-          </Box>
-        )}
-      </Paper>
+        </Typography>
+        <Button className="d-none" onClick={handleOpen}>Open modal</Button>
+      </div>
+      <Modal open={open} onClose={handleClose}>
+        <Box component="form" onSubmit={handleSubmit} sx={style}>
+          <Typography variant="h6" component="h2" sx={{ mt: 2 }}>
+            Change Password
+          </Typography>
+          <TextField
+            label="Enter Old Password"
+            type="password"
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            value={oldPass}
+            onChange={(e) => setOldPass(e.target.value)}
+            InputProps={{ style: { backgroundColor: "white" } }}
+            required
+          />
+          <TextField
+            label="Enter New Password"
+            type="password"
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            value={newPass}
+            onChange={(e) => setNewPass(e.target.value)}
+            InputProps={{ style: { backgroundColor: "white" } }}
+            required
+          />
+          <TextField
+            label="Confirm New Password"
+            type="password"
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            value={confirmPass}
+            onChange={(e) => setConfirmPass(e.target.value)}
+            InputProps={{ style: { backgroundColor: "white" } }}
+            required
+          />
+          <Button 
+            type="submit" 
+            variant="contained" 
+            sx={{ mt: 2 }} 
+            fullWidth
+          >
+            Confirm
+          </Button>
+        </Box>
+      </Modal>
+      <HarvestSkeliton />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import { Typography } from "@mui/material";
+import EventNoteIcon from '@mui/icons-material/EventNote'; 
 import BarChartIcon from "@mui/icons-material/BarChart";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import GroupIcon from '@mui/icons-material/Group';
@@ -86,8 +87,8 @@ const menuItems = [
   { text: "Harvests", icon: <GrainIcon />, path: "/harvests" }, 
   { text: "User Management", icon: <GroupIcon />, path: "/userManagement" },
   { text: "Reports", icon: <ReportIcon />, path: "/reports" },
-   
-]; 
+  { text: "Activity Logs", icon: <EventNoteIcon />, path: "/activitylogs" }, // Changed icon here
+];
 
 function Sidebar({ open, setOpen }) {
   const theme = useTheme();

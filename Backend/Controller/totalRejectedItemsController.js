@@ -11,8 +11,9 @@ const totalRejecteditems = async (req, res) => {
             }
         });
 
-        const totalRejected = response.data.length || 0;
-        res.json({ totalRejected });
+        const rejectedTable = Array.isArray(response.data) ? response.data : [];  // Ensure it's an array
+        const totalReject = rejectedTable.length;
+        res.json({ rejectedTable, totalReject });
         
     } catch (error) {
         console.error("External API Error:", error.response?.data || error.message);
@@ -23,3 +24,7 @@ const totalRejecteditems = async (req, res) => {
 };
 
 export default totalRejecteditems;
+
+  
+
+  

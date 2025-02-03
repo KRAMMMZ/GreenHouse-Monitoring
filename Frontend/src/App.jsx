@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import { Box } from "@mui/material";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Sidebar from "./components/Sidebar";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -16,7 +16,7 @@ import UserManagement from "./pages/UserManagement";
 import Graphs from "./pages/Graphs";
 import Harvests from "./pages/Harvests";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { useAuth } from "./contexts/AuthContext";
+import ActivityLogs from "./pages/ActivityLogs";
 import Loading from "./components/LoadingAlert";
 
 const drawerWidth = 300;
@@ -50,7 +50,9 @@ function App() {
 }
 
 const AuthRoutes = ({ open, setOpen }) => {
-  const { user } = useAuth();
+  const { user, authLoading } = useAuth();
+
+  
 
   return (
     <Box sx={{ display: "flex", height: "100vh", width: "100vw" }}>
@@ -116,7 +118,6 @@ const AuthRoutes = ({ open, setOpen }) => {
                   </ProtectedRoute>
                 }
               />
-
               <Route
                 path="/reports"
                 element={
@@ -125,7 +126,14 @@ const AuthRoutes = ({ open, setOpen }) => {
                   </ProtectedRoute>
                 }
               />
-
+              <Route
+                path="/activitylogs"
+                element={
+                  <ProtectedRoute>
+                    <ActivityLogs />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="*" element={<Navigate to="/dashboard" />} />
             </>
           )}

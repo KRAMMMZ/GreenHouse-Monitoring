@@ -5,10 +5,16 @@ import dotenv from "dotenv";
 import { Server } from "socket.io";
 import http from "http";
 
+import totalRejectToday from "./Routes/routeRejectToday.js";
 import totalRejecteditems from "./Routes/routeTotalRejectedItems.js";
 import totalHarvests from "./Routes/routeTotalHarvests.js";
+import totalHarvestsToday from "./Routes/routeHarvestToday.js";
 import totalHarvestsPerDay from "./Routes/routePerDayHarvest.js";
-import totalAcceptedPerDay from "./Routes/routeChart.js";
+import BarChart from "./Routes/routeBarChart.js";
+import PieChart from "./Routes/routePieChart.js";
+import login from "./Routes/routeLogin.js";
+
+import ChangePassword from "./Routes/routeChangePass.js";
 dotenv.config();
 
 const app = express();
@@ -19,16 +25,19 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "http://localhost:5173",
-    methods: ["GET", "POST"],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],  
+    allowedHeaders: ['Content-Type', 'Authorization'],
   },
 });
 
 app.use(cors({ origin: "http://localhost:5173" }));
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use("/reason_for_rejection", totalRejecteditems);
-app.use("/harvests", totalHarvests, totalHarvestsPerDay, totalAcceptedPerDay);
- 
+app.use("/reason_for_rejection", totalRejecteditems, PieChart, totalRejectToday);
+app.use("/harvests", totalHarvests, totalHarvestsToday, totalHarvestsPerDay, BarChart);
+app.use("/admin/login", login );
+app.use("/admin/:loginId", ChangePassword);
 
 // Handle errors
 app.use((err, req, res, next) => {

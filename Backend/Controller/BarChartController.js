@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const totalAcceptedPerDay = async (req, res) => {
+const BarChart = async (req, res) => {
   try {
     console.log("Fetching harvests data from external API...");
 
@@ -10,8 +10,7 @@ const totalAcceptedPerDay = async (req, res) => {
         'x-api-key': process.env.API_KEY, // Ensure the API key is correctly set in your environment variables
       },
     });
-
-    console.log("Data fetched successfully.");
+ 
     const harvestTable = response.data || [];
     const totalHarvests = harvestTable.length;
 
@@ -22,8 +21,7 @@ const totalAcceptedPerDay = async (req, res) => {
       const date = new Date(item.harvest_date);
       const formattedDate = `${date.toLocaleString("default", { month: "short" })}${date.getDate()}`;
 
-      // Log each harvest item for debugging
-      console.log(`Processing harvest item ${index + 1}:`, item);
+      
 
       if (!acc[formattedDate]) {
         acc[formattedDate] = {
@@ -33,16 +31,12 @@ const totalAcceptedPerDay = async (req, res) => {
         };
       }
 
-      // Log before adding to the accumulator
-      console.log(`Before aggregation for ${formattedDate}:`, acc[formattedDate]);
-
+      
       acc[formattedDate].accepted += item.accepted;
       acc[formattedDate].rejected += item.rejected;
       acc[formattedDate].totalYield += item.yield;
 
-      // Log after updating the accumulator
-      console.log(`After aggregation for ${formattedDate}:`, acc[formattedDate]);
-
+       
       return acc;
     }, {});
 
@@ -77,4 +71,4 @@ const totalAcceptedPerDay = async (req, res) => {
   }
 };
 
-export default totalAcceptedPerDay;
+export default BarChart;
