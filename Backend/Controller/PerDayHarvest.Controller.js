@@ -21,8 +21,7 @@ const totalHarvestsPerDay = async (req, res) => {
       return `${year}-${month}-${day}`;
     };
     
-    const today = getLocalDateString(); // Use local date
-
+    const today = getLocalDateString(); // Use local dates
     // Aggregate data for all days
     const harvestDataPerDay = harvestTable.reduce((acc, item) => {
       const date = item.harvest_date;

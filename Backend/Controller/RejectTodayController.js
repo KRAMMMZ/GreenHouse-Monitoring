@@ -6,7 +6,7 @@ const totalRejectToday = async (req, res) => {
             headers: { 'x-api-key': process.env.API_KEY }
         });
 
-          // Assuming the external API returns an array of harvest items
+          // Assuming the external API returns an array of harvest itemss
       const rejectedTable = response.data || [];
   
       // Get today's date in YYYY-MM-DD format

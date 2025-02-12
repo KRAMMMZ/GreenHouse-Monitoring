@@ -8,24 +8,31 @@ import http from "http";
 import totalRejectToday from "./Routes/routeRejectToday.js";
 import totalRejecteditems from "./Routes/routeTotalRejectedItems.js";
 import totalHarvests from "./Routes/routeTotalHarvests.js";
-import totalHarvestsToday from "./Routes/routeHarvestToday.js";
 import totalHarvestsPerDay from "./Routes/routePerDayHarvest.js";
 import BarChart from "./Routes/routeBarChart.js";
 import PieChart from "./Routes/routePieChart.js";
-import login from "./Routes/routeLogin.js";
 
-import ChangePassword from "./Routes/routeChangePass.js";
+import login from "./Routes/routeLogin.js";
+import logout from "./Routes/routeLogout.js";
+
+import ChangePassword from "./Controller/ChangePasswordController.js"; 
+import ForgotPassword from "./Controller/ForgotPassController.js";
+
+import Adminlogs from "./Routes/routeAdminLogs.js"
+import UserManagement from "./Routes/routeUserManagement.js";
+import Maintenance from "./Controller/Maintenance.js";
+
 dotenv.config();
 
 const app = express();
 const port = 3001;
 
-// Create an HTTP server
+// Create an HTTP servera
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],  
+    origin: "http://localhost:5173", // Allow the frontend to accesss
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   },
 });
@@ -35,14 +42,22 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use("/reason_for_rejection", totalRejecteditems, PieChart, totalRejectToday);
-app.use("/harvests", totalHarvests, totalHarvestsToday, totalHarvestsPerDay, BarChart);
-app.use("/admin/login", login );
-app.use("/admin/:loginId", ChangePassword);
+app.use("/harvests", totalHarvests, totalHarvestsPerDay, BarChart);
+app.use("/admin/login", login);
+app.use("/admin/logout", logout);
+
+app.use("/activity_logs/admin", Adminlogs);
+app.use("/users", UserManagement);
+app.get("/maintenance", Maintenance);
+
+
+app.put("/admin/:email", ChangePassword);   
+app.post("/admin", ForgotPassword);   
 
 // Handle errors
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send("Something is Wrong!");
+  res.status(500).send("Something is wrong!");
 });
 
 // WebSocket Connection
@@ -64,7 +79,7 @@ const simulateHarvestUpdate = () => {
   setTimeout(() => {
     emitHarvestUpdate();
     console.log("Harvest data updated");
-  }, 5000); // Every 10 seconds
+  }, 5000); // Every 5 seconds
 };
 
 // Start the simulation
