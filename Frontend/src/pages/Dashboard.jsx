@@ -22,6 +22,8 @@ import {useTotalHarvestsToday } from "../hooks/TotalHarvestHooks"
 import { useTotalRejectToday } from "../hooks/RejectItemHooks";
 
 
+import useBarChartCardToday from '../hooks/BarChartCardHooks'; 
+
 const data = [
   { name: "Jan", value: 30 },
   { name: "Feb", value: 25 },
@@ -42,28 +44,26 @@ function Dashboard() {
   const rejectedChart = useRejectedChart();
   const yieldChart = useYieldChart();
 
-  const harvestItems = useTotalHarvestsToday();
-
+  const totalHarvestToday = useTotalHarvestsToday();
+  const totalHarvestCountToday = useBarChartCardToday();
   return (
     <div className="container-fluid p-3">
-      <h1 className="mb-4">DASHBOARD</h1>
-
       <div className="row g-4 mb-4">
-        <div className="col-12 col-md-6 col-lg-3">
+        <div className="col-12 col-md-6 col-lg-4">
           {acceptedLoading ? (
             <DashboardSkeliton />
           ) : (
             <MetricCard
-              title=" Accepted Today"
-              value={accepted}
+              title=" Total Harvests Today"
+              value={totalHarvestToday}
               color="bg-primary"
-              chartType="line"
-              data={acceptedChart}
+              chartType="bar"
+              data={totalHarvestCountToday}
             />
           )}
         </div>
 
-        <div className="col-12 col-md-6 col-lg-3">
+        <div className="col-12 col-md-6 col-lg-4">
           {rejectedLoading ? (
             <DashboardSkeliton />
           ) : (
@@ -77,7 +77,7 @@ function Dashboard() {
           )}
         </div>
 
-        <div className="col-12 col-md-6 col-lg-3">
+        <div className="col-12 col-md-6 col-lg-4">
           {totalYieldLoading ? (
             <DashboardSkeliton />
           ) : (
@@ -85,37 +85,24 @@ function Dashboard() {
               title="Total Yield"
               value={totalYield}
               color="bg-primary"
-              chartType="bar"
+              chartType="line"
               data={yieldChart}
             />
           )}
         </div>
-
-        <div className="col-12 col-md-6 col-lg-3">
-          <MetricCard
-            title="TBD"
-            value="TBD"
-            color="bg-danger"
-            chartType="pie"
-            data={data}
-           
-          />
-        </div>
+ 
       </div>
-      <div
-        className="d-flex flex-wrap align-items-stretch justify-content-between mb-3"
-        style={{ gap: "20px" }}
-      >
-        <div style={{ flex: "1 1 48%", minWidth: "100px" }}>
+      <div className="row g-4 mb-2">
+        <div className="col-12 col-md-6">
           <HarvestChart />
         </div>
-        <div style={{ flex: "1 1 48%", minWidth: "100px" }}>
-          <RejectionPieChartDUMMY />
+        <div className="col-12 col-md-6">
+          <RejectionPieChart />
         </div>
       </div>
 
       <div className="d-flex">
-          <HarvestSkeliton />
+        <HarvestSkeliton />
       </div>
     </div>
   );

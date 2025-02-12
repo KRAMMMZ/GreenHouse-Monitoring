@@ -31,7 +31,7 @@ const useRejectedTableItems = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get("http://localhost:3001/reason_for_rejection");
-        console.log("API Response (Rejected Items):", response.data);  // Log the data for inspection
+       
         const rejectedData = response.data.rejectedTable || [];
         if (Array.isArray(rejectedData)) {
           setRejectItems(rejectedData);  // Set it to an array

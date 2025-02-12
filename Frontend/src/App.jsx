@@ -17,6 +17,7 @@ import Graphs from "./pages/Graphs";
 import Harvests from "./pages/Harvests";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ActivityLogs from "./pages/ActivityLogs";
+import Maintenance from "./pages/Maintenance";
 import Loading from "./components/LoadingAlert";
 
 const drawerWidth = 300;
@@ -110,6 +111,14 @@ const AuthRoutes = ({ open, setOpen }) => {
                   </ProtectedRoute>
                 }
               />
+                <Route
+                path="/reports"
+                element={
+                  <ProtectedRoute>
+                    <Reports />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/userManagement"
                 element={
@@ -118,14 +127,15 @@ const AuthRoutes = ({ open, setOpen }) => {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/reports"
+                <Route
+                path="/maintenance"
                 element={
                   <ProtectedRoute>
-                    <Reports />
+                    <Maintenance />
                   </ProtectedRoute>
                 }
               />
+             
               <Route
                 path="/activitylogs"
                 element={

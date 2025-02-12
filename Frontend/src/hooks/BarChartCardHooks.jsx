@@ -4,9 +4,17 @@ import { io } from 'socket.io-client';
 
 const socket = io('http://localhost:3001');
 
+// Utility function to get today's date in 'YYYY-MM-DD' format
+const getTodayDateString = () => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const useHarvestHistory = () => {
   const [harvestHistory, setHarvestHistory] = useState([]);
-  const [loading, setLoading] = useState(true); // Added loading state
 
   useEffect(() => {
     const formatDateLabel = (dateStr) => {
@@ -15,42 +23,45 @@ const useHarvestHistory = () => {
     };
 
     const fetchData = async () => {
-      setLoading(true); // Set loading to true before fetching
       try {
         const response = await axios.get('http://localhost:3001/harvests');
         const harvestTable = response.data.harvestTable || [];
-        
-        const currentDate = new Date();
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(currentDate.getDate() - 7);
 
+        // Get today's date in YYYY-MM-DD format
+        const todayDate = getTodayDateString();
+
+        // Group by date and sum values for the current day only
         const groupedData = harvestTable.reduce((acc, item) => {
-          const date = new Date(item.harvest_date);
-          if (date >= sevenDaysAgo) {
-            const formattedDate = date.toISOString().split('T')[0];
-            if (!acc[formattedDate]) {
-              acc[formattedDate] = { accepted: 0, rejected: 0, totalYield: 0 };
+          // Extract only the date part (YYYY-MM-DD) from harvest_date
+          const date = new Date(item.harvest_date).toISOString().split('T')[0];
+          
+          // Only include data for today's date
+          if (date === todayDate) {
+            if (!acc[date]) {
+              acc[date] = {
+                accepted: 0,
+                rejected: 0,
+                totalYield: 0
+              };
             }
-            acc[formattedDate].accepted += item.accepted;
-            acc[formattedDate].rejected += item.total_rejected;
-            acc[formattedDate].totalYield += item.total_yield;
+            acc[date].accepted += item.accepted;
+            acc[date].rejected += item.total_rejected;
+            acc[date].totalYield += item.total_yield;
           }
           return acc;
         }, {});
 
+        // Convert to array and format date labels
         const sortedData = Object.entries(groupedData)
           .map(([date, values]) => ({
             date: formatDateLabel(date),
             ...values
-          }))
-          .sort((a, b) => new Date(a.date) - new Date(b.date));
+          }));
 
         setHarvestHistory(sortedData);
       } catch (error) {
         console.error('Error fetching harvest data:', error);
         setHarvestHistory([]);
-      } finally {
-        setLoading(false); // Set loading to false after fetching
       }
     };
 
@@ -62,7 +73,7 @@ const useHarvestHistory = () => {
     };
   }, []);
 
-  return { harvestHistory, loading }; // Return loading state
+  return harvestHistory;
 };
 
 export default useHarvestHistory;

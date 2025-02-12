@@ -35,10 +35,13 @@ export const AuthProvider = ({ children }) => {
         });
 
         if (response.data.success) {
-            const userData = response.data.user_data; // Ensure login_id is present
+            const  storedData = response.data.user_data; // Extract email and name
+            const userData = storedData;
+
             setUser(userData);
             setIsLoggedIn(true);
-            localStorage.setItem("user", JSON.stringify(userData)); // Store user data including login_id
+            localStorage.setItem("user", JSON.stringify(userData)); // Store user data
+
             Swal.fire("Success", "Login Successful!", "success");
             navigate("/dashboard");
         } else {
@@ -51,14 +54,33 @@ export const AuthProvider = ({ children }) => {
 };
 
 
+
+ 
   // Logout function
-  const logout = () => {
-    localStorage.removeItem("user"); // Clear user data from localStorage
-    setUser(null);
-    setIsLoggedIn(false);
-    Swal.fire("Success", "Logged Out Successfully!", "success");
-    navigate("/");
+  const logout = async () => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const email = storedUser.email;
+    console.log(email);
+    try{
+      const response = await axios.post("http://localhost:3001/admin/logout", {
+        email,
+      });
+  
+      if (response.data.success) {
+        localStorage.removeItem("user"); // Clear user data from localStorage
+        setUser(null);
+        setIsLoggedIn(false);
+        Swal.fire("Success", "Logged Out Successfully!", "success");
+        navigate("/");
+      } else {
+        throw new Error(response.data.message || "Authentication failed");
+      }
+    } catch (error) {
+      Swal.fire("Error", "Invalid Credentials", "error");
+      console.error("Login Error:", error);
+    }
   };
+  
 
   const value = {
     user,

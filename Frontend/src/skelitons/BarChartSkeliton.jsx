@@ -1,26 +1,34 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Paper, Typography } from '@mui/material';
-import useHarvestHistory from '../hooks/BarChartHooks';  // Fixed incorrect importss
-import BarChartSkeliton from '../skelitons/BarChartSkeliton';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { Paper, Typography } from "@mui/material";
 
-const HarvestBarChart = () => {
-  const {harvestHistory, loading} = useHarvestHistory();
-
-  if (loading) {
-    return (
-      <BarChartSkeliton/>
-    );
-  }
-
+const BarChartSkeliton = () => {
   return (
-    <Paper elevation={3} sx={{ p: 3, mb: 2, backgroundColor: "#FDFCFB ", borderRadius: "20px", boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.15)" }}>
+    <Paper
+      elevation={3}
+      sx={{ p: 3, mb: 2, backgroundColor: "#d8d8d8", borderRadius: "20px" }}
+    >
       <Typography variant="h6" gutterBottom>
         Harvest History (Last 7 Days)
       </Typography>
-      <div style={{ height: 300, width: '100%', backgroundColor: "#FDFCFB ", borderRadius: "20px" }}>
+      <div
+        style={{
+          height: 300,
+          width: "100%",
+          backgroundColor: "#d8d8d8",
+          borderRadius: "20px",
+        }}
+      >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={harvestHistory}
             margin={{
               top: 20,
               right: 30,
@@ -40,7 +48,7 @@ const HarvestBarChart = () => {
         </ResponsiveContainer>
       </div>
     </Paper>
-  );   
+  );
 };
 
-export default HarvestBarChart;
+export default BarChartSkeliton;

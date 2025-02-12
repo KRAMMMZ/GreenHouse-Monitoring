@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 
 const socket = io("http://localhost:3001");
 
-// Helper function to get today's date in YYYY-MM-DD format (local time)
+// Helper function to get today's date in YYYY-MM-DD format (local time)s
 const getTodayDateString = () => {
   const date = new Date();
   const year = date.getFullYear();

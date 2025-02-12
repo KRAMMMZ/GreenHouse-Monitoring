@@ -1,4 +1,4 @@
-// UserManagement.jsx
+// Maintenance.jsx
 import React, { useState } from "react";
 import {
   Typography,
@@ -16,28 +16,28 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import HarvestSkeliton from "../skelitons/HarvestSkeliton";
-import useUserManagement from "../hooks/UserManagementHooks";
+import useMaintenance from "../hooks/MaintenanceHooks"; // Import the hook
 
-function UserManagement() {
-  // Use object destructuring here:
-  const { usersManage, usersLoading } = useUserManagement();
+function Maintenance() {
+  const { maintenance, maintenanceLoading } = useMaintenance();
   const [page, setPage] = useState(0);
   const rowsPerPage = 10;
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredUsers = usersManage.filter((user) =>
-    user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.phone_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.address.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter maintenance items based on title and description
+  const filteredMaintenance = maintenance.filter((item) =>
+    item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const sortedUsers = [...filteredUsers].sort((a, b) => a.user_id - b.user_id);
+  // Sort maintenance items by date_completed descending (latest first)
+  const sortedMaintenance = [...filteredMaintenance].sort(
+    (a, b) => new Date(b.date_completed) - new Date(a.date_completed)
+  );
 
   return (
     <div className="container-fluid p-3">
-      {usersLoading ? (
+      {maintenanceLoading ? (
         <HarvestSkeliton />
       ) : (
         <Paper
@@ -66,10 +66,10 @@ function UserManagement() {
                 fontSize: "clamp(0.875rem, 1.7vw, 2rem)",
               }}
             >
-              USER MANAGEMENT
+              MAINTENANCE
             </Typography>
             <TextField
-              label="Search Users"
+              label="Search Maintenance"
               variant="outlined"
               size="small"
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -89,13 +89,10 @@ function UserManagement() {
                   sx={{ backgroundColor: "#4169E1", borderRadius: "10px" }}
                 >
                   {[
-                    "First Name",
-                    "Last Name",
-                    "Email",
-                    "Phone",
-                    "Address",
-                    "DOB",
-                    "Active",
+                  
+                    "Title",
+                    "Description",
+                    "Date Completed",
                   ].map((header) => (
                     <TableCell
                       key={header}
@@ -113,22 +110,19 @@ function UserManagement() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {sortedUsers
+                {sortedMaintenance
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((user) => (
+                  .map((item) => (
                     <TableRow
-                      key={user.user_id}
+                      key={item.maintenance_id}
                       hover
                       sx={{ borderRadius: "10px" }}
                     >
                       {[
-                        user.first_name,
-                        user.last_name,
-                        user.email,
-                        user.phone_number,
-                        user.address,
-                        new Date(user.date_of_birth).toLocaleDateString(),
-                        user.isActive ? "Yes" : "No",
+                     
+                        item.title,
+                        item.description,
+                        new Date(item.date_completed).toLocaleDateString(),
                       ].map((value, index) => (
                         <TableCell
                           key={index}
@@ -153,7 +147,7 @@ function UserManagement() {
           >
             <TablePagination
               component="div"
-              count={sortedUsers.length}
+              count={sortedMaintenance.length}
               rowsPerPage={rowsPerPage}
               page={page}
               onPageChange={(event, newPage) => setPage(newPage)}
@@ -166,4 +160,4 @@ function UserManagement() {
   );
 }
 
-export default UserManagement;
+export default Maintenance;

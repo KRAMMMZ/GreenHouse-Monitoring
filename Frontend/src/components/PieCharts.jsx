@@ -5,24 +5,16 @@ import { Paper, Typography } from '@mui/material';
 const RejectionPieChartDUMMY = () => {
   // Placeholder data for rejected items
   const rejectionData = [
-    { name: 'Too Small', value: 12 },
-    { name: 'Diseased', value: 8 },
+    { name: 'Too Small', value: 5 },
+    { name: 'Diseased', value: 5 },
     { name: 'Physical Damage', value: 5 },
   ];
 
   const COLORS = ['#ff6b6b', '#ff9f43', '#54a0ff'];
 
   return (
-    <Paper elevation={3} sx={{ 
-      p: 3, 
-      mb: 2,  
-      backgroundColor: "#d8d8d8",
-      borderRadius: "16px",
-      boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)'
-    }}>
-      <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: '#2d3436' }}>
-        Rejection Analysis
-      </Typography>
+   
+       
       <div style={{ 
       height: 300, width: '100%' ,
         position: 'relative',
@@ -79,7 +71,7 @@ const RejectionPieChartDUMMY = () => {
           </PieChart>
         </ResponsiveContainer>
       </div>
-    </Paper>
+    
   );
 };
 

@@ -17,7 +17,7 @@ const useAcceptedChart = () => {
           if (!acc[formattedDate]) {
             acc[formattedDate] = 0;
           }
-          acc[formattedDate] += item.accepted; // Sum accepted values
+          acc[formattedDate] += item.accepted; // Sum accepted valuess
   
           return acc;
         }, {});

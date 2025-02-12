@@ -4,52 +4,61 @@ import { io } from "socket.io-client";
 
 const socket = io("http://localhost:3001");
 
-// Helper function to get today's date in YYYY-MM-DD format (local time)
 const getTodayDateString = () => {
   const date = new Date();
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`; // Format as 'YYYY-MM-DD'
 };
 
 const useRejectionDataPerDay = () => {
-  const [rejectionData, setRejectionData] = useState({
-    diseased: 0,
-    physically_damaged: 0,
-    too_small: 0
-  });
+  const [rejectionData, setRejectionData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axios.get("http://localhost:3001/reason_for_rejection");
-        const rejectionTable = response.data.rejectionData || [];
-        const today = getTodayDateString();
+        
+        const rejectionTable = response.data.rejectedTable || []; // Correct the key
+        
+        const todayDate = getTodayDateString(); // Get today's date as string (YYYY-MM-DD)
 
-        const todaysData = rejectionTable.filter(item => item.rejection_date === today);
+        const groupedData = rejectionTable.reduce(
+          (acc, item) => {
+            // Ensure we only compare the date part (YYYY-MM-DD)
+            const date = item.rejection_date.split("T")[0]; // Split by 'T' and get the date part
+            if (date === todayDate) {
+              acc.diseased += item.diseased || 0;
+              acc.physically_damaged += item.physically_damaged || 0;
+              acc.too_small += item.too_small || 0; // Ensure all categories are accounted for
+            }
+            return acc;
+          },
+          { diseased: 0, physically_damaged: 0, too_small: 0 }
+        );
 
-        const diseased = todaysData.reduce((sum, item) => sum + item.diseased, 0);
-        const physicallyDamaged = todaysData.reduce((sum, item) => sum + item.physically_damaged, 0);
-        const tooSmall = todaysData.reduce((sum, item) => sum + item.too_small, 0);
-
-        setRejectionData({ diseased, physically_damaged: physicallyDamaged, too_small: tooSmall });
+       setRejectionData([
+          { name: "Diseased", value: groupedData.diseased },
+          { name: "Physically Damaged", value: groupedData.physically_damaged },
+          { name: "Too Small", value: groupedData.too_small },
+        ]);
       } catch (error) {
         console.error("Error fetching rejection data:", error);
-        setRejectionData({ diseased: 0, physically_damaged: 0, too_small: 0 });
+        setRejectionData([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-    socket.on("updateRejections", fetchData);
+    socket.on("updateRejections", fetchData); // Listen for updates to rejection data
 
     return () => {
-      socket.off("updateRejections");
+      socket.off("updateRejections"); // Clean up socket listener on component unmount
     };
-  }, []);
+  }, []); // Empty array ensures this runs only once when the component mounts
 
   return { rejectionData, loading };
 };

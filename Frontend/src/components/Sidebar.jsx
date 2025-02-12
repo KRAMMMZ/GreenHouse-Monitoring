@@ -12,16 +12,18 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import { Typography } from "@mui/material";
-import EventNoteIcon from '@mui/icons-material/EventNote'; 
+import EventNoteIcon from "@mui/icons-material/EventNote";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
-import GroupIcon from '@mui/icons-material/Group';
-import ReportIcon from '@mui/icons-material/Report';
-import GrainIcon from '@mui/icons-material/Grain';
+import GroupIcon from "@mui/icons-material/Group";
+import BuildIcon from '@mui/icons-material/Build';
+import ReportIcon from "@mui/icons-material/Report";
+import GrainIcon from "@mui/icons-material/Grain";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-
+import MenuPopupState from "./UserLogout";
+import ChangePasswordModal from "./ChangePassModal";
 const drawerWidth = 300;
 
 const openedMixin = (theme) => ({
@@ -84,10 +86,12 @@ const DrawerHeader = styled("div")(({ theme }) => ({
 const menuItems = [
   { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
   { text: "Graphs", icon: <BarChartIcon />, path: "/graphs" },
-  { text: "Harvests", icon: <GrainIcon />, path: "/harvests" }, 
-  { text: "User Management", icon: <GroupIcon />, path: "/userManagement" },
+  { text: "Harvests", icon: <GrainIcon />, path: "/harvests" },
   { text: "Reports", icon: <ReportIcon />, path: "/reports" },
-  { text: "Activity Logs", icon: <EventNoteIcon />, path: "/activitylogs" }, // Changed icon here
+  { text: "User Management", icon: <GroupIcon />, path: "/userManagement" },
+  { text: "Maintenance", icon: <BuildIcon />, path: "/maintenance" },
+  
+  { text: "Activity Logs", icon: <EventNoteIcon />, path: "/activitylogs" },
 ];
 
 function Sidebar({ open, setOpen }) {
@@ -96,7 +100,7 @@ function Sidebar({ open, setOpen }) {
   const location = useLocation();
   const { logout } = useAuth();
   const [selectedItem, setSelectedItem] = useState(null);
-
+  const [openChangePassModal, setOpenChangePassModal] = useState(false);
   // Load selected menu item from localStorage on mount
   useEffect(() => {
     const storedItem = localStorage.getItem("selectedMenuItem");
@@ -110,6 +114,14 @@ function Sidebar({ open, setOpen }) {
     setSelectedItem(path);
     localStorage.setItem("selectedMenuItem", path);
     navigate(path);
+  };
+
+  const changePassModal = () => {
+    setOpenChangePassModal(true);
+  };
+
+  const closeChangePassModal = () => {
+    setOpenChangePassModal(false);
   };
 
   const handleLogout = async () => {
@@ -144,10 +156,14 @@ function Sidebar({ open, setOpen }) {
       </DrawerHeader>
       <Divider sx={{ my: 2, backgroundColor: "#FFFFFF" }} />
 
-      <List sx={{ mx: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <List sx={{ mx: 2, display: "flex", flexDirection: "column", height: "100%" }}>
         <div style={{ flexGrow: 1 }}>
           {menuItems.map((item) => (
-            <ListItem key={item.text} disablePadding sx={{ display: "flex", justifyContent: "center" }}>
+            <ListItem
+              key={item.text}
+              disablePadding
+              sx={{ display: "flex", justifyContent: "center" }}
+            >
               <ListItemButton
                 onClick={() => handleNavigation(item.path)}
                 sx={{
@@ -160,7 +176,8 @@ function Sidebar({ open, setOpen }) {
                   py: 1,
                   mb: 1,
                   borderRadius: "16px",
-                  backgroundColor: selectedItem === item.path ? "#f8eeec" : "transparent",
+                  backgroundColor:
+                    selectedItem === item.path ? "#f8eeec" : "transparent",
                   "&:hover": {
                     backgroundColor: "#4169E1",
                   },
@@ -169,7 +186,7 @@ function Sidebar({ open, setOpen }) {
                 <ListItemIcon
                   sx={{
                     minWidth: 0,
-                    mx: open ? 2 :0 ,
+                    mx: open ? 2 : 0,
                     justifyContent: "center",
                     color: selectedItem === item.path ? "#000000" : "#FFFFFF",
                     "& svg": {
@@ -180,62 +197,28 @@ function Sidebar({ open, setOpen }) {
                 >
                   {item.icon}
                 </ListItemIcon>
-                <ListItemText
-                  primary={item.text}
-                  sx={{
-                    opacity: open ? 1 : 0,
-                    color: selectedItem === item.path ? "#000000" : "#FFFFFF",
-                    whiteSpace: "nowrap",
-                    transition: "opacity 0.3s",
-                    marginLeft: open ? 1 : 0,
-                    "& .MuiTypography-root": {
-                      fontSize: "1.2rem",
+
+                {/* Conditionally render text if drawer is open */}
+                {open && (
+                  <ListItemText
+                    primary={item.text}
+                    sx={{
+                      color: selectedItem === item.path ? "#000000" : "#FFFFFF",
+                      fontSize: "1rem",
                       fontWeight: 500,
                       verticalAlign: "middle",
-                    },
-                  }}
-                />
+                      whiteSpace: "nowrap",
+                    }}
+                  />
+                )}
               </ListItemButton>
             </ListItem>
           ))}
         </div>
 
         <Divider sx={{ my: 1, backgroundColor: "#FFFFFF" }} />
-
-        <ListItem disablePadding sx={{ display: "flex", justifyContent: "center" }}>
-          <ListItemButton
-            onClick={handleLogout}
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "100%",
-              px: 1,
-              py: 1,
-              borderRadius: "16px",
-              "&:hover": {
-                backgroundColor: "#4169E1",
-              },
-            }}
-          >
-            <ListItemIcon
-              sx={{
-                minWidth: 0,
-               mx: open ? 4 :0 ,
-                justifyContent: "center",
-                color: "#FFFFFF",
-                "& svg": {
-                  fontSize: 30,
-                  verticalAlign: "middle",
-                },
-              }}
-            >
-              <ExitToAppIcon />
-            </ListItemIcon>
-            <ListItemText primary="Logout" sx={{ opacity: open ? 1 : 0, color: "#FFFFFF" }} />
-          </ListItemButton>
-        </ListItem>
+        <MenuPopupState handleLogout={handleLogout} changePassModal={changePassModal} />
+        <ChangePasswordModal open={openChangePassModal} onClose={closeChangePassModal} />
       </List>
     </Drawer>
   );
