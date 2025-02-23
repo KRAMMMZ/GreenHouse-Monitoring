@@ -13,14 +13,36 @@ import {
   Tooltip,
 } from "recharts";
 
-const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff7300", "#0088FE"];
+const COLORS = ["#ff6b35", "#1d3557", "#4169E1" ];
 
-// Dummy data for when there's no actual data
+// Dummy data for when there's no actual datas
 const dummyData = [
   { name: "Loading", value: 0 },
   { name: "Loading", value: 0 },
   { name: "Loading", value: 0 },
 ];
+
+const RADIAN = Math.PI / 180;
+const renderCustomizedLabel = ({
+  cx, cy, midAngle, innerRadius, outerRadius, percent, index
+}) => {
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  return (
+    <text
+      x={x}
+      y={y}
+      fill="white"
+      textAnchor="middle"
+      dominantBaseline="central"
+      style={{ fontSize: '12px' }}
+    >
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  );
+};
 
 const MetricCard = ({ title, value, chartType, data }) => {
   // If no data is available, use dummy data
@@ -31,9 +53,9 @@ const MetricCard = ({ title, value, chartType, data }) => {
       className="d-flex flex-column flex-md-row align-items-center text-white p-3 w-100"
       style={{
         borderRadius: "8px",
-        backgroundColor: "#FDFCFB ",
+        backgroundColor: "#06402B ",
         overflow: "hidden",
-        minHeight: "150px",
+        minHeight: "100px",
         boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.15)", // Added box shadow
       }}
     >
@@ -48,8 +70,8 @@ const MetricCard = ({ title, value, chartType, data }) => {
         <h2
           className="display-6 fw-bold mb-2 mb-md-0"
           style={{
-            color: "#4169E1",
-            fontSize: "clamp(1.5rem, 4vw, 3rem)",
+            color: "#fff",
+            fontSize: "clamp(2.5rem, 4vw, 3rem)",
           }}
         >
           {value}
@@ -57,7 +79,7 @@ const MetricCard = ({ title, value, chartType, data }) => {
         <p
           className="medium fw-bold mb-0"
           style={{
-            color: "#333",
+            color: "#fff",
             fontSize: "clamp(0.675rem, 1.7vw, .9rem)",
           }}
         >
@@ -71,10 +93,10 @@ const MetricCard = ({ title, value, chartType, data }) => {
         style={{
           flex: "1",
           height: "100%",
-          padding: "8px",
+          padding: "6px",
         }}
       >
-        <ResponsiveContainer width="100%" height={120}>
+        <ResponsiveContainer width="100%" height={107}>
           {chartType === "line" ? (
             <LineChart
               data={chartData}
@@ -123,20 +145,24 @@ const MetricCard = ({ title, value, chartType, data }) => {
               />
             </AreaChart>
           ) : chartType === "pie" ? (
-            <PieChart>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#333",
-                  color: "#fff",
-                  borderRadius: "5px",
-                }}
-              />
-              <Pie data={chartData} dataKey="value" nameKey="name" outerRadius={50} label>
-                {chartData.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-            </PieChart>
+            <PieChart width={200} height={200}>
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius={50}
+              labelLine={false}       // remove default label lines
+              label={renderCustomizedLabel}  // render text inside the pie
+            >
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip contentStyle={{ fontSize: "12px" }} itemStyle={{ fontSize: "12px" }} />
+          </PieChart>
+          
           ) : null}
         </ResponsiveContainer>
       </div>

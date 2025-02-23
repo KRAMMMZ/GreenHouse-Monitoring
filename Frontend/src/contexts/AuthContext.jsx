@@ -1,3 +1,4 @@
+// AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -11,76 +12,83 @@ export const AuthProvider = ({ children }) => {
   const [authLoading, setAuthLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Check for existing session on app load
+  // On app load, check if the user is authenticated using the HTTP-only cookie.
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+    const checkAuth = async () => {
       try {
-        const userData = JSON.parse(storedUser);
-        setUser(userData);
-        setIsLoggedIn(true);
+        const response = await axios.get("http://localhost:3001/admin/me", {
+          withCredentials: true,
+        });
+        if (response.data.success) {
+          setUser(response.data.user_data);
+          setIsLoggedIn(true);
+        } else {
+          setUser(null);
+          setIsLoggedIn(false);
+        }
       } catch (error) {
-        console.error("Error parsing user data:", error);
-        localStorage.removeItem("user");
+        console.error("Error checking authentication:", error);
+        setUser(null);
+        setIsLoggedIn(false);
       }
-    }
-    setAuthLoading(false);
+      setAuthLoading(false);
+    };
+
+    checkAuth();
   }, []);
 
   const login = async (email, password) => {
     try {
-        const response = await axios.post("http://localhost:3001/admin/login", {
-            email,
-            password,
-        });
-
-        if (response.data.success) {
-            const  storedData = response.data.user_data; // Extract email and name
-            const userData = storedData;
-
-            setUser(userData);
-            setIsLoggedIn(true);
-            localStorage.setItem("user", JSON.stringify(userData)); // Store user data
-
-            Swal.fire("Success", "Login Successful!", "success");
-            navigate("/dashboard");
-        } else {
-            throw new Error(response.data.message || "Authentication failed");
-        }
-    } catch (error) {
-        Swal.fire("Error", "Invalid Credentials", "error");
-        console.error("Login Error:", error);
-    }
-};
-
-
-
- 
-  // Logout function
-  const logout = async () => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    const email = storedUser.email;
-    console.log(email);
-    try{
-      const response = await axios.post("http://localhost:3001/admin/logout", {
-        email,
-      });
-  
+      const response = await axios.post(
+        "http://localhost:3001/admin/login",
+        { email, password },
+        { withCredentials: true }
+      );
       if (response.data.success) {
-        localStorage.removeItem("user"); // Clear user data from localStorage
+        // The JWT token is set in an HTTP-only cookie by the server.
+        setUser(response.data.user_data);
+        setIsLoggedIn(true);
+        Swal.fire("Success", "Login Successful!", "success");
+        navigate("/dashboard");
+      } else {
+        throw new Error(response.data.message || "Authentication failed");
+      }
+    } catch (error) {
+      Swal.fire(
+        "Error",
+        error.response?.data?.message || "Invalid Credentials",
+        "error"
+      );
+      console.error("Login Error:", error);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      // Pass the logged-in user's email to the logout API.
+      const response = await axios.post(
+        "http://localhost:3001/admin/logout",
+        { email: user?.email },
+        { withCredentials: true }
+      );
+      if (response.data.success) {
+        // The server clears the JWT cookie.
         setUser(null);
         setIsLoggedIn(false);
         Swal.fire("Success", "Logged Out Successfully!", "success");
         navigate("/");
       } else {
-        throw new Error(response.data.message || "Authentication failed");
+        throw new Error(response.data.message || "Logout failed");
       }
     } catch (error) {
-      Swal.fire("Error", "Invalid Credentials", "error");
-      console.error("Login Error:", error);
+      Swal.fire(
+        "Error",
+        error.response?.data?.message || "Logout failed",
+        "error"
+      );
+      console.error("Logout Error:", error);
     }
   };
-  
 
   const value = {
     user,

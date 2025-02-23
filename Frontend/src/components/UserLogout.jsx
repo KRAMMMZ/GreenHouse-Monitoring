@@ -1,4 +1,5 @@
-import * as React from "react";
+// MenuPopupState.jsx
+import React from "react";
 import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
@@ -13,7 +14,7 @@ export default function MenuPopupState({ handleLogout, changePassModal }) {
   return (
     <PopupState variant="popover" popupId="demo-popup-menu">
       {(popupState) => (
-        <React.Fragment>
+        <>
           <Button
             variant="text"
             {...bindTrigger(popupState)}
@@ -28,7 +29,7 @@ export default function MenuPopupState({ handleLogout, changePassModal }) {
               textTransform: "none",
               width: "100%",
               "&:hover": {
-                backgroundColor: "#4169E1",
+                backgroundColor: "#2e6f40",
               },
             }}
           >
@@ -46,62 +47,50 @@ export default function MenuPopupState({ handleLogout, changePassModal }) {
                 whiteSpace: "nowrap",
               }}
             >
-              {user?.name ? `${user.name}` : "Dashboard"}
+              {user?.name || "Display the name here"}
             </Typography>
           </Button>
           <Menu
-  {...bindMenu(popupState)}
-  anchorOrigin={{
-    vertical: "top",
-    horizontal: "right",
-  }}
-  transformOrigin={{
-    vertical: "bottom",
-    horizontal: "right",
-  }}
->
-  <MenuItem
-    onClick={popupState.close}
-    sx={{
-      '&:hover': {
-        backgroundColor: 'blue', // Change background to blue on hover
-        color: 'white', // Change text color to white
-      },
-    }}
-  >
-    My Profile
-  </MenuItem>
-  <MenuItem
-    onClick={() => {
-      popupState.close();
-      changePassModal(); // Show change password modal
-    }}
-    sx={{
-      '&:hover': {
-        backgroundColor: 'blue', // Change background to blue on hover
-        color: 'white', // Change text color to white
-      },
-    }}
-  >
-    Change Password
-  </MenuItem>
-  <MenuItem
-    onClick={async () => {
-      popupState.close();
-      await handleLogout(); // Call the logout function
-    }}
-    sx={{
-      '&:hover': {
-        backgroundColor: 'blue', // Change background to blue on hover
-        color: 'white', // Change text color to white
-      },
-    }}
-  >
-    Logout
-  </MenuItem>
-</Menu>
-
-        </React.Fragment>
+            {...bindMenu(popupState)}
+            anchorOrigin={{
+              vertical: "top",
+              horizontal: "right",
+            }}
+            transformOrigin={{
+              vertical: "bottom",
+              horizontal: "right",
+            }}
+          >
+            <MenuItem
+              onClick={() => {
+                popupState.close();
+                changePassModal(); // Show change password modal
+              }}
+              sx={{
+                "&:hover": {
+                  backgroundColor: "#06402B",
+                  color: "white",
+                },
+              }}
+            >
+              Change Password
+            </MenuItem>
+            <MenuItem
+              onClick={async () => {
+                popupState.close();
+                await handleLogout(); // Call the logout function
+              }}
+              sx={{
+                "&:hover": {
+                  backgroundColor: "#06402B",
+                  color: "white",
+                },
+              }}
+            >
+              Logout
+            </MenuItem>
+          </Menu>
+        </>
       )}
     </PopupState>
   );

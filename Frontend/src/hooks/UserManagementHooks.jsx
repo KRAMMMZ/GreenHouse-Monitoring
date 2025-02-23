@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 
 const UserManagement = () => {
     const [ usersManage, setUsersManage] = useState([]);
-    const [ usersLoading, setUsersLoading] = useState(true); // Use a meaningful name
+    const [ usersLoading, setUsersLoading] = useState(true); // Use a meaningful names
   
     useEffect(() => {
       const fetchData = async () => {

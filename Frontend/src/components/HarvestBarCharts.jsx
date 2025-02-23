@@ -1,25 +1,32 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Paper, Typography } from '@mui/material';
-import useHarvestHistory from '../hooks/BarChartHooks';  // Fixed incorrect importss
+import useHarvestHistory from '../hooks/BarChartHooks'; // Using the same hook
 import BarChartSkeliton from '../skelitons/BarChartSkeliton';
 
-const HarvestBarChart = () => {
-  const {harvestHistory, loading} = useHarvestHistory();
+const HarvestLineChart = () => {
+  const { harvestHistory, loading } = useHarvestHistory();
 
   if (loading) {
-    return (
-      <BarChartSkeliton/>
-    );
+    return <BarChartSkeliton />;
   }
 
   return (
-    <Paper elevation={3} sx={{ p: 3, mb: 2, backgroundColor: "#FDFCFB ", borderRadius: "20px", boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.15)" }}>
+    <Paper
+      elevation={3}
+      sx={{
+        p: 3,
+        mb: 2,
+        backgroundColor: "#FDFCFB",
+        borderRadius: "20px",
+        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.3)"
+      }}
+    >
       <Typography variant="h6" gutterBottom>
         Harvest History (Last 7 Days)
       </Typography>
-      <div style={{ height: 300, width: '100%', backgroundColor: "#FDFCFB ", borderRadius: "20px" }}>
+      <div style={{ height: 300, width: '100%', backgroundColor: "#FDFCFB", borderRadius: "20px" }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart
+          <LineChart
             data={harvestHistory}
             margin={{
               top: 20,
@@ -33,14 +40,14 @@ const HarvestBarChart = () => {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey="accepted" fill="#ff6b35" name="Accepted Items" />
-            <Bar dataKey="rejected" fill="#1d3557" name="Rejected Items" />
-            <Bar dataKey="totalYield" fill="#4169E1" name="Total Yield" />
-          </BarChart>
+            <Line type="monotone" dataKey="accepted" stroke="#ff6b35" name="Accepted Items" strokeWidth={5} />
+            <Line type="monotone" dataKey="rejected" stroke="#1d3557" name="Rejected Items" strokeWidth={5} />
+            <Line type="monotone" dataKey="totalYield" stroke="#4169E1" name="Total Yield" strokeWidth={5} />
+          </LineChart>
         </ResponsiveContainer>
       </div>
     </Paper>
-  );   
+  );
 };
 
-export default HarvestBarChart;
+export default HarvestLineChart;

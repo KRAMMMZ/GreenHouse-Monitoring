@@ -27,10 +27,10 @@ function HarvestSkeliton() {
         }}
       >
         <TableContainer>
-          <Table sx={{ minWidth: 650, backgroundColor: "#d8d8d8" }}>
+          <Table sx={{ minWidth: 650, backgroundColor: "#fff" }}>
             <TableHead>
               <TableRow
-                sx={{ backgroundColor: "#4169E1", borderRadius: "10px" }}
+                sx={{ backgroundColor: "#06402B", borderRadius: "10px" }}
               >
                 {[
                   "Accepted",

@@ -34,20 +34,43 @@ function ChangePasswordModal({ open, onClose }) {
       }
     `;
     document.head.appendChild(style);
-
     return () => {
-      // Cleanup when component unmounts
       document.head.removeChild(style);
     };
   }, []);
 
+  /**
+   * Validates that the new password:
+   * - Has at least 8 characters
+   * - Contains at least one letter and one digit
+   */
+  const validateNewPassword = (password) => {
+    const regex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+    if (!password) {
+      return "New password is required";
+    } else if (!regex.test(password)) {
+      return "Password must be at least 8 characters long and contain letters and digits";
+    }
+    return "";
+  };
+
+  const validateConfirmPassword = (confirmPwd) => {
+    if (!confirmPwd) {
+      return "Confirm password is required";
+    } else if (newPassword !== confirmPwd) {
+      return "Passwords do not match";
+    }
+    return "";
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Validate fields
     const newErrors = {
       oldPassword: oldPassword ? "" : "Old password is required",
-      newPassword: newPassword ? "" : "New password is required",
-      confirmPassword: confirmPassword ? "" : "Confirm password is required",
+      newPassword: validateNewPassword(newPassword),
+      confirmPassword: validateConfirmPassword(confirmPassword),
     };
 
     setErrors(newErrors);
@@ -55,45 +78,45 @@ function ChangePasswordModal({ open, onClose }) {
       return;
     }
 
-    if (newPassword !== confirmPassword) {
-      Swal.fire("Error", "New passwords don't match!", "error");
-      return;
-    }
-
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    const email = storedUser;
-    if (!email) {
-      Swal.fire("Error", "User not found. Please log in again.", "error");
-      return;
-    }
-     
     try {
-      
+      // Call the dedicated change-password endpoint.
+      // Make sure to include withCredentials so that the cookie is sent.
       const response = await axios.put(
-        `http://localhost:3001/admin/${email}`,  
-        { old_password: oldPassword, new_password: newPassword }, 
-        { headers: { "Content-Type": "application/json" } }
+        `http://localhost:3001/admin/change-password`,
+        { old_password: oldPassword, new_password: newPassword },
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
       );
 
       if (response.data.success) {
         Swal.fire("Success", "Password changed successfully!", "success");
-        onClose(); 
+        onClose();
         setOldPassword("");
         setNewPassword("");
         setConfirmPassword("");
       }
     } catch (error) {
-      Swal.fire("Error", error.response?.data?.message || "Password change failed", "error");
+      Swal.fire(
+        "Error",
+        error.response?.data?.message || "Password change failed",
+        "error"
+      );
       console.error("Change Password Error:", error);
     }
-};
-
+  };
 
   const handleCancel = () => {
     setOldPassword("");
     setNewPassword("");
     setConfirmPassword("");
-    onClose(); // Close the modal after clearing the fields
+    setErrors({
+      oldPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+    onClose();
   };
 
   return (
@@ -101,17 +124,11 @@ function ChangePasswordModal({ open, onClose }) {
       <DialogTitle>
         Change Password
         <CloseIcon
-          style={{
-            position: "absolute",
-            top: 10,
-            right: 10,
-            cursor: "pointer",
-          }}
+          style={{ position: "absolute", top: 10, right: 10, cursor: "pointer" }}
           onClick={handleCancel}
         />
       </DialogTitle>
       <DialogContent>
-        {/* Old Password */}
         <TextField
           label="Old Password"
           type={showOldPassword ? "text" : "password"}
@@ -128,15 +145,16 @@ function ChangePasswordModal({ open, onClose }) {
           margin="normal"
           InputProps={{
             endAdornment: (
-              <Button onClick={() => setShowOldPassword(!showOldPassword)} style={{ cursor: "pointer" }}>
+              <Button onClick={() => setShowOldPassword(!showOldPassword)}>
                 {showOldPassword ? <Visibility /> : <VisibilityOff />}
               </Button>
             ),
           }}
         />
-        {errors.oldPassword && <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.oldPassword}</p>}
+        {errors.oldPassword && (
+          <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.oldPassword}</p>
+        )}
 
-        {/* New Password */}
         <TextField
           label="New Password"
           type={showNewPassword ? "text" : "password"}
@@ -144,24 +162,30 @@ function ChangePasswordModal({ open, onClose }) {
           variant="outlined"
           value={newPassword}
           onChange={(e) => {
-            setNewPassword(e.target.value);
+            const value = e.target.value;
+            setNewPassword(value);
             setErrors((prevErrors) => ({
               ...prevErrors,
-              newPassword: e.target.value ? "" : "New password is required",
+              newPassword: validateNewPassword(value),
+              confirmPassword:
+                confirmPassword && value !== confirmPassword
+                  ? "Passwords do not match"
+                  : prevErrors.confirmPassword,
             }));
           }}
           margin="normal"
           InputProps={{
             endAdornment: (
-              <Button onClick={() => setShowNewPassword(!showNewPassword)} style={{ cursor: "pointer" }}>
+              <Button onClick={() => setShowNewPassword(!showNewPassword)}>
                 {showNewPassword ? <Visibility /> : <VisibilityOff />}
               </Button>
             ),
           }}
         />
-        {errors.newPassword && <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.newPassword}</p>}
+        {errors.newPassword && (
+          <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.newPassword}</p>
+        )}
 
-        {/* Confirm Password */}
         <TextField
           label="Confirm Password"
           type={showConfirmPassword ? "text" : "password"}
@@ -169,22 +193,25 @@ function ChangePasswordModal({ open, onClose }) {
           variant="outlined"
           value={confirmPassword}
           onChange={(e) => {
-            setConfirmPassword(e.target.value);
+            const value = e.target.value;
+            setConfirmPassword(value);
             setErrors((prevErrors) => ({
               ...prevErrors,
-              confirmPassword: e.target.value ? "" : "Confirm password is required",
+              confirmPassword: validateConfirmPassword(value),
             }));
           }}
           margin="normal"
           InputProps={{
             endAdornment: (
-              <Button onClick={() => setShowConfirmPassword(!showConfirmPassword)} style={{ cursor: "pointer" }}>
+              <Button onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
                 {showConfirmPassword ? <Visibility /> : <VisibilityOff />}
               </Button>
             ),
           }}
         />
-        {errors.confirmPassword && <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.confirmPassword}</p>}
+        {errors.confirmPassword && (
+          <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.confirmPassword}</p>
+        )}
       </DialogContent>
       <DialogActions>
         <Button variant="contained" color="primary" onClick={handleSubmit}>

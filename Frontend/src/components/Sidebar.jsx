@@ -11,19 +11,22 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import DashboardIcon from "@mui/icons-material/Dashboard";
-import { Typography } from "@mui/material";
+import { Typography, Tooltip } from "@mui/material";
 import EventNoteIcon from "@mui/icons-material/EventNote";
 import BarChartIcon from "@mui/icons-material/BarChart";
-import ShowChartIcon from "@mui/icons-material/ShowChart";
 import GroupIcon from "@mui/icons-material/Group";
-import BuildIcon from '@mui/icons-material/Build';
 import ReportIcon from "@mui/icons-material/Report";
 import GrainIcon from "@mui/icons-material/Grain";
-import ExitToAppIcon from "@mui/icons-material/ExitToApp";
+import ExpandLess from "@mui/icons-material/ExpandLess";
+import ExpandMore from "@mui/icons-material/ExpandMore";
+import Collapse from "@mui/material/Collapse";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import MenuPopupState from "./UserLogout";
 import ChangePasswordModal from "./ChangePassModal";
+
 const drawerWidth = 300;
 
 const openedMixin = (theme) => ({
@@ -33,7 +36,7 @@ const openedMixin = (theme) => ({
     duration: theme.transitions.duration.standard,
   }),
   overflowX: "hidden",
-  backgroundColor: "#000",
+  backgroundColor: "#06402B",
   color: "#FFFFFF",
   height: "100vh",
 });
@@ -48,7 +51,7 @@ const closedMixin = (theme) => ({
   [theme.breakpoints.up("sm")]: {
     width: `calc(${theme.spacing(8)} + 1px)`,
   },
-  backgroundColor: "#000",
+  backgroundColor: "#06402B",
   color: "#FFFFFF",
   height: "100vh",
 });
@@ -83,14 +86,12 @@ const DrawerHeader = styled("div")(({ theme }) => ({
   ...theme.mixins.toolbar,
 }));
 
+// Define menu items for non-dropdown options
 const menuItems = [
   { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
   { text: "Graphs", icon: <BarChartIcon />, path: "/graphs" },
-  { text: "Harvests", icon: <GrainIcon />, path: "/harvests" },
   { text: "Reports", icon: <ReportIcon />, path: "/reports" },
   { text: "User Management", icon: <GroupIcon />, path: "/userManagement" },
-  { text: "Maintenance", icon: <BuildIcon />, path: "/maintenance" },
-  
   { text: "Activity Logs", icon: <EventNoteIcon />, path: "/activitylogs" },
 ];
 
@@ -101,6 +102,9 @@ function Sidebar({ open, setOpen }) {
   const { logout } = useAuth();
   const [selectedItem, setSelectedItem] = useState(null);
   const [openChangePassModal, setOpenChangePassModal] = useState(false);
+  // State to control dropdown for Harvests
+  const [harvestOpen, setHarvestOpen] = useState(false);
+
   // Load selected menu item from localStorage on mount
   useEffect(() => {
     const storedItem = localStorage.getItem("selectedMenuItem");
@@ -133,10 +137,73 @@ function Sidebar({ open, setOpen }) {
     }
   };
 
+  // Determine if Harvest dropdown should appear as selected
+  const isHarvestSelected =
+    selectedItem === "/harvests" || selectedItem === "/rejected";
+
+  // Helper to render a menu item with tooltip if sidebar is collapsed
+  const renderMenuItem = (item, extraSx = {}) => {
+    const content = (
+      <ListItemButton
+        onClick={() => handleNavigation(item.path)}
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "100%",
+          px: 1,
+          py: 1,
+          mb: 1,
+          borderRadius: "16px",
+          backgroundColor:
+            selectedItem === item.path ? "#f8eeec" : "transparent",
+          "&:hover": { backgroundColor: "#2e6f40" },
+          ...extraSx,
+        }}
+      >
+        <ListItemIcon
+          sx={{
+            minWidth: 0,
+            mx: open ? 2 : "auto",
+            justifyContent: "center",
+            color: selectedItem === item.path ? "#000000" : "#FFFFFF",
+            "& svg": { fontSize: 25, verticalAlign: "middle" },
+          }}
+        >
+          {item.icon}
+        </ListItemIcon>
+        {open && (
+          <ListItemText
+            primary={item.text}
+            sx={{
+              color: selectedItem === item.path ? "#000000" : "#FFFFFF",
+              fontSize: "1rem",
+              fontWeight: 500,
+              whiteSpace: "nowrap",
+            }}
+          />
+        )}
+      </ListItemButton>
+    );
+
+    return open ? (
+      content
+    ) : (
+      <Tooltip title={item.text} placement="right">
+        {content}
+      </Tooltip>
+    );
+  };
+
   return (
     <Drawer variant="permanent" open={open}>
       <DrawerHeader sx={{ px: open ? 4 : 2, py: 2 }}>
-        <Typography variant="h5" noWrap sx={{ color: "#FFFFFF", marginTop: 2 }}>
+        <Typography
+          variant="h5"
+          noWrap
+          sx={{ color: "#FFFFFF", marginTop: 2 }}
+        >
           AGREEMO
         </Typography>
         <IconButton
@@ -158,14 +225,18 @@ function Sidebar({ open, setOpen }) {
 
       <List sx={{ mx: 2, display: "flex", flexDirection: "column", height: "100%" }}>
         <div style={{ flexGrow: 1 }}>
-          {menuItems.map((item) => (
-            <ListItem
-              key={item.text}
-              disablePadding
-              sx={{ display: "flex", justifyContent: "center" }}
-            >
+          {/* Render first two menu items */}
+          {menuItems.slice(0, 2).map((item) => (
+            <ListItem key={item.text} disablePadding sx={{ display: "flex", justifyContent: "center" }}>
+              {renderMenuItem(item)}
+            </ListItem>
+          ))}
+
+          {/* Harvest dropdown positioned as 3rd item */}
+          <ListItem disablePadding sx={{ display: "flex", justifyContent: "center" }}>
+            {open ? (
               <ListItemButton
-                onClick={() => handleNavigation(item.path)}
+                onClick={() => setHarvestOpen(!harvestOpen)}
                 sx={{
                   display: "flex",
                   flexDirection: "row",
@@ -176,42 +247,206 @@ function Sidebar({ open, setOpen }) {
                   py: 1,
                   mb: 1,
                   borderRadius: "16px",
-                  backgroundColor:
-                    selectedItem === item.path ? "#f8eeec" : "transparent",
-                  "&:hover": {
-                    backgroundColor: "#4169E1",
-                  },
+                  backgroundColor: isHarvestSelected ? "#f8eeec" : "transparent",
+                  "&:hover": { backgroundColor: "#2e6f40" },
                 }}
               >
                 <ListItemIcon
                   sx={{
                     minWidth: 0,
-                    mx: open ? 2 : 0,
+                    mx: open ? 2 : "auto",
                     justifyContent: "center",
-                    color: selectedItem === item.path ? "#000000" : "#FFFFFF",
-                    "& svg": {
-                      fontSize: 25,
-                      verticalAlign: "middle",
-                    },
+                    color: isHarvestSelected ? "#000000" : "#FFFFFF",
+                    "& svg": { fontSize: 25, verticalAlign: "middle" },
                   }}
                 >
-                  {item.icon}
+                  <GrainIcon />
                 </ListItemIcon>
-
-                {/* Conditionally render text if drawer is open */}
-                {open && (
-                  <ListItemText
-                    primary={item.text}
-                    sx={{
-                      color: selectedItem === item.path ? "#000000" : "#FFFFFF",
-                      fontSize: "1rem",
-                      fontWeight: 500,
-                      verticalAlign: "middle",
-                      whiteSpace: "nowrap",
-                    }}
-                  />
+                <ListItemText
+                  primary="Harvests Items "
+                  sx={{
+                    color: isHarvestSelected ? "#000000" : "#FFFFFF",
+                    fontSize: "1rem",
+                    fontWeight: 500,
+                    whiteSpace: "nowrap",
+                  }}
+                />
+                {harvestOpen ? (
+                  <ExpandLess sx={{ color: isHarvestSelected ? "#000000" : "#FFFFFF" }} />
+                ) : (
+                  <ExpandMore sx={{ color: isHarvestSelected ? "#000000" : "#FFFFFF" }} />
                 )}
               </ListItemButton>
+            ) : (
+              <Tooltip title="Harvests" placement="right">
+                <ListItemButton
+                  onClick={() => setHarvestOpen(!harvestOpen)}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    px: 1,
+                    py: 1,
+                    mb: 1,
+                    borderRadius: "16px",
+                    backgroundColor: isHarvestSelected ? "#f8eeec" : "transparent",
+                    "&:hover": { backgroundColor: "#2e6f40" },
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      mx: "auto",
+                      justifyContent: "center",
+                      color: isHarvestSelected ? "#000000" : "#FFFFFF",
+                      "& svg": { fontSize: 25, verticalAlign: "middle" },
+                    }}
+                  >
+                    <GrainIcon />
+                  </ListItemIcon>
+                </ListItemButton>
+              </Tooltip>
+            )}
+          </ListItem>
+          {open && (
+            <Collapse in={harvestOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                {/* Harvested item */}
+                <ListItem disablePadding>
+                  {open ? (
+                    <ListItemButton
+                      onClick={() => handleNavigation("/harvests")}
+                      sx={{
+                        pl: 4,
+                        mb:1,
+                        justifyContent: "flex-start",
+                        borderRadius: "16px",
+                        backgroundColor:
+                          selectedItem === "/harvests" ? "#f8eeec" : "transparent",
+                        "&:hover": { backgroundColor: "#2e6f40" },
+                      }}
+                    >
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 0,
+                          mr: 2,
+                          justifyContent: "center",
+                          color: selectedItem === "/harvests" ? "#000000" : "#FFFFFF",
+                          "& svg": { fontSize: 20, verticalAlign: "middle" },
+                        }}
+                      >
+                        <CheckCircleIcon />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="Harvested"
+                        sx={{
+                          color: selectedItem === "/harvests" ? "#000000" : "#FFFFFF",
+                          fontSize: "0.95rem",
+                          fontWeight: 500,
+                          whiteSpace: "nowrap",
+                        }}
+                      />
+                    </ListItemButton>
+                  ) : (
+                    <Tooltip title="Harvested" placement="right">
+                      <ListItemButton
+                        onClick={() => handleNavigation("/harvests")}
+                        sx={{
+                          justifyContent: "center",
+                          borderRadius: "16px",
+                          backgroundColor:
+                            selectedItem === "/harvests" ? "#f8eeec" : "transparent",
+                          "&:hover": { backgroundColor: "#2e6f40" },
+                        }}
+                      >
+                        <ListItemIcon
+                          sx={{
+                            minWidth: 0,
+                            mx: "auto",
+                            justifyContent: "center",
+                            color: selectedItem === "/harvests" ? "#000000" : "#FFFFFF",
+                            "& svg": { fontSize: 20, verticalAlign: "middle" },
+                          }}
+                        >
+                          <CheckCircleIcon />
+                        </ListItemIcon>
+                      </ListItemButton>
+                    </Tooltip>
+                  )}
+                </ListItem>
+                {/* Rejected item */}
+                <ListItem disablePadding>
+                  {open ? (
+                    <ListItemButton
+                      onClick={() => handleNavigation("/rejected")}
+                      sx={{
+                        pl: 4,
+                        mb:1,
+                        justifyContent: "flex-start",
+                        borderRadius: "16px",
+                        backgroundColor:
+                          selectedItem === "/rejected" ? "#f8eeec" : "transparent",
+                        "&:hover": { backgroundColor: "#2e6f40" },
+                      }}
+                    >
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 0,
+                          mr: 2,
+                          justifyContent: "center",
+                          color: selectedItem === "/rejected" ? "#000000" : "#FFFFFF",
+                          "& svg": { fontSize: 20, verticalAlign: "middle" },
+                        }}
+                      >
+                        <CancelIcon />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="Rejected"
+                        sx={{
+                          color: selectedItem === "/rejected" ? "#000000" : "#FFFFFF",
+                          fontSize: "0.95rem",
+                          fontWeight: 500,
+                          whiteSpace: "nowrap",
+                        }}
+                      />
+                    </ListItemButton>
+                  ) : (
+                    <Tooltip title="Rejected" placement="right">
+                      <ListItemButton
+                        onClick={() => handleNavigation("/rejected")}
+                        sx={{
+                          justifyContent: "center",
+                          borderRadius: "16px",
+                          backgroundColor:
+                            selectedItem === "/rejected" ? "#f8eeec" : "transparent",
+                          "&:hover": { backgroundColor: "#2e6f40" },
+                        }}
+                      >
+                        <ListItemIcon
+                          sx={{
+                            minWidth: 0,
+                            mx: "auto",
+                            justifyContent: "center",
+                            color: selectedItem === "/rejected" ? "#000000" : "#FFFFFF",
+                            "& svg": { fontSize: 20, verticalAlign: "middle" },
+                          }}
+                        >
+                          <CancelIcon />
+                        </ListItemIcon>
+                      </ListItemButton>
+                    </Tooltip>
+                  )}
+                </ListItem>
+              </List>
+            </Collapse>
+          )}
+
+          {/* Render remaining menu items */}
+          {menuItems.slice(2).map((item) => (
+            <ListItem key={item.text} disablePadding sx={{ display: "flex", justifyContent: "center" }}>
+              {renderMenuItem(item)}
             </ListItem>
           ))}
         </div>

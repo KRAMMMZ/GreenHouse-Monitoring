@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   BrowserRouter as Router,
   Routes,
@@ -15,16 +16,19 @@ import Reports from "./pages/Reports";
 import UserManagement from "./pages/UserManagement";
 import Graphs from "./pages/Graphs";
 import Harvests from "./pages/Harvests";
+import Rejected from "./pages/Rejected";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ActivityLogs from "./pages/ActivityLogs";
 import Maintenance from "./pages/Maintenance";
 import Loading from "./components/LoadingAlert";
+import HttpError from "./pages/HttpError";
 
 const drawerWidth = 300;
 const closedDrawerWidth = 65;
 
 function App() {
   const [open, setOpen] = useState(true);
+  const [httpError, setHttpError] = useState(false);
 
   // Load the sidebar state from localStorage on component mount
   useEffect(() => {
@@ -39,21 +43,40 @@ function App() {
     });
   };
 
+  // Global axios interceptor for handling 500 errors
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => {
+        // Clear the error overlay if response is ok
+        setHttpError(false);
+        return response;
+      },
+      (error) => {
+        // If the error is a 500, display the error overlay
+        if (error.response && error.response.status === 500) {
+          setHttpError(true);
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => axios.interceptors.response.eject(interceptor);
+  }, []);
+
   return (
     <Router>
       <AuthProvider>
         <Box sx={{ display: "flex", minHeight: "100vh" }}>
           <AuthRoutes open={open} setOpen={toggleSidebar} />
         </Box>
+        {/* Display global error overlay if HTTP 500 error occurs */}
+        {httpError && <HttpError />}
       </AuthProvider>
     </Router>
   );
 }
 
 const AuthRoutes = ({ open, setOpen }) => {
-  const { user, authLoading } = useAuth();
-
-  
+  const { user } = useAuth();
 
   return (
     <Box sx={{ display: "flex", height: "100vh", width: "100vw" }}>
@@ -64,7 +87,7 @@ const AuthRoutes = ({ open, setOpen }) => {
           flex: 1,
           padding: user ? "2rem" : "0rem",
           height: "100vh",
-          backgroundColor: "#f8eeec",
+          backgroundColor: "#ddd",
           overflowY: "auto",
           transition: (theme) =>
             theme.transitions.create(["margin", "width"], {
@@ -112,6 +135,14 @@ const AuthRoutes = ({ open, setOpen }) => {
                 }
               />
                 <Route
+                path="/rejected"
+                element={
+                  <ProtectedRoute>
+                    <Rejected />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/reports"
                 element={
                   <ProtectedRoute>
@@ -127,15 +158,7 @@ const AuthRoutes = ({ open, setOpen }) => {
                   </ProtectedRoute>
                 }
               />
-                <Route
-                path="/maintenance"
-                element={
-                  <ProtectedRoute>
-                    <Maintenance />
-                  </ProtectedRoute>
-                }
-              />
-             
+              
               <Route
                 path="/activitylogs"
                 element={

@@ -1,28 +1,51 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
 
-const AdminLogs = () => {
-    const [ adminActivityLogs, setAdminActivityLogs] = useState([]);
-    const [ adminLogsLoading, setAdminLogsLoading] = useState(true); // Use a meaningful name
-  
-    useEffect(() => {
-      const fetchData = async () => {
-        try {
-          const response = await axios.get("http://localhost:3001/activity_logs/admin");
-          setAdminActivityLogs(response.data.AdminLogsTable || []); // Ensure fallback to an array
-         
-        } catch (error) {
-          console.error("Error fetching harvest items:", error);
-          setAdminActivityLogs([]);
-        } finally {
-            setAdminLogsLoading(false);
-        }
-      };
-  
-      fetchData();
-    }, []);
-  
-    return { adminActivityLogs, adminLogsLoading };
-  };
+export const useActivityLogs = () => {
+  const [adminActivityLogs, setAdminActivityLogs] = useState([]);
+  const [userActivityLogs, setUserActivityLogs] = useState([]);
+  const [rejectionLogs, setRejectionLogs] = useState([]);
+  const [maintenanceLogs, setMaintenanceLogs] = useState([]);
+  const [logsLoading, setLogsLoading] = useState(true);
 
-export default AdminLogs;
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const [
+          adminResponse,
+          userResponse,
+          rejectionResponse,
+          maintenanceResponse,
+        ] = await Promise.all([
+          axios.get("http://localhost:3001/logs/admin"),
+          axios.get("http://localhost:3001/logs/user"),
+          axios.get("http://localhost:3001/logs/rejection"),
+          axios.get("http://localhost:3001/logs/maintenance"),
+        ]);
+
+        setAdminActivityLogs(adminResponse.data.AdminLogsTable || []);
+        setUserActivityLogs(userResponse.data.UserLogsTable || []);
+        setRejectionLogs(rejectionResponse.data.RejectionTable || []);
+        setMaintenanceLogs(maintenanceResponse.data.MaintenanceTable || []);
+      } catch (error) {
+        console.error("Error fetching logs:", error);
+        setAdminActivityLogs([]);
+        setUserActivityLogs([]);
+        setRejectionLogs([]);
+        setMaintenanceLogs([]);
+      } finally {
+        setLogsLoading(false);
+      }
+    };
+
+    fetchLogs();
+  }, []);
+
+  return {
+    adminActivityLogs,
+    userActivityLogs,
+    rejectionLogs,
+    maintenanceLogs,
+    logsLoading,
+  };
+};

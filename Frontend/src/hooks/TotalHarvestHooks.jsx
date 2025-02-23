@@ -32,42 +32,42 @@ const useTotalHarvests = () => {
 
 const useTotalHarvestsToday = () => {
   const [harvestItemsToday, setHarvestItemsToday] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axios.get("http://localhost:3001/harvests");
 
-        // Log the fetched data to the console for debugging
-        
-
-        // Check if harvestTable is available and filter for today'ss date
+        // Check if harvestTable is available and filter for today's date
         if (response.data && response.data.harvestTable) {
           const todayDate = getTodayDateString();
 
           // Filter harvests to only include those from today
-          const harvestsToday = response.data.harvestTable.filter(harvest => {
-            // Use the harvest_date field to match today's date
-            return harvest.harvest_date === todayDate;
-          });
+          const harvestsToday = response.data.harvestTable.filter(harvest => 
+            harvest.harvest_date === todayDate
+          );
 
           setHarvestItemsToday(harvestsToday.length); // Total count for today
-          
         } else {
           console.error("Error: No harvest data received");
-          setHarvestItemsToday(0); // Reset state if no data is found
+          setHarvestItemsToday(0);
         }
       } catch (error) {
         console.error("Error fetching total harvests for today:", error);
-        setHarvestItemsToday(0); // Reset state in case of error
+        setHarvestItemsToday(0);
+      } finally {
+        // Set loading to false regardless of success or error
+        setIsLoading(false);
       }
     };
 
     fetchData();
-  }, []); // Empty array ensures this runs only once when the component mounts
+  }, []); // Runs only once when the component mounts
 
-  return harvestItemsToday;
+  return { harvestItemsToday, isLoading };
 };
+
 
 
 const useHarvestItems = () => {
@@ -78,7 +78,7 @@ const useHarvestItems = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get("http://localhost:3001/harvests");
-        setHarvestItems(response.data.harvestTable || []); // Ensure fallback to an array
+        setHarvestItems(response.data.harvestTable || []); // Ensure fallback to an arrays
       } catch (error) {
         console.error("Error fetching harvest items:", error);
         setHarvestItems([]);

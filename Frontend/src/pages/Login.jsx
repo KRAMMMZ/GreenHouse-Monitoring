@@ -30,11 +30,11 @@ function Login() {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     let newErrors = { username: "", password: "" };
-    
+
     // Validation logic
     if (!username) newErrors.username = "*Email is required";
     if (!password) newErrors.password = "*Password is required";
-    
+
     if (newErrors.username || newErrors.password) {
       setErrors(newErrors);
       return;
@@ -108,9 +108,10 @@ function Login() {
                   },
                 }}
                 sx={{
-                  "& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "red",
-                  },
+                  "& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline":
+                    {
+                      borderColor: "red",
+                    },
                 }}
               />
             </div>
@@ -147,15 +148,17 @@ function Login() {
                   },
                 }}
                 sx={{
-                  "& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "red",
-                  },
+                  "& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline":
+                    {
+                      borderColor: "red",
+                    },
                 }}
               />
             </div>
             <div className="d-flex justify-content-end mt-2 mb-4">
               <Link
                 component="button"
+                type="button" // Add this line
                 variant="body2"
                 color="primary"
                 onClick={handleForgotPasswordClick}

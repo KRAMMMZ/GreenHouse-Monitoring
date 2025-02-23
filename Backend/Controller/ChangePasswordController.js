@@ -1,32 +1,30 @@
 import axios from "axios";
 import dotenv from "dotenv";
-import qs from "qs";  // Import qs to convert JSON to form-urlencoded format
+import qs from "qs"; // Used to convert JSON to form-urlencoded format
 
 dotenv.config();
 
 const ChangePassword = async (req, res) => {
-    console.log("Params:", req.params);
-    console.log("Body:", req.body);
+    // Get the email from req.user (set by your authentication middleware)
+    const userEmail = req.user?.email;
+    const { old_password, new_password } = req.body;
 
-    const { email } = req.params;
-    const { old_password, new_password } = req.body; // Match the Postman request format
-
-    if (!email || !old_password || !new_password) {
+    if (!userEmail || !old_password || !new_password) {
         return res.status(400).json({ success: false, message: "All fields are required." });
     }
 
     try {
-        const requestBody = qs.stringify({ old_password, new_password }); // Convert JSON to form-urlencoded
-
+        // Prepare the request body as form-urlencoded data
+        const requestBody = qs.stringify({ email: userEmail, old_password, new_password });
         console.log("Sending to External API:", requestBody);
 
         const response = await axios.put(
-            `https://agreemo-api.onrender.com/admin/${email}`,
-            requestBody, // Send as form-urlencoded
+            `https://agreemo-api.onrender.com/admin`,
+            requestBody,
             {
                 headers: {
                     "x-api-key": process.env.API_KEY || "fallback_key",
-                    "Content-Type": "application/x-www-form-urlencoded", // Change Content-Type
+                    "Content-Type": "application/x-www-form-urlencoded",
                     "Accept": "application/json",
                 },
             }

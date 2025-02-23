@@ -2,13 +2,9 @@ import React, { useEffect, useState } from "react";
 import MetricCard from "../components/DashboardCards";
 import { PieChart } from "@mui/x-charts/PieChart";
  
+ 
 import {
-  useRejectedItemsPerDay,
-  useTotalYield,
-  useAcceptedPerDay,
-} from "../hooks/HarvestPerDayChart";
-import {
-  useAcceptedChart,
+  
   useRejectedChart,
   useYieldChart,
 } from "../hooks/CardChartHooks";
@@ -20,9 +16,13 @@ import DashboardSkeliton from "../skelitons/DashboardSkeliton";
 import HarvestSkeliton from "../skelitons/HarvestSkeliton";
 import {useTotalHarvestsToday } from "../hooks/TotalHarvestHooks"
 import { useTotalRejectToday } from "../hooks/RejectItemHooks";
-
-
+import Metric from "../props/MetricSection";
+import { useMaintenanceToday } from "../hooks/MaintenanceHooks";
+import EngineeringIcon from '@mui/icons-material/Engineering';
 import useBarChartCardToday from '../hooks/BarChartCardHooks'; 
+import usePieChartCardToday from '../hooks/PieChartCardHooks';
+import UserLogs from "../props/UserLogsTable";
+import { useActivityLogs } from "../hooks/AdminLogsHooks";
 
 const data = [
   { name: "Jan", value: 30 },
@@ -34,28 +34,37 @@ const data = [
 ];
 
 function Dashboard() {
-  const [loading] = useState(true); // Simulate loading state
-
-  const { accepted, acceptedLoading } = useAcceptedPerDay();
-  const { rejected, rejectedLoading } = useRejectedItemsPerDay();
-  const { totalYield, totalYieldLoading } = useTotalYield();
-
-  const acceptedChart = useAcceptedChart();
+  
+  //const acceptedChart = useAcceptedChart();
   const rejectedChart = useRejectedChart();
   const yieldChart = useYieldChart();
 
-  const totalHarvestToday = useTotalHarvestsToday();
+  const { harvestItemsToday, isLoading} = useTotalHarvestsToday();
   const totalHarvestCountToday = useBarChartCardToday();
+
+  const { totalRejects, rejectLoading} = useTotalRejectToday();
+  const totalRejectCountToday = usePieChartCardToday();
+
+  const { maintenanceToday, maintenanceTodayLoading } = useMaintenanceToday();
+
+  const {
+     
+    userActivityLogs = [],
+   
+    logsLoading,
+  } = useActivityLogs();
+  
   return (
     <div className="container-fluid p-3">
+      
       <div className="row g-4 mb-4">
         <div className="col-12 col-md-6 col-lg-4">
-          {acceptedLoading ? (
+          {isLoading ? (
             <DashboardSkeliton />
           ) : (
             <MetricCard
               title=" Total Harvests Today"
-              value={totalHarvestToday}
+              value={harvestItemsToday}
               color="bg-primary"
               chartType="bar"
               data={totalHarvestCountToday}
@@ -64,46 +73,53 @@ function Dashboard() {
         </div>
 
         <div className="col-12 col-md-6 col-lg-4">
-          {rejectedLoading ? (
+          {isLoading ? (
             <DashboardSkeliton />
           ) : (
             <MetricCard
-              title="Rejected Today "
-              value={rejected}
+              title="Total Rejected Today "
+              value={totalRejects}
               color="bg-primary"
-              chartType="area"
-              data={rejectedChart}
+              chartType="pie"
+              data={totalRejectCountToday}
             />
           )}
         </div>
 
         <div className="col-12 col-md-6 col-lg-4">
-          {totalYieldLoading ? (
+          {isLoading ? (
             <DashboardSkeliton />
           ) : (
-            <MetricCard
-              title="Total Yield"
-              value={totalYield}
-              color="bg-primary"
-              chartType="line"
-              data={yieldChart}
-            />
+            <Metric
+            title="Maintenance Reports"
+            value={maintenanceToday}
+            loading={maintenanceTodayLoading}
+            icon={<EngineeringIcon sx={{ fontSize: "4rem", color: "#fff" }} />}
+          />
+           
           )}
         </div>
- 
+        
       </div>
       <div className="row g-4 mb-2">
         <div className="col-12 col-md-6">
-          <HarvestChart />
+          <RejectionPieChart />
         </div>
         <div className="col-12 col-md-6">
-          <RejectionPieChart />
+          {logsLoading ? (
+            <DashboardSkeliton />
+          ) : (
+            <UserLogs logs={userActivityLogs} />
+          )}
         </div>
       </div>
 
-      <div className="d-flex">
-        <HarvestSkeliton />
-      </div>
+      <div className="row">
+  <div className="col-12">
+    <HarvestChart />
+  </div>
+</div>
+
     </div>
   );
 }

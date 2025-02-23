@@ -51,7 +51,7 @@ const useHarvestHistory = () => {
           return acc;
         }, {});
 
-        // Convert to array and format date labels
+        // Convert to array and format date labelss
         const sortedData = Object.entries(groupedData)
           .map(([date, values]) => ({
             date: formatDateLabel(date),

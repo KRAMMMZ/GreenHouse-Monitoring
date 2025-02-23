@@ -11,9 +11,11 @@ const totalRejecteditems = async (req, res) => {
             }
         });
 
-        const rejectedTable = Array.isArray(response.data) ? response.data : [];  // Ensure it's an array
+        const rejectedTable = response.data || [];
         const totalReject = rejectedTable.length;
         res.json({ rejectedTable, totalReject });
+
+      
         
     } catch (error) {
         console.error("External API Error:", error.response?.data || error.message);

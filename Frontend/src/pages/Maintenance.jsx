@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import HarvestSkeliton from "../skelitons/HarvestSkeliton";
-import useMaintenance from "../hooks/MaintenanceHooks"; // Import the hook
+import { useMaintenance} from "../hooks/MaintenanceHooks"; // Import the hooks
 
 function Maintenance() {
   const { maintenance, maintenanceLoading } = useMaintenance();
@@ -55,7 +55,7 @@ function Maintenance() {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              mb: 3,
+              mb: 1,
             }}
           >
             <Typography

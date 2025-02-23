@@ -4,7 +4,7 @@ import { Skeleton } from "@mui/material";
 function DashboardSkeliton (){
 
     return (
-        <div className="cards text-white p-3" style={{ minHeight: "150px", borderRadius: "8px", backgroundColor: "#d8d8d8" }}>
+        <div className="cards text-white p-3" style={{ minHeight: "150px", borderRadius: "8px", backgroundColor: "#fff" }}>
         {/* Title and Value Skeleton */}
         <div>
           <Skeleton variant="text" width="80%" height={40} sx={{ bgcolor: "#c0c0c0", marginBottom: "8px" }} />

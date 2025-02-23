@@ -8,14 +8,15 @@ const Maintenance = async (req,res ) => {
      
     const response = await axios.get('https://agreemo-api.onrender.com/maintenance', {
         headers: {
-          'x-api-key': process.env.API_KEY, // Ensure the API key is correctly set in your environment variables
+          'x-api-key': process.env.API_KEY, // Ensure the API key is correctly set isn your environment variables
         },
       });
       const maintenanceTable = response.data || [];
-   
+      const totalMaintenance = maintenanceTable.length;
       res.json({ 
         
-        maintenanceTable 
+        maintenanceTable,
+        totalMaintenance
       });
       
     } catch (error) {
