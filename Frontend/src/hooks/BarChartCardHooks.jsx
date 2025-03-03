@@ -1,8 +1,5 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { io } from 'socket.io-client';
-
-const socket = io('http://localhost:3001');
 
 // Utility function to get today's date in 'YYYY-MM-DD' format
 const getTodayDateString = () => {
@@ -41,7 +38,7 @@ const useHarvestHistory = () => {
               acc[date] = {
                 accepted: 0,
                 rejected: 0,
-                totalYield: 0
+                totalYield: 0,
               };
             }
             acc[date].accepted += item.accepted;
@@ -51,12 +48,11 @@ const useHarvestHistory = () => {
           return acc;
         }, {});
 
-        // Convert to array and format date labelss
-        const sortedData = Object.entries(groupedData)
-          .map(([date, values]) => ({
-            date: formatDateLabel(date),
-            ...values
-          }));
+        // Convert to array and format date labels
+        const sortedData = Object.entries(groupedData).map(([date, values]) => ({
+          date: formatDateLabel(date),
+          ...values,
+        }));
 
         setHarvestHistory(sortedData);
       } catch (error) {
@@ -66,11 +62,6 @@ const useHarvestHistory = () => {
     };
 
     fetchData();
-    socket.on('updateHarvests', fetchData);
-
-    return () => {
-      socket.off('updateHarvests');
-    };
   }, []);
 
   return harvestHistory;

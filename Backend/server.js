@@ -3,6 +3,7 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import http from "http";
 
 import userRoutes from "./Routes/routeUserControl.js";
 import verifyPasswordRoutes from "./Routes/routeVerifyPassword.js";
@@ -25,6 +26,9 @@ import { authenticateUser } from "./middleware/authenticateUser.js";
 dotenv.config();
 
 const app = express();
+const port = 3001;
+
+const server = http.createServer(app);
 
 // Enable CORS with credentials
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
@@ -67,6 +71,12 @@ app.use((err, req, res, next) => {
   res.status(500).send("Something is wrong!");
 });
 
-// IMPORTANT: Do NOT call app.listen() here.
-// Export the app so Vercel can handle the invocation as a serverless function.
+// Conditionally start the server locally if not deployed to Vercel
+if (!process.env.VERCEL) {
+  server.listen(port, () => {
+    console.log(`Backend server is running on http://localhost:${port}`);
+  });
+}
+
+// Export the Express app for Vercel serverless deployment
 export default app;

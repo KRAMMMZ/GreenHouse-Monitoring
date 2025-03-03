@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { io } from "socket.io-client";
 
-const socket = io("http://localhost:3001");
-
+// Utility filter functions
 const filterLast7Days = (rejectedTable) => {
   const today = new Date();
   const pastDate = new Date();
   pastDate.setDate(today.getDate() - 6);
-  return rejectedTable.filter(item => {
+  return rejectedTable.filter((item) => {
     const itemDate = new Date(item.rejection_date);
     return itemDate >= pastDate && itemDate <= today;
   });
@@ -18,7 +16,7 @@ const filterLast31Days = (rejectedTable) => {
   const today = new Date();
   const pastDate = new Date();
   pastDate.setDate(today.getDate() - 30);
-  return rejectedTable.filter(item => {
+  return rejectedTable.filter((item) => {
     const itemDate = new Date(item.rejection_date);
     return itemDate >= pastDate && itemDate <= today;
   });
@@ -26,7 +24,7 @@ const filterLast31Days = (rejectedTable) => {
 
 const filterCurrentDay = (rejectedTable) => {
   const today = new Date();
-  return rejectedTable.filter(item => {
+  return rejectedTable.filter((item) => {
     const itemDate = new Date(item.rejection_date);
     return (
       itemDate.getDate() === today.getDate() &&
@@ -57,10 +55,6 @@ const useDiseasedOverall = () => {
     };
 
     fetchData();
-    socket.on("updateRejected", fetchData);
-    return () => {
-      socket.off("updateRejected", fetchData);
-    };
   }, []);
 
   return { overallDiseased, overallDiseasedLoading };
@@ -89,10 +83,6 @@ const usePhysicallyDamageOverall = () => {
     };
 
     fetchData();
-    socket.on("updateRejected", fetchData);
-    return () => {
-      socket.off("updateRejected", fetchData);
-    };
   }, []);
 
   return { overallPhysicallyDamage, overallPhysicallyDamageLoading };
@@ -107,10 +97,7 @@ const useTooSmallOverall = () => {
       try {
         const response = await axios.get("http://localhost:3001/reason_for_rejection");
         const rejectedTable = response.data.rejectedTable || [];
-        const totalTooSmall = rejectedTable.reduce(
-          (sum, item) => sum + item.too_small,
-          0
-        );
+        const totalTooSmall = rejectedTable.reduce((sum, item) => sum + item.too_small, 0);
         setOverallTooSmall(totalTooSmall);
       } catch (error) {
         console.error("Error fetching too small items:", error);
@@ -121,10 +108,6 @@ const useTooSmallOverall = () => {
     };
 
     fetchData();
-    socket.on("updateRejected", fetchData);
-    return () => {
-      socket.off("updateRejected", fetchData);
-    };
   }, []);
 
   return { overallTooSmall, overallTooSmallLoading };
@@ -152,10 +135,6 @@ const useDiseasedLast7Days = () => {
     };
 
     fetchData();
-    socket.on("updateRejected", fetchData);
-    return () => {
-      socket.off("updateRejected", fetchData);
-    };
   }, []);
 
   return { diseasedLast7Days, diseasedLast7DaysLoading };
@@ -185,10 +164,6 @@ const usePhysicallyDamageLast7Days = () => {
     };
 
     fetchData();
-    socket.on("updateRejected", fetchData);
-    return () => {
-      socket.off("updateRejected", fetchData);
-    };
   }, []);
 
   return { physicallyDamageLast7Days, physicallyDamageLast7DaysLoading };
@@ -215,10 +190,6 @@ const useTooSmallLast7Days = () => {
     };
 
     fetchData();
-    socket.on("updateRejected", fetchData);
-    return () => {
-      socket.off("updateRejected", fetchData);
-    };
   }, []);
 
   return { tooSmallLast7Days, tooSmallLast7DaysLoading };
@@ -246,10 +217,6 @@ const useDiseasedLast31Days = () => {
     };
 
     fetchData();
-    socket.on("updateRejected", fetchData);
-    return () => {
-      socket.off("updateRejected", fetchData);
-    };
   }, []);
 
   return { diseasedLast31Days, diseasedLast31DaysLoading };
@@ -279,10 +246,6 @@ const usePhysicallyDamageLast31Days = () => {
     };
 
     fetchData();
-    socket.on("updateRejected", fetchData);
-    return () => {
-      socket.off("updateRejected", fetchData);
-    };
   }, []);
 
   return { physicallyDamageLast31Days, physicallyDamageLast31DaysLoading };
@@ -309,10 +272,6 @@ const useTooSmallLast31Days = () => {
     };
 
     fetchData();
-    socket.on("updateRejected", fetchData);
-    return () => {
-      socket.off("updateRejected", fetchData);
-    };
   }, []);
 
   return { tooSmallLast31Days, tooSmallLast31DaysLoading };
@@ -340,10 +299,6 @@ const useDiseasedCurrentDay = () => {
     };
 
     fetchData();
-    socket.on("updateRejected", fetchData);
-    return () => {
-      socket.off("updateRejected", fetchData);
-    };
   }, []);
 
   return { diseasedCurrentDay, diseasedCurrentDayLoading };
@@ -373,10 +328,6 @@ const usePhysicallyDamageCurrentDay = () => {
     };
 
     fetchData();
-    socket.on("updateRejected", fetchData);
-    return () => {
-      socket.off("updateRejected", fetchData);
-    };
   }, []);
 
   return { physicallyDamageCurrentDay, physicallyDamageCurrentDayLoading };
@@ -403,10 +354,6 @@ const useTooSmallCurrentDay = () => {
     };
 
     fetchData();
-    socket.on("updateRejected", fetchData);
-    return () => {
-      socket.off("updateRejected", fetchData);
-    };
   }, []);
 
   return { tooSmallCurrentDay, tooSmallCurrentDayLoading };

@@ -1,10 +1,6 @@
 // hooks.js
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { io } from "socket.io-client";
-
-// Connect to the backend Socket.IO server.
-const socket = io("http://localhost:3001");
 
 // Helper functions to filter the harvest data by date.
 const filterLast7Days = (harvestTable) => {
@@ -50,11 +46,8 @@ export const useAcceptedOverall = () => {
     };
 
     fetchData();
-    socket.on("updateHarvests", fetchData);
-
-    return () => {
-      socket.off("updateHarvests", fetchData);
-    };
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   return { overallAccepted, overallAcceptedLoading };
@@ -80,11 +73,8 @@ export const useRejectedOverall = () => {
     };
 
     fetchData();
-    socket.on("updateHarvests", fetchData);
-
-    return () => {
-      socket.off("updateHarvests", fetchData);
-    };
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   return { overallRejected, overallRejectedLoading };
@@ -110,11 +100,8 @@ export const useTotalOverallYield = () => {
     };
 
     fetchData();
-    socket.on("updateHarvests", fetchData);
-
-    return () => {
-      socket.off("updateHarvests", fetchData);
-    };
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   return { overallTotalYield, overallTotalYieldLoading };
@@ -142,11 +129,8 @@ export const useAcceptedLast7Days = () => {
     };
 
     fetchData();
-    socket.on("updateHarvests", fetchData);
-
-    return () => {
-      socket.off("updateHarvests", fetchData);
-    };
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   return { acceptedLast7Days, acceptedLast7DaysLoading };
@@ -173,11 +157,8 @@ export const useRejectedLast7Days = () => {
     };
 
     fetchData();
-    socket.on("updateHarvests", fetchData);
-
-    return () => {
-      socket.off("updateHarvests", fetchData);
-    };
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   return { rejectedLast7Days, rejectedLast7DaysLoading };
@@ -204,11 +185,8 @@ export const useTotalYieldLast7Days = () => {
     };
 
     fetchData();
-    socket.on("updateHarvests", fetchData);
-
-    return () => {
-      socket.off("updateHarvests", fetchData);
-    };
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   return { totalYieldLast7Days, totalYieldLast7DaysLoading };
@@ -236,11 +214,8 @@ export const useAcceptedLast31Days = () => {
     };
 
     fetchData();
-    socket.on("updateHarvests", fetchData);
-
-    return () => {
-      socket.off("updateHarvests", fetchData);
-    };
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   return { acceptedLast31Days, acceptedLast31DaysLoading };
@@ -267,11 +242,8 @@ export const useRejectedLast31Days = () => {
     };
 
     fetchData();
-    socket.on("updateHarvests", fetchData);
-
-    return () => {
-      socket.off("updateHarvests", fetchData);
-    };
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   return { rejectedLast31Days, rejectedLast31DaysLoading };
@@ -298,11 +270,8 @@ export const useTotalYieldLast31Days = () => {
     };
 
     fetchData();
-    socket.on("updateHarvests", fetchData);
-
-    return () => {
-      socket.off("updateHarvests", fetchData);
-    };
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   return { totalYieldLast31Days, totalYieldLast31DaysLoading };
@@ -372,11 +341,8 @@ export const useAcceptedToday = () => {
     };
 
     fetchData();
-    socket.on("updateHarvests", fetchData);
-    
-    return () => {
-      socket.off("updateHarvests", fetchData);
-    };
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   return { todayAccepted, todayAcceptedLoading };
@@ -402,11 +368,8 @@ export const useRejectedToday = () => {
     };
 
     fetchData();
-    socket.on("updateHarvests", fetchData);
-    
-    return () => {
-      socket.off("updateHarvests", fetchData);
-    };
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   return { todayRejected, todayRejectedLoading };
@@ -432,11 +395,8 @@ export const useTotalYieldToday = () => {
     };
 
     fetchData();
-    socket.on("updateHarvests", fetchData);
-    
-    return () => {
-      socket.off("updateHarvests", fetchData);
-    };
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   return { todayTotalYield, todayTotalYieldLoading };
