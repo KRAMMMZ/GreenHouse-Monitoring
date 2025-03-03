@@ -6,14 +6,11 @@ dotenv.config();
 export const getMe = (req, res) => {
   const token = req.cookies.token;
   if (!token) {
-    return res
-      .status(401)
-      .json({ success: false, message: "Not authenticated" });
+    return res.status(401).json({ success: false, message: "Not authenticated" });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // Ensure that the JWT payload includes a "name" property
     return res.json({
       success: true,
       user_data: { 
@@ -26,6 +23,7 @@ export const getMe = (req, res) => {
     return res.status(401).json({ success: false, message: "Invalid token" });
   }
 };
+
 export const authenticateUser = (req, res, next) => {
   const token = req.cookies.token;
   if (!token) {
@@ -33,6 +31,7 @@ export const authenticateUser = (req, res, next) => {
   }
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Store admin's details on req.user for use in later middleware or controllers
     req.user = { id: decoded.id, email: decoded.email, name: decoded.name };
     next();
   } catch (error) {

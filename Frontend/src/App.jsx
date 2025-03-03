@@ -22,6 +22,7 @@ import ActivityLogs from "./pages/ActivityLogs";
 import Maintenance from "./pages/Maintenance";
 import Loading from "./components/LoadingAlert";
 import HttpError from "./pages/HttpError";
+import "../public/dashboard.css";
 
 const drawerWidth = 300;
 const closedDrawerWidth = 65;
@@ -68,8 +69,8 @@ function App() {
         <Box sx={{ display: "flex", minHeight: "100vh" }}>
           <AuthRoutes open={open} setOpen={toggleSidebar} />
         </Box>
-        {/* Display global error overlay if HTTP 500 error occurs */}
-        {httpError && <HttpError />}
+        {/* Display global error overlay if HTTP 500 error occurs  
+        {httpError && <HttpError />}*/}
       </AuthProvider>
     </Router>
   );

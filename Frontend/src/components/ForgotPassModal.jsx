@@ -5,9 +5,10 @@ import {
   Typography,
   TextField,
   Button,
-  IconButton,
+  InputAdornment,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import EmailIcon from "@mui/icons-material/Email";
 import Swal from "sweetalert2";
 import axios from "axios";
 import "../../public/login.css"; // Keep your styles
@@ -15,11 +16,12 @@ import "../../public/login.css"; // Keep your styles
 const ForgotPasswordModal = ({ open, onClose }) => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     // Adjust SweetAlert z-index when the component mounts
     const style = document.createElement("style");
-    style.innerHTML = ` .swal2-container { z-index: 9999 !important; } `;
+    style.innerHTML = `.swal2-container { z-index: 9999 !important; }`;
     document.head.appendChild(style);
 
     return () => {
@@ -29,11 +31,20 @@ const ForgotPasswordModal = ({ open, onClose }) => {
   }, []);
 
   const handleConfirm = async () => {
+    // Validate if email is provided
     if (!email) {
-      Swal.fire("Error", "Please enter your email.", "error");
+      setError("Please enter your email.");
       return;
     }
 
+    // Validate email format using regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    setError(""); // Clear error if email is provided and valid
     setLoading(true);
 
     // Show SweetAlert while processing
@@ -74,13 +85,14 @@ const ForgotPasswordModal = ({ open, onClose }) => {
 
   const handleCancel = () => {
     setEmail(""); // Clear email field when Cancel is clicked
+    setError(""); // Clear error message
     onClose(); // Close the modal
   };
 
   return (
     <Modal open={open} onClose={handleCancel} disableEscapeKeyDown>
       <Box className="forgot-password-modal">
-        {/* Close Button - Top Left */}
+        {/* Close Button - Top Right */}
         <CloseIcon
           style={{
             position: "absolute",
@@ -88,30 +100,42 @@ const ForgotPasswordModal = ({ open, onClose }) => {
             right: 10,
             cursor: "pointer",
           }}
-          onClick={handleCancel} // Clear email and close modal on X click
+          onClick={handleCancel}
         />
         {/* Centered Logo & Title */}
         <div className="modal-center-content">
-          <img src="./src/assets/AGREEMO.png" alt="Logo" className="logo" />
+          <img src="./src/assets/N_AGREEMO.png" alt="Logo" className="logo" />
           <Typography variant="h5" className="forgot-title mb-4">
             Forgot Password?
           </Typography>
         </div>
 
         {/* Left-aligned Verification Text */}
-        <Typography variant="body2" className="verify-text mb-2  fw-bold">
+        <Typography variant="body2" className="verify-text mb-2 fw-bold">
           Verify your email:
         </Typography>
 
-        {/* Email Input */}
+        {/* Email Input with Icon */}
         <TextField
           fullWidth
           type="email"
           variant="outlined"
           placeholder="Enter your email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (error) setError("");
+          }}
           className="email-input mb-3"
+          error={Boolean(error)}
+          helperText={error}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <EmailIcon />
+              </InputAdornment>
+            ),
+          }}
         />
 
         {/* Buttons Positioned Bottom Right */}
@@ -124,7 +148,12 @@ const ForgotPasswordModal = ({ open, onClose }) => {
           >
             {loading ? "Processing..." : "Confirm"}
           </Button>
-          <Button variant="outlined" color="secondary" onClick={handleCancel} disabled={loading}>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={handleCancel}
+            disabled={loading}
+          >
             Cancel
           </Button>
         </div>

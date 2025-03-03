@@ -91,8 +91,12 @@ function ChangePasswordModal({ open, onClose }) {
       );
 
       if (response.data.success) {
-        Swal.fire("Success", "Password changed successfully!", "success");
-        onClose();
+        Swal.fire({
+          title: "Password change successfully!",
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false,
+        }); onClose();
         setOldPassword("");
         setNewPassword("");
         setConfirmPassword("");
@@ -121,106 +125,106 @@ function ChangePasswordModal({ open, onClose }) {
 
   return (
     <Dialog open={open} onClose={handleCancel} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        Change Password
-        <CloseIcon
-          style={{ position: "absolute", top: 10, right: 10, cursor: "pointer" }}
-          onClick={handleCancel}
-        />
-      </DialogTitle>
-      <DialogContent>
-        <TextField
-          label="Old Password"
-          type={showOldPassword ? "text" : "password"}
-          fullWidth
-          variant="outlined"
-          value={oldPassword}
-          onChange={(e) => {
-            setOldPassword(e.target.value);
-            setErrors((prevErrors) => ({
-              ...prevErrors,
-              oldPassword: e.target.value ? "" : "Old password is required",
-            }));
-          }}
-          margin="normal"
-          InputProps={{
-            endAdornment: (
-              <Button onClick={() => setShowOldPassword(!showOldPassword)}>
-                {showOldPassword ? <Visibility /> : <VisibilityOff />}
-              </Button>
-            ),
-          }}
-        />
-        {errors.oldPassword && (
-          <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.oldPassword}</p>
-        )}
-
-        <TextField
-          label="New Password"
-          type={showNewPassword ? "text" : "password"}
-          fullWidth
-          variant="outlined"
-          value={newPassword}
-          onChange={(e) => {
-            const value = e.target.value;
-            setNewPassword(value);
-            setErrors((prevErrors) => ({
-              ...prevErrors,
-              newPassword: validateNewPassword(value),
-              confirmPassword:
-                confirmPassword && value !== confirmPassword
-                  ? "Passwords do not match"
-                  : prevErrors.confirmPassword,
-            }));
-          }}
-          margin="normal"
-          InputProps={{
-            endAdornment: (
-              <Button onClick={() => setShowNewPassword(!showNewPassword)}>
-                {showNewPassword ? <Visibility /> : <VisibilityOff />}
-              </Button>
-            ),
-          }}
-        />
-        {errors.newPassword && (
-          <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.newPassword}</p>
-        )}
-
-        <TextField
-          label="Confirm Password"
-          type={showConfirmPassword ? "text" : "password"}
-          fullWidth
-          variant="outlined"
-          value={confirmPassword}
-          onChange={(e) => {
-            const value = e.target.value;
-            setConfirmPassword(value);
-            setErrors((prevErrors) => ({
-              ...prevErrors,
-              confirmPassword: validateConfirmPassword(value),
-            }));
-          }}
-          margin="normal"
-          InputProps={{
-            endAdornment: (
-              <Button onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
-                {showConfirmPassword ? <Visibility /> : <VisibilityOff />}
-              </Button>
-            ),
-          }}
-        />
-        {errors.confirmPassword && (
-          <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.confirmPassword}</p>
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button variant="contained" color="primary" onClick={handleSubmit}>
-          Confirm
-        </Button>
-        <Button variant="contained" color="error" onClick={handleCancel}>
-          Cancel
-        </Button>
-      </DialogActions>
+      <form onSubmit={handleSubmit}>
+        <DialogTitle>
+          Change Password
+          <CloseIcon
+            style={{ position: "absolute", top: 10, right: 10, cursor: "pointer" }}
+            onClick={handleCancel}
+          />
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Old Password"
+            type={showOldPassword ? "text" : "password"}
+            fullWidth
+            variant="outlined"
+            value={oldPassword}
+            onChange={(e) => {
+              setOldPassword(e.target.value);
+              setErrors((prevErrors) => ({
+                ...prevErrors,
+                oldPassword: e.target.value ? "" : "Old password is required",
+              }));
+            }}
+            margin="normal"
+            InputProps={{
+              endAdornment: (
+                <Button onClick={() => setShowOldPassword(!showOldPassword)}>
+                  {showOldPassword ? <Visibility /> : <VisibilityOff />}
+                </Button>
+              ),
+            }}
+          />
+          {errors.oldPassword && (
+            <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.oldPassword}</p>
+          )}
+          <TextField
+            label="New Password"
+            type={showNewPassword ? "text" : "password"}
+            fullWidth
+            variant="outlined"
+            value={newPassword}
+            onChange={(e) => {
+              const value = e.target.value;
+              setNewPassword(value);
+              setErrors((prevErrors) => ({
+                ...prevErrors,
+                newPassword: validateNewPassword(value),
+                confirmPassword:
+                  confirmPassword && value !== confirmPassword
+                    ? "Passwords do not match"
+                    : prevErrors.confirmPassword,
+              }));
+            }}
+            margin="normal"
+            InputProps={{
+              endAdornment: (
+                <Button onClick={() => setShowNewPassword(!showNewPassword)}>
+                  {showNewPassword ? <Visibility /> : <VisibilityOff />}
+                </Button>
+              ),
+            }}
+          />
+          {errors.newPassword && (
+            <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.newPassword}</p>
+          )}
+          <TextField
+            label="Confirm Password"
+            type={showConfirmPassword ? "text" : "password"}
+            fullWidth
+            variant="outlined"
+            value={confirmPassword}
+            onChange={(e) => {
+              const value = e.target.value;
+              setConfirmPassword(value);
+              setErrors((prevErrors) => ({
+                ...prevErrors,
+                confirmPassword: validateConfirmPassword(value),
+              }));
+            }}
+            margin="normal"
+            InputProps={{
+              endAdornment: (
+                <Button onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                  {showConfirmPassword ? <Visibility /> : <VisibilityOff />}
+                </Button>
+              ),
+            }}
+          />
+          {errors.confirmPassword && (
+            <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.confirmPassword}</p>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" color="primary" type="submit">
+            Confirm
+          </Button>
+          <Button variant="contained" color="error" onClick={handleCancel}>
+            Cancel
+          </Button>
+        </DialogActions>
+      </form>
     </Dialog>
   );
 }

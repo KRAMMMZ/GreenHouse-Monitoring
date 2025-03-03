@@ -3,7 +3,13 @@
     border-radius: 20px !important;
  }
  
- .s{
+ .S{
    border:1px solid red;
  }
- 
+ .logo {
+  height: 15em;
+  width: 15em;
+  will-change: filter;
+  transition: filter 300ms;
+   
+}

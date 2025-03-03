@@ -30,6 +30,15 @@ import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import GrainIcon from "@mui/icons-material/Grain";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 
+// Helper function to compare only the date parts (ignoring time)
+const isSameDay = (date1, date2) => {
+  return (
+    date1.getFullYear() === date2.getFullYear() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDate() === date2.getDate()
+  );
+};
+
 const Harvest = () => {
   const { harvestItems, harvestLoading } = useHarvestItems();
   const [harvestPage, setHarvestPage] = useState(0);
@@ -87,13 +96,13 @@ const Harvest = () => {
     })
     .reduce((sum, item) => sum + item.total_yield, 0);
 
-  // CHOOSE DATE metrics (computed inline after user applies custom range)
+  // CHOOSE DATE metrics (only include items whose date exactly matches customFrom or customTo)
   const customAccepted =
     customFrom && customTo
       ? harvestItems
           .filter((item) => {
             const date = new Date(item.harvest_date);
-            return date >= customFrom && date <= customTo;
+            return isSameDay(date, customFrom) || isSameDay(date, customTo);
           })
           .reduce((sum, item) => sum + item.accepted, 0)
       : 0;
@@ -102,7 +111,7 @@ const Harvest = () => {
       ? harvestItems
           .filter((item) => {
             const date = new Date(item.harvest_date);
-            return date >= customFrom && date <= customTo;
+            return isSameDay(date, customFrom) || isSameDay(date, customTo);
           })
           .reduce((sum, item) => sum + item.total_rejected, 0)
       : 0;
@@ -111,7 +120,7 @@ const Harvest = () => {
       ? harvestItems
           .filter((item) => {
             const date = new Date(item.harvest_date);
-            return date >= customFrom && date <= customTo;
+            return isSameDay(date, customFrom) || isSameDay(date, customTo);
           })
           .reduce((sum, item) => sum + item.total_yield, 0)
       : 0;
@@ -192,7 +201,7 @@ const Harvest = () => {
       ? harvestLoading
       : overallTotalYieldLoading;
 
-  // Compute lose rate metrics based on filter
+  // Compute lose rate metrics based on filters
   const overallTotal = overallAccepted + overallRejected;
   const overallLoseRate =
     overallTotal > 0 ? (overallRejected / overallTotal) * 100 : 0;
@@ -215,7 +224,7 @@ const Harvest = () => {
     customTotal > 0 ? (customRejected / customTotal) * 100 : 0;
   const customLoseRateLoading = harvestLoading;
 
-  // NEW: CURRENT DAY lose rate computation
+  // CURRENT DAY lose rate computation
   const loseRateToday =
     todayAccepted + todayRejected > 0
       ? (todayRejected / (todayAccepted + todayRejected)) * 100
@@ -272,14 +281,16 @@ const Harvest = () => {
     }
     if (harvestFilter === "CHOOSE DATE") {
       if (!customFrom || !customTo) return true;
-      return itemDate >= customFrom && itemDate <= customTo;
+      return isSameDay(itemDate, customFrom) || isSameDay(itemDate, customTo);
     }
     return true;
   };
   const filteredHarvestItems = sortedHarvestItems.filter((item) => {
     const dateMatch = filterByDate(item);
     const searchTerm = harvestSearchTerm.toLowerCase();
-    const harvestDate = item.harvest_date ? item.harvest_date.toLowerCase() : "";
+    const harvestDate = item.harvest_date
+      ? item.harvest_date.toLowerCase()
+      : "";
     const notes = item.notes ? item.notes.toLowerCase() : "";
     const searchMatch =
       harvestDate.includes(searchTerm) || notes.includes(searchTerm);
@@ -306,7 +317,7 @@ const Harvest = () => {
 
   return (
     <Container maxWidth="xxl" sx={{ p: 3 }}>
-      <Grid container spacing={3}>
+     {/* <Grid container spacing={3}>
         <Grid item xs={12} md={3}>
           <Metric
             title="Accepted"
@@ -339,7 +350,7 @@ const Harvest = () => {
             icon={<TrendingDownIcon sx={{ fontSize: "4rem", color: "#fff" }} />}
           />
         </Grid>
-      </Grid>
+      </Grid> */}
 
       <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 3, mt: 3 }}>
         <FilterSearchSection
@@ -375,14 +386,20 @@ const Harvest = () => {
       </Paper>
 
       <CustomDateModal
-        openDateModal={openDateModal}
-        setOpenDateModal={setOpenDateModal}
-        customFrom={customFrom}
-        setCustomFrom={setCustomFrom}
-        customTo={customTo}
-        setCustomTo={setCustomTo}
-        handleApplyCustomDates={handleApplyCustomDates}
-      />
+            openDateModal={openDateModal}
+            setOpenDateModal={(value) => {
+              setOpenDateModal(value);
+              if (!value && (!customFrom || !customTo)) {
+                // If the modal is closed without applying a range, revert filter back to "all"
+                setFilterOption("all");
+              }
+            }}
+            customFrom={customFrom}
+            setCustomFrom={setCustomFrom}
+            customTo={customTo}
+            setCustomTo={setCustomTo}
+            handleApplyCustomDates={handleApplyCustomDates}
+          />
     </Container>
   );
 };

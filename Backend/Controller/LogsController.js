@@ -50,6 +50,28 @@ export const UserLogs = async (req,res) => {
     }
 }
 
+export const HarvestLogs = async (req,res) => {
+  try{
+
+    const response = await axios.get('https://agreemo-api.onrender.com/activity_logs/harvest', {
+      headers: {
+        'x-api-key': process.env.API_KEY, // Ensure the API key is correctly set in your environment varsiables
+      },
+    });
+    const harvestLogsTable = response.data || [];
+ 
+    res.json({ 
+      
+      harvestLogsTable 
+    });
+    
+  } catch (error) {
+    console.error("External API Error:", error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data?.error || 'Internal Server Error'
+    });
+  }
+}
 
 export const RejectionLogs = async (req,res) => {
   try{

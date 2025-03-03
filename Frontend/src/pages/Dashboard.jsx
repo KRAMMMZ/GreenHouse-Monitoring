@@ -107,7 +107,7 @@ function Dashboard() {
         </div>
         <div className="col-12 col-md-6">
           {logsLoading ? (
-            <DashboardSkeliton />
+            <HarvestSkeliton />
           ) : (
             <UserLogs logs={userActivityLogs} />
           )}

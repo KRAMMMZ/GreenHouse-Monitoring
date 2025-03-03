@@ -36,7 +36,7 @@ import DashboardSkeliton from "../skelitons/DashboardSkeliton";
 import HarvestSkeliton from "../skelitons/HarvestSkeliton";
 import MetricCard from "../components/DashboardCards";
 
-// Import all hooks including current day functions
+// Import all hooks including current day functionss
 import {
   useDiseasedOverall,
   usePhysicallyDamageOverall,
@@ -257,7 +257,7 @@ const Rejected = () => {
 
   return (
     <Container maxWidth="xxl" sx={{ p: 3 }}>
-      {/* Metrics Section */}
+      {/* Metrics Section 
       <Grid container spacing={3}>
   <Grid item xs={12} md={4}>
     <Metric
@@ -284,6 +284,7 @@ const Rejected = () => {
     />
   </Grid>
 </Grid>
+ */}
       {/* Filter/Search and Table Section */}
       <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 3, mt: 3 }}>
         <Box

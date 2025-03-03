@@ -1,4 +1,3 @@
-// AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -39,13 +38,27 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      // Show a loading alert (no timer) before making the request
+      Swal.fire({
+        title: "Please wait...",
+        text: "Loading...",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
       const response = await axios.post(
         "http://localhost:3001/admin/login",
         { email, password },
         { withCredentials: true }
       );
+
+      // Close the loading alert once the request is done
+      Swal.close();
+
       if (response.data.success) {
-        // The JWT token is set in an HTTP-only cookie by the server.
         setUser(response.data.user_data);
         setIsLoggedIn(true);
         Swal.fire("Success", "Login Successful!", "success");
@@ -54,6 +67,8 @@ export const AuthProvider = ({ children }) => {
         throw new Error(response.data.message || "Authentication failed");
       }
     } catch (error) {
+      // Ensure the loading alert is closed and show an error alert
+      Swal.close();
       Swal.fire(
         "Error",
         error.response?.data?.message || "Invalid Credentials",
@@ -65,16 +80,14 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      // Pass the logged-in user's email to the logout API.
       const response = await axios.post(
         "http://localhost:3001/admin/logout",
         { email: user?.email },
         { withCredentials: true }
       );
       if (response.data.success) {
-        // The server clears the JWT cookie.
         setUser(null);
-        setIsLoggedIn(false);
+        setIsLoggedIn(false); 
         Swal.fire("Success", "Logged Out Successfully!", "success");
         navigate("/");
       } else {

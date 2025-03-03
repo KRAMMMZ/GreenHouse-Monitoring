@@ -5,7 +5,7 @@ import qs from "qs"; // Used to convert JSON to form-urlencoded format
 dotenv.config();
 
 const ChangePassword = async (req, res) => {
-    // Get the email from req.user (set by your authentication middleware)
+    // Get the email from req.user (set by your authentication middleware)s
     const userEmail = req.user?.email;
     const { old_password, new_password } = req.body;
 

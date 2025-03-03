@@ -4,7 +4,7 @@ import useHarvestHistory from '../hooks/BarChartHooks'; // Using the same hook
 import BarChartSkeliton from '../skelitons/BarChartSkeliton';
 
 const HarvestLineChart = () => {
-  const { harvestHistory, loading } = useHarvestHistory();
+  const { harvestHistory, loading, getCurrentDayData, getOverallTotalData, getCurrentMonthData, getMonthData, filterHarvestData} = useHarvestHistory();
 
   if (loading) {
     return <BarChartSkeliton />;

@@ -22,14 +22,14 @@ const login = async (req, res) => {
   try {
     const response = await axios(configAxios);
     if (response.data.success) {
-      // Correct: use user_data from the response
+      // Use user_data from the response
       const user_data = response.data.success.user_data;
 
       // Sign a JWT token using user_data as the payload.
       const token = jwt.sign(
         { id: user_data._id, email: user_data.email, name: user_data.name },
         process.env.JWT_SECRET,
-        { expiresIn: "1h" }
+        { expiresIn: "1d" }
       );
 
       // Set the token in an HTTP-only cookie.
@@ -48,7 +48,7 @@ const login = async (req, res) => {
     } else {
       return res
         .status(400)
-        .json({ success: false, message: "INVALID CREDENTIALS" });
+        .json({ success: false, message: "Invalid Credentials" });
     }
   } catch (error) {
     console.error(
@@ -56,12 +56,8 @@ const login = async (req, res) => {
       error.response ? error.response.data : error.message
     );
     const status = error.response?.status || 500;
-    let message = "INVALID CREDENTIALS";
-
-    if (!error.response || !error.response.data) {
-      message = "An error occurred, please try again.";
-    }
-
+    // If the error is a 500 (Internal Server Error), show that message; otherwise, show "Invalid Credentials".
+    const message = status === 500 ? "Internal Server Error" : "Invalid Credentials";
     return res.status(status).json({ success: false, message });
   }
 };

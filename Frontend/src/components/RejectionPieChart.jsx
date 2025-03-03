@@ -14,7 +14,13 @@ import useRejectionData from "../hooks/PieChartHooks";
 import PieChartSkeliton from "../skelitons/PieChartSkeliton"
 
 const RejectionBarChart = () => {
-  const { timeSeriesData, loading } = useRejectionData();
+  const {   timeSeriesData,
+    loading,
+    getCurrentDayDataRejection,
+    getOverallTotalData,
+    getCurrentMonthData,
+    getMonthData,  
+    filterRejectionData, } = useRejectionData();
 
   if (loading) {
     return <PieChartSkeliton />;
@@ -34,7 +40,7 @@ const RejectionBarChart = () => {
       }}
     >
       <Typography variant="h6" gutterBottom>
-        Rejection Analysis Over Time
+        Rejection History (Last 7 Days)
       </Typography>
 
       <div style={{ height: 300, width: "100%", backgroundColor: "#fff"}}>

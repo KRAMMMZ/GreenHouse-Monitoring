@@ -5,27 +5,24 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
-// Create a custom theme for the DatePicker components
 const theme = createTheme({
   components: {
-    // Customize the calendar header (day-of-week labels)
     MuiPickersCalendarHeader: {
       styleOverrides: {
         dayLabel: {
-          backgroundColor: "#4169E1", // Set your desired header background color here
+          backgroundColor: "#4169E1",
           color: "#000",
           fontWeight: "bold",
           padding: "8px 0",
         },
       },
     },
-    // Customize the individual day cells
     MuiPickersDay: {
       styleOverrides: {
         root: {
           "&:hover": {
             backgroundColor: "#4169E1",
-            color:"#fff",
+            color: "#fff",
           },
         },
       },
@@ -42,6 +39,10 @@ const CustomDateModal = ({
   setCustomTo,
   handleApplyCustomDates,
 }) => {
+  // Validate that the FROM date is not after the TO date.
+  const isDateError =
+    customFrom && customTo && new Date(customFrom) > new Date(customTo);
+
   const modalStyle = {
     position: "absolute",
     top: "50%",
@@ -60,7 +61,6 @@ const CustomDateModal = ({
         <Typography variant="h6" sx={{ mb: 2 }}>
           Choose Date Range
         </Typography>
-        {/* Wrap the DatePicker components with ThemeProvider to apply the custom theme */}
         <ThemeProvider theme={theme}>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <DatePicker
@@ -77,7 +77,15 @@ const CustomDateModal = ({
               value={customTo}
               onChange={(newValue) => setCustomTo(newValue)}
               renderInput={(params) => (
-                <TextField {...params} fullWidth sx={{ mb: 4 }} />
+                <TextField
+                  {...params}
+                  fullWidth
+                  sx={{ mb: 4 }}
+                  error={isDateError}
+                  helperText={
+                    isDateError ? "From date cannot be later than To date" : ""
+                  }
+                />
               )}
             />
           </LocalizationProvider>
@@ -87,7 +95,12 @@ const CustomDateModal = ({
           <Button onClick={() => setOpenDateModal(false)} color="secondary">
             Cancel
           </Button>
-          <Button onClick={handleApplyCustomDates} variant="contained" color="primary">
+          <Button
+            onClick={handleApplyCustomDates}
+            variant="contained"
+            color="primary"
+            disabled={isDateError || !customFrom || !customTo}
+          >
             Apply
           </Button>
         </Box>

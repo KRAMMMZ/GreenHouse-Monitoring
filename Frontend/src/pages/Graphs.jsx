@@ -1,63 +1,60 @@
 import React from "react";
-import { Paper, Skeleton, Typography, Box } from "@mui/material";
+import { Container } from "@mui/material";
+import { ThemeProvider, createTheme, responsiveFontSizes } from "@mui/material/styles";
+import HarvestAnalytics from "../components/HarvestAnalytics";
+import RejectionAnalytics from "../components/RejectionAnalytics";
+import AnalyticsDashboardSkeleton from "../skelitons/AnalyticsSkeliton";
+import useHarvestHistory from "../hooks/BarChartHooks";
+import useRejectionData from "../hooks/PieChartHooks";
 
-function Graph() {
+const AnalyticsDashboard = () => {
+  const {
+    harvestHistory,
+    loading: harvestLoading,
+    getCurrentDayData,
+    getOverallTotalData,
+    getCurrentMonthData,
+    getMonthData,
+    filterHarvestData,
+  } = useHarvestHistory();
+
+  const {
+    timeSeriesData,
+    loading: rejectionLoading,
+    getCurrentDayDataRejection,
+    getOverallTotalData: getOverallTotalRejectionData,
+    getRejectionCurrentMonthData,
+    getRejectionMonthData,
+    filterRejectionData,
+  } = useRejectionData();
+
+  let theme = createTheme();
+  theme = responsiveFontSizes(theme);
+
+  if (harvestLoading && rejectionLoading) return <AnalyticsDashboardSkeleton />;
+
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom sx={{ mb: 4 }}>
-        Harvest Analytics
-      </Typography>
-      
-      {/* Line Chart Skeleton */}
-      <Paper elevation={3} sx={{ p: 3, mb: 4 ,backgroundColor: "#d8d8d8"}}>
-        <Skeleton variant="text" width={200} height={40} />
-        <Skeleton variant="rectangular" width="100%" height={400} sx={{ mt: 2 }} />
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-          <Skeleton variant="text" width={60} />
-          <Skeleton variant="text" width={60} />
-          <Skeleton variant="text" width={60} />
-        </Box>
-      </Paper>
-
-      {/* Bar Chart Skeleton */}
-      <Paper elevation={3} sx={{ p: 3, mb: 4 ,backgroundColor: "#d8d8d8"}}>
-        <Skeleton variant="text" width={200} height={40} />
-        <Skeleton variant="rectangular" width="100%" height={400} sx={{ mt: 2 }} />
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-          <Skeleton variant="text" width={80} />
-          <Skeleton variant="text" width={80} />
-          <Skeleton variant="text" width={80} />
-        </Box>
-      </Paper>
-
-      {/* Pie Chart Skeleton */}
-      <Paper elevation={3} sx={{ p: 3, mb: 4,backgroundColor: "#d8d8d8" }}>
-        <Skeleton variant="text" width={200} height={40} />
-        <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
-          <Skeleton variant="circular" width={300} height={300} />
-          <Box sx={{ ml: 4, width: '100%' }}>
-            <Skeleton variant="text" width={120} height={30} />
-            <Skeleton variant="text" width={120} height={30} />
-            <Skeleton variant="text" width={120} height={30} />
-          </Box>
-        </Box>
-      </Paper>
-
-      {/* Stats Overview Skeleton */}
-      <Paper elevation={3} sx={{ p: 3 ,backgroundColor: "#d8d8d8"}}>
-        <Skeleton variant="text" width={200} height={40} />
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-          {[1, 2, 3, 4].map((item) => (
-            <Paper key={item} sx={{ p: 2, width: '23%' }}>
-              <Skeleton variant="text" width={80} />
-              <Skeleton variant="text" width={120} height={50} />
-              <Skeleton variant="text" width={100} />
-            </Paper>
-          ))}
-        </Box>
-      </Paper>
-    </Box>
+    <ThemeProvider theme={theme}>
+      <Container maxWidth="xxl" sx={{ paddingTop: 2 }}>
+        <HarvestAnalytics
+          harvestHistory={harvestHistory}
+          getCurrentDayData={getCurrentDayData}
+          getOverallTotalData={getOverallTotalData}
+          getCurrentMonthData={getCurrentMonthData}
+          getMonthData={getMonthData}
+          filterHarvestData={filterHarvestData}
+        />
+        <RejectionAnalytics
+          timeSeriesData={timeSeriesData}
+          getCurrentDayDataRejection={getCurrentDayDataRejection}
+          getOverallTotalRejectionData={getOverallTotalRejectionData}
+          getRejectionCurrentMonthData={getRejectionCurrentMonthData}
+          getRejectionMonthData={getRejectionMonthData}
+          filterRejectionData={filterRejectionData}
+        />
+      </Container>
+    </ThemeProvider>
   );
-}
+};
 
-export default Graph;
+export default AnalyticsDashboard;

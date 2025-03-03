@@ -33,7 +33,6 @@ const useMaintenance = () => {
   return { maintenance, maintenanceLoading };
 };
 
-
 const useMaintenanceToday = () => {
   const [maintenanceToday, setMaintenanceToday] = useState(0);
   const [maintenanceTodayLoading, setMaintenanceTodayLoading] = useState(true);
@@ -45,14 +44,13 @@ const useMaintenanceToday = () => {
         if (response.data && response.data.maintenanceTable) {
           const todayDate = getTodayDateString();
 
-          // Convert maintenance.date_completed to YYYY-MM-DD and compare with todayDate
-          const todayMaintenance = response.data.maintenanceTable.filter(maintenance => {
-            const maintenanceDate = new Date(maintenance.date_completed);
-            const maintenanceDateString = maintenanceDate.toISOString().slice(0, 10);
+          // Convert maintenance.date_completed to a local date string in YYYY-MM-DD format
+          const todayMaintenance = response.data.maintenanceTable.filter(item => {
+            const maintenanceDate = new Date(item.date_completed);
+            const maintenanceDateString = `${maintenanceDate.getFullYear()}-${String(maintenanceDate.getMonth() + 1).padStart(2, '0')}-${String(maintenanceDate.getDate()).padStart(2, '0')}`;
             return maintenanceDateString === todayDate;
           });
 
-        
           // Set the count of today's maintenance records
           setMaintenanceToday(todayMaintenance.length);
         } else {
@@ -68,9 +66,9 @@ const useMaintenanceToday = () => {
     };
 
     fetchData();
-  }, []); // Runs only once when the component mounts
+  }, []);
 
   return { maintenanceToday, maintenanceTodayLoading };
 };
 
-export  { useMaintenance, useMaintenanceToday};
+export { useMaintenance, useMaintenanceToday };
