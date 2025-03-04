@@ -11,16 +11,15 @@ import {
 import "../../public/dashboard.css";
 import HarvestChart from "../components/HarvestBarCharts";
 import RejectionPieChart from "../components/RejectionPieChart";
-import RejectionPieChartDUMMY from "../components/PieCharts";
+ 
 import DashboardSkeliton from "../skelitons/DashboardSkeliton";
 import HarvestSkeliton from "../skelitons/HarvestSkeliton";
-import {useTotalHarvestsToday } from "../hooks/TotalHarvestHooks"
-import { useTotalRejectToday } from "../hooks/RejectItemHooks";
+import {useTotalHarvestsToday,useHarvestHistory } from "../hooks/HarvestPerDayChart"
+import { useTotalRejectToday, RejectedPieChart } from "../hooks/RejectionTotalHooks";
 import Metric from "../props/MetricSection";
 import { useMaintenanceToday } from "../hooks/MaintenanceHooks";
 import EngineeringIcon from '@mui/icons-material/Engineering';
-import useBarChartCardToday from '../hooks/BarChartCardHooks'; 
-import usePieChartCardToday from '../hooks/PieChartCardHooks';
+ 
 import UserLogs from "../props/UserLogsTable";
 import { useActivityLogs } from "../hooks/AdminLogsHooks";
 
@@ -40,10 +39,10 @@ function Dashboard() {
   const yieldChart = useYieldChart();
 
   const { harvestItemsToday, isLoading} = useTotalHarvestsToday();
-  const totalHarvestCountToday = useBarChartCardToday();
+  const totalHarvestCountToday = useHarvestHistory();
 
   const { totalRejects, rejectLoading} = useTotalRejectToday();
-  const totalRejectCountToday = usePieChartCardToday();
+  const totalRejectCountToday = RejectedPieChart();
 
   const { maintenanceToday, maintenanceTodayLoading } = useMaintenanceToday();
 

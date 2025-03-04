@@ -27,7 +27,6 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import axios from "axios";
-import { io } from "socket.io-client";
 import Metric from "../props/MetricSection";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import ReportProblemIcon from "@mui/icons-material/ReportProblem";
@@ -36,7 +35,7 @@ import DashboardSkeliton from "../skelitons/DashboardSkeliton";
 import HarvestSkeliton from "../skelitons/HarvestSkeliton";
 import MetricCard from "../components/DashboardCards";
 
-// Import all hooks including current day functionss
+// Import all hooks including current day functions
 import {
   useDiseasedOverall,
   usePhysicallyDamageOverall,
@@ -50,40 +49,10 @@ import {
   useDiseasedCurrentDay,
   usePhysicallyDamageCurrentDay,
   useTooSmallCurrentDay,
+  useRejectedTableItems,
 } from "../hooks/RejectionTotalHooks";
 
-// Initialize socket connection (ensure your backend is running)
-const socket = io("http://localhost:3001");
-
-// Hook for fetching rejected table data
-const useRejectedTableItems = () => {
-  const [rejectItems, setRejectItems] = useState([]);
-  const [rejectLoading, setRejectLoading] = useState(true);
-
-  React.useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("http://localhost:3001/reason_for_rejection");
-        const table = response.data.rejectedTable || [];
-        setRejectItems(table);
-      } catch (error) {
-        console.error("Error fetching rejected table data:", error);
-        setRejectItems([]);
-      } finally {
-        setRejectLoading(false);
-      }
-    };
-
-    fetchData();
-    socket.on("updateRejected", fetchData);
-    return () => {
-      socket.off("updateRejected", fetchData);
-    };
-  }, []);
-
-  return { rejectItems, rejectLoading };
-};
-
+ 
 const Rejected = () => {
   // Metric hooks for overall, last 7 days, last 31 days, and current day
   const { overallDiseased, overallDiseasedLoading } = useDiseasedOverall();
@@ -116,12 +85,20 @@ const Rejected = () => {
   const [customFrom, setCustomFrom] = useState(null);
   const [customTo, setCustomTo] = useState(null);
 
+  // Adjust customTo to include the entire day (set time to 23:59:59.999)
+  const getAdjustedCustomTo = () => {
+    if (!customTo) return null;
+    const adjusted = new Date(customTo);
+    adjusted.setHours(23, 59, 59, 999);
+    return adjusted;
+  };
+
   // For custom filtering: filter table data by date range
   const customFilteredItems =
     customFrom && customTo
       ? rejectItems.filter((item) => {
           const itemDate = new Date(item.rejection_date);
-          return itemDate >= customFrom && itemDate <= customTo;
+          return itemDate >= customFrom && itemDate <= getAdjustedCustomTo();
         })
       : [];
 
@@ -212,7 +189,8 @@ const Rejected = () => {
     }
     if (rejectFilter === "CHOOSE DATE") {
       if (!customFrom || !customTo) return true;
-      return itemDate >= customFrom && itemDate <= customTo;
+      const adjustedCustomTo = getAdjustedCustomTo();
+      return itemDate >= customFrom && itemDate <= adjustedCustomTo;
     }
     return true;
   };
@@ -235,13 +213,16 @@ const Rejected = () => {
     }
   };
 
-  // Apply custom date range from modal
+  // Apply custom date range from modal only on clicking Apply
   const handleApplyCustomDates = () => {
-    if (customFrom && customTo) {
+    if (customFrom && customTo && customFrom <= customTo) {
       setRejectFilter("CHOOSE DATE");
       setOpenDateModal(false);
     }
   };
+
+  // Determine if the Apply button should be disabled
+  const isApplyDisabled = !customFrom || !customTo || customFrom > customTo;
 
   const modalStyle = {
     position: "absolute",
@@ -257,34 +238,33 @@ const Rejected = () => {
 
   return (
     <Container maxWidth="xxl" sx={{ p: 3 }}>
-      {/* Metrics Section 
-      <Grid container spacing={3}>
-  <Grid item xs={12} md={4}>
-    <Metric
-      title="Diseased"
-      value={diseasedMetric}
-      loading={metricsLoading}
-      icon={<BugReportIcon sx={{ fontSize: "4rem", color: "#fff" }} />}
-    />
-  </Grid>
-  <Grid item xs={12} md={4}>
-    <Metric
-      title="Physically Damaged"
-      value={physicallyDamageMetric}
-      loading={metricsLoading}
-      icon={<ReportProblemIcon sx={{ fontSize: "4rem",color: "#fff" }} />}
-    />
-  </Grid>
-  <Grid item xs={12} md={4}>
-    <Metric
-      title="Too Small"
-      value={tooSmallMetric}
-      loading={metricsLoading}
-      icon={<RemoveCircleOutlineIcon sx={{ fontSize: "4rem",color: "#fff" }} />}
-    />
-  </Grid>
-</Grid>
- */}
+      {/* Metrics Section */}
+      {/* <Grid container spacing={3}>
+        <Grid item xs={12} md={4}>
+          <Metric
+            title="Diseased"
+            value={diseasedMetric}
+            loading={metricsLoading}
+            icon={<BugReportIcon sx={{ fontSize: "4rem", color: "#fff" }} />}
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Metric
+            title="Physically Damaged"
+            value={physicallyDamageMetric}
+            loading={metricsLoading}
+            icon={<ReportProblemIcon sx={{ fontSize: "4rem", color: "#fff" }} />}
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Metric
+            title="Too Small"
+            value={tooSmallMetric}
+            loading={metricsLoading}
+            icon={<RemoveCircleOutlineIcon sx={{ fontSize: "4rem", color: "#fff" }} />}
+          />
+        </Grid>
+      </Grid> */}
       {/* Filter/Search and Table Section */}
       <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 3, mt: 3 }}>
         <Box
@@ -402,7 +382,7 @@ const Rejected = () => {
             <Button onClick={() => setOpenDateModal(false)} color="secondary">
               Cancel
             </Button>
-            <Button onClick={handleApplyCustomDates} variant="contained" color="primary">
+            <Button onClick={handleApplyCustomDates} variant="contained" color="primary" disabled={isApplyDisabled}>
               Apply
             </Button>
           </Box>

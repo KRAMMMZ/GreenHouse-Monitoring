@@ -1,403 +1,267 @@
-// hooks.js
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
+import { io } from "socket.io-client";
 
-// Helper functions to filter the harvest data by date.
-const filterLast7Days = (harvestTable) => {
-  const today = new Date();
-  const pastDate = new Date();
-  pastDate.setDate(today.getDate() - 6);
-  
-  return harvestTable.filter(item => {
-    const itemDate = new Date(item.harvest_date);
-    return itemDate >= pastDate && itemDate <= today;
-  });
+// Create a single socket connection instance
+const socket = io("http://localhost:3001");
+
+// Helper function to get today's date in 'YYYY-MM-DD' format
+const getTodayDateString = () => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
-const filterLast31Days = (harvestTable) => {
-  const today = new Date();
-  const pastDate = new Date();
-  pastDate.setDate(today.getDate() - 30);
-  
-  return harvestTable.filter(item => {
-    const itemDate = new Date(item.harvest_date);
-    return itemDate >= pastDate && itemDate <= today;
-  });
-};
+/*
+  Generic hook to fetch harvest data once and share it among metric hooks.
+  Uses a fallback fetch and listens for Socket.IO "harvestData" events for real-time updates.
+*/
+const useHarvests = () => {
+  const [harvestTable, setHarvestTable] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-// Overall hooks
-export const useAcceptedOverall = () => {
-  const [overallAccepted, setOverallAccepted] = useState(0);
-  const [overallAcceptedLoading, setOverallAcceptedLoading] = useState(true);
+  const fetchData = async () => {
+    try {
+      const response = await axios.get("http://localhost:3001/harvests");
+      setHarvestTable(response.data.harvestTable || []);
+    } catch (error) {
+      console.error("Error fetching harvest data:", error);
+      setHarvestTable([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("http://localhost:3001/harvests");
-        const harvestTable = response.data.harvestTable || [];
-        const totalAccepted = harvestTable.reduce((sum, item) => sum + item.accepted, 0);
-        setOverallAccepted(totalAccepted);
-      } catch (error) {
-        console.error("Error fetching accepted items:", error);
-        setOverallAccepted(0);
-      } finally {
-        setOverallAcceptedLoading(false);
-      }
-    };
-
+    // Initial fetch in case socket update takes a moment.
     fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
+
+    // Listen for real-time updates
+    socket.on("harvestData", (data) => {
+      if (data && data.harvestTable) {
+        setHarvestTable(data.harvestTable);
+        setLoading(false);
+      }
+    });
+
+    // Clean up the event listener on unmount
+    return () => {
+      socket.off("harvestData");
+    };
   }, []);
 
-  return { overallAccepted, overallAcceptedLoading };
+  return { harvestTable, loading };
+};
+
+/*
+  One-time fetch hooks that now share the same data from useHarvests.
+*/
+
+// Returns all harvest items.
+export const useHarvestItems = () => {
+  const { harvestTable, loading } = useHarvests();
+  return { harvestItems: harvestTable, harvestLoading: loading };
+};
+
+// Returns the count of harvest items for today's date.
+export const useTotalHarvestsToday = () => {
+  const { harvestTable, loading } = useHarvests();
+  const todayDate = getTodayDateString();
+  const harvestsToday = harvestTable.filter(
+    (harvest) => harvest.harvest_date === todayDate
+  );
+  return { harvestItemsToday: harvestsToday.length, isLoading: loading };
+};
+
+/*
+  New Hook: useHarvestHistory
+  Groups today's harvest data by date and aggregates accepted, rejected, and total yield values.
+  Returns an array of grouped data (which your BarChart component expects).
+*/
+export const useHarvestHistory = () => {
+  const { harvestTable } = useHarvests();
+
+  return useMemo(() => {
+    // Function to format the date for display (e.g. "Jan 1")
+    const formatDateLabel = (dateStr) => {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+
+    const todayDate = getTodayDateString();
+
+    // Group data by date for today's entries only
+    const groupedData = harvestTable.reduce((acc, item) => {
+      // Extract only the date part (YYYY-MM-DD) from harvest_date
+      const date = new Date(item.harvest_date).toISOString().split('T')[0];
+      
+      // Only include data for today's date
+      if (date === todayDate) {
+        if (!acc[date]) {
+          acc[date] = {
+            accepted: 0,
+            rejected: 0,
+            totalYield: 0,
+          };
+        }
+        acc[date].accepted += item.accepted;
+        acc[date].rejected += item.total_rejected;
+        acc[date].totalYield += item.total_yield;
+      }
+      return acc;
+    }, {});
+
+    // Convert grouped object to an array with formatted date labels
+    return Object.entries(groupedData).map(([date, values]) => ({
+      date: formatDateLabel(date),
+      ...values,
+    }));
+  }, [harvestTable]);
+};
+
+/*
+  Helper functions for filtering data by date (if needed for additional metrics)
+*/
+const filterByDateRange = (harvestTable, days) => {
+  const today = new Date();
+  const pastDate = new Date();
+  pastDate.setDate(today.getDate() - (days - 1));
+  return harvestTable.filter(item => {
+    const itemDate = new Date(item.harvest_date);
+    return itemDate >= pastDate && itemDate <= today;
+  });
+};
+
+const filterToday = (harvestTable) => {
+  const today = new Date();
+  return harvestTable.filter(item => {
+    const date = new Date(item.harvest_date);
+    return (
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear()
+    );
+  });
+};
+
+// Utility to compute totals by key (accepted, total_rejected, total_yield)
+const computeTotal = (data, key) =>
+  data.reduce((sum, item) => sum + (item[key] || 0), 0);
+
+/*
+  Derived Metrics Hooks
+*/
+
+// Overall Metrics
+export const useAcceptedOverall = () => {
+  const { harvestTable, loading } = useHarvests();
+  const overallAccepted = useMemo(
+    () => computeTotal(harvestTable, "accepted"),
+    [harvestTable]
+  );
+  return { overallAccepted, overallAcceptedLoading: loading };
 };
 
 export const useRejectedOverall = () => {
-  const [overallRejected, setOverallRejected] = useState(0);
-  const [overallRejectedLoading, setOverallRejectedLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("http://localhost:3001/harvests");
-        const harvestTable = response.data.harvestTable || [];
-        const totalRejected = harvestTable.reduce((sum, item) => sum + item.total_rejected, 0);
-        setOverallRejected(totalRejected);
-      } catch (error) {
-        console.error("Error fetching rejected items:", error);
-        setOverallRejected(0);
-      } finally {
-        setOverallRejectedLoading(false);
-      }
-    };
-
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return { overallRejected, overallRejectedLoading };
+  const { harvestTable, loading } = useHarvests();
+  const overallRejected = useMemo(
+    () => computeTotal(harvestTable, "total_rejected"),
+    [harvestTable]
+  );
+  return { overallRejected, overallRejectedLoading: loading };
 };
 
 export const useTotalOverallYield = () => {
-  const [overallTotalYield, setOverallTotalYield] = useState(0);
-  const [overallTotalYieldLoading, setOverallTotalYieldLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("http://localhost:3001/harvests");
-        const harvestTable = response.data.harvestTable || [];
-        const yieldTotal = harvestTable.reduce((sum, item) => sum + item.total_yield, 0);
-        setOverallTotalYield(yieldTotal);
-      } catch (error) {
-        console.error("Error fetching total yield:", error);
-        setOverallTotalYield(0);
-      } finally {
-        setOverallTotalYieldLoading(false);
-      }
-    };
-
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return { overallTotalYield, overallTotalYieldLoading };
+  const { harvestTable, loading } = useHarvests();
+  const overallTotalYield = useMemo(
+    () => computeTotal(harvestTable, "total_yield"),
+    [harvestTable]
+  );
+  return { overallTotalYield, overallTotalYieldLoading: loading };
 };
 
-// Last 7 Days hooks
+// Last 7 Days Metrics
 export const useAcceptedLast7Days = () => {
-  const [acceptedLast7Days, setAcceptedLast7Days] = useState(0);
-  const [acceptedLast7DaysLoading, setAcceptedLast7DaysLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("http://localhost:3001/harvests");
-        const harvestTable = response.data.harvestTable || [];
-        const filtered = filterLast7Days(harvestTable);
-        const totalAccepted = filtered.reduce((sum, item) => sum + item.accepted, 0);
-        setAcceptedLast7Days(totalAccepted);
-      } catch (error) {
-        console.error("Error fetching accepted items (last 7 days):", error);
-        setAcceptedLast7Days(0);
-      } finally {
-        setAcceptedLast7DaysLoading(false);
-      }
-    };
-
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return { acceptedLast7Days, acceptedLast7DaysLoading };
+  const { harvestTable, loading } = useHarvests();
+  const acceptedLast7Days = useMemo(() => {
+    const filtered = filterByDateRange(harvestTable, 7);
+    return computeTotal(filtered, "accepted");
+  }, [harvestTable]);
+  return { acceptedLast7Days, acceptedLast7DaysLoading: loading };
 };
 
 export const useRejectedLast7Days = () => {
-  const [rejectedLast7Days, setRejectedLast7Days] = useState(0);
-  const [rejectedLast7DaysLoading, setRejectedLast7DaysLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("http://localhost:3001/harvests");
-        const harvestTable = response.data.harvestTable || [];
-        const filtered = filterLast7Days(harvestTable);
-        const totalRejected = filtered.reduce((sum, item) => sum + item.total_rejected, 0);
-        setRejectedLast7Days(totalRejected);
-      } catch (error) {
-        console.error("Error fetching rejected items (last 7 days):", error);
-        setRejectedLast7Days(0);
-      } finally {
-        setRejectedLast7DaysLoading(false);
-      }
-    };
-
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return { rejectedLast7Days, rejectedLast7DaysLoading };
+  const { harvestTable, loading } = useHarvests();
+  const rejectedLast7Days = useMemo(() => {
+    const filtered = filterByDateRange(harvestTable, 7);
+    return computeTotal(filtered, "total_rejected");
+  }, [harvestTable]);
+  return { rejectedLast7Days, rejectedLast7DaysLoading: loading };
 };
 
 export const useTotalYieldLast7Days = () => {
-  const [totalYieldLast7Days, setTotalYieldLast7Days] = useState(0);
-  const [totalYieldLast7DaysLoading, setTotalYieldLast7DaysLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("http://localhost:3001/harvests");
-        const harvestTable = response.data.harvestTable || [];
-        const filtered = filterLast7Days(harvestTable);
-        const yieldTotal = filtered.reduce((sum, item) => sum + item.total_yield, 0);
-        setTotalYieldLast7Days(yieldTotal);
-      } catch (error) {
-        console.error("Error fetching total yield (last 7 days):", error);
-        setTotalYieldLast7Days(0);
-      } finally {
-        setTotalYieldLast7DaysLoading(false);
-      }
-    };
-
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return { totalYieldLast7Days, totalYieldLast7DaysLoading };
+  const { harvestTable, loading } = useHarvests();
+  const totalYieldLast7Days = useMemo(() => {
+    const filtered = filterByDateRange(harvestTable, 7);
+    return computeTotal(filtered, "total_yield");
+  }, [harvestTable]);
+  return { totalYieldLast7Days, totalYieldLast7DaysLoading: loading };
 };
 
-// Last 31 Days hooks
+// Last 31 Days Metrics
 export const useAcceptedLast31Days = () => {
-  const [acceptedLast31Days, setAcceptedLast31Days] = useState(0);
-  const [acceptedLast31DaysLoading, setAcceptedLast31DaysLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("http://localhost:3001/harvests");
-        const harvestTable = response.data.harvestTable || [];
-        const filtered = filterLast31Days(harvestTable);
-        const totalAccepted = filtered.reduce((sum, item) => sum + item.accepted, 0);
-        setAcceptedLast31Days(totalAccepted);
-      } catch (error) {
-        console.error("Error fetching accepted items (last 31 days):", error);
-        setAcceptedLast31Days(0);
-      } finally {
-        setAcceptedLast31DaysLoading(false);
-      }
-    };
-
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return { acceptedLast31Days, acceptedLast31DaysLoading };
+  const { harvestTable, loading } = useHarvests();
+  const acceptedLast31Days = useMemo(() => {
+    const filtered = filterByDateRange(harvestTable, 31);
+    return computeTotal(filtered, "accepted");
+  }, [harvestTable]);
+  return { acceptedLast31Days, acceptedLast31DaysLoading: loading };
 };
 
 export const useRejectedLast31Days = () => {
-  const [rejectedLast31Days, setRejectedLast31Days] = useState(0);
-  const [rejectedLast31DaysLoading, setRejectedLast31DaysLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("http://localhost:3001/harvests");
-        const harvestTable = response.data.harvestTable || [];
-        const filtered = filterLast31Days(harvestTable);
-        const totalRejected = filtered.reduce((sum, item) => sum + item.total_rejected, 0);
-        setRejectedLast31Days(totalRejected);
-      } catch (error) {
-        console.error("Error fetching rejected items (last 31 days):", error);
-        setRejectedLast31Days(0);
-      } finally {
-        setRejectedLast31DaysLoading(false);
-      }
-    };
-
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return { rejectedLast31Days, rejectedLast31DaysLoading };
+  const { harvestTable, loading } = useHarvests();
+  const rejectedLast31Days = useMemo(() => {
+    const filtered = filterByDateRange(harvestTable, 31);
+    return computeTotal(filtered, "total_rejected");
+  }, [harvestTable]);
+  return { rejectedLast31Days, rejectedLast31DaysLoading: loading };
 };
 
 export const useTotalYieldLast31Days = () => {
-  const [totalYieldLast31Days, setTotalYieldLast31Days] = useState(0);
-  const [totalYieldLast31DaysLoading, setTotalYieldLast31DaysLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("http://localhost:3001/harvests");
-        const harvestTable = response.data.harvestTable || [];
-        const filtered = filterLast31Days(harvestTable);
-        const yieldTotal = filtered.reduce((sum, item) => sum + item.total_yield, 0);
-        setTotalYieldLast31Days(yieldTotal);
-      } catch (error) {
-        console.error("Error fetching total yield (last 31 days):", error);
-        setTotalYieldLast31Days(0);
-      } finally {
-        setTotalYieldLast31DaysLoading(false);
-      }
-    };
-
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return { totalYieldLast31Days, totalYieldLast31DaysLoading };
+  const { harvestTable, loading } = useHarvests();
+  const totalYieldLast31Days = useMemo(() => {
+    const filtered = filterByDateRange(harvestTable, 31);
+    return computeTotal(filtered, "total_yield");
+  }, [harvestTable]);
+  return { totalYieldLast31Days, totalYieldLast31DaysLoading: loading };
 };
 
-// Functions for Today's Metrics
-const getTodayAccepted = (harvestTable) => {
-  const today = new Date();
-  return harvestTable
-    .filter(item => {
-      const date = new Date(item.harvest_date);
-      return (
-        date.getDate() === today.getDate() &&
-        date.getMonth() === today.getMonth() &&
-        date.getFullYear() === today.getFullYear()
-      );
-    })
-    .reduce((sum, item) => sum + item.accepted, 0);
-};
-
-const getTodayRejected = (harvestTable) => {
-  const today = new Date();
-  return harvestTable
-    .filter(item => {
-      const date = new Date(item.harvest_date);
-      return (
-        date.getDate() === today.getDate() &&
-        date.getMonth() === today.getMonth() &&
-        date.getFullYear() === today.getFullYear()
-      );
-    })
-    .reduce((sum, item) => sum + item.total_rejected, 0);
-};
-
-const getTodayTotalYield = (harvestTable) => {
-  const today = new Date();
-  return harvestTable
-    .filter(item => {
-      const date = new Date(item.harvest_date);
-      return (
-        date.getDate() === today.getDate() &&
-        date.getMonth() === today.getMonth() &&
-        date.getFullYear() === today.getFullYear()
-      );
-    })
-    .reduce((sum, item) => sum + item.total_yield, 0);
-};
-
-// Today's Metrics Hooks
+// Today's Metrics
 export const useAcceptedToday = () => {
-  const [todayAccepted, setTodayAccepted] = useState(0);
-  const [todayAcceptedLoading, setTodayAcceptedLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("http://localhost:3001/harvests");
-        const harvestTable = response.data.harvestTable || [];
-        const total = getTodayAccepted(harvestTable);
-        setTodayAccepted(total);
-      } catch (error) {
-        console.error("Error fetching today's accepted items:", error);
-        setTodayAccepted(0);
-      } finally {
-        setTodayAcceptedLoading(false);
-      }
-    };
-
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return { todayAccepted, todayAcceptedLoading };
+  const { harvestTable, loading } = useHarvests();
+  const todayAccepted = useMemo(() => {
+    const filtered = filterToday(harvestTable);
+    return computeTotal(filtered, "accepted");
+  }, [harvestTable]);
+  return { todayAccepted, todayAcceptedLoading: loading };
 };
 
 export const useRejectedToday = () => {
-  const [todayRejected, setTodayRejected] = useState(0);
-  const [todayRejectedLoading, setTodayRejectedLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("http://localhost:3001/harvests");
-        const harvestTable = response.data.harvestTable || [];
-        const total = getTodayRejected(harvestTable);
-        setTodayRejected(total);
-      } catch (error) {
-        console.error("Error fetching today's rejected items:", error);
-        setTodayRejected(0);
-      } finally {
-        setTodayRejectedLoading(false);
-      }
-    };
-
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return { todayRejected, todayRejectedLoading };
+  const { harvestTable, loading } = useHarvests();
+  const todayRejected = useMemo(() => {
+    const filtered = filterToday(harvestTable);
+    return computeTotal(filtered, "total_rejected");
+  }, [harvestTable]);
+  return { todayRejected, todayRejectedLoading: loading };
 };
 
 export const useTotalYieldToday = () => {
-  const [todayTotalYield, setTodayTotalYield] = useState(0);
-  const [todayTotalYieldLoading, setTodayTotalYieldLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("http://localhost:3001/harvests");
-        const harvestTable = response.data.harvestTable || [];
-        const total = getTodayTotalYield(harvestTable);
-        setTodayTotalYield(total);
-      } catch (error) {
-        console.error("Error fetching today's total yield:", error);
-        setTodayTotalYield(0);
-      } finally {
-        setTodayTotalYieldLoading(false);
-      }
-    };
-
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return { todayTotalYield, todayTotalYieldLoading };
+  const { harvestTable, loading } = useHarvests();
+  const todayTotalYield = useMemo(() => {
+    const filtered = filterToday(harvestTable);
+    return computeTotal(filtered, "total_yield");
+  }, [harvestTable]);
+  return { todayTotalYield, todayTotalYieldLoading: loading };
 };

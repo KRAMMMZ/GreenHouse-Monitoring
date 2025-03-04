@@ -1,9 +1,12 @@
+// server.js
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import http from "http";
+import axios from "axios";
+import { Server } from "socket.io";
 
 import userRoutes from "./Routes/routeUserControl.js";
 import verifyPasswordRoutes from "./Routes/routeVerifyPassword.js";
@@ -30,9 +33,17 @@ const port = 3001;
 
 const server = http.createServer(app);
 
+// Initialize Socket.IO with CORS options
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
 // Enable CORS with credentials
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
-// Parse cookies so req.cookies is available
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -52,17 +63,49 @@ app.use("/user", userRoutes);
 app.use("/verify-user", verifyPasswordRoutes);
 app.post("/apk-link-sender", SendEmail);
 
-// Example: A harvest creation endpoint.
-app.post("/harvests", async (req, res) => {
-  try {
-    // Insert new harvest data into your database here.
-    res.status(201).send({
-      message: "Harvest data added",
-    });
-  } catch (error) {
-    console.error("Error adding harvest:", error);
-    res.status(500).send({ message: "Error adding harvest" });
-  }
+// Socket.IO connection handling
+io.on("connection", (socket) => {
+  console.log("Client connected:", socket.id);
+
+  // Poll for harvest data
+  let lastHarvestData = null;
+  const intervalIdHarvest = setInterval(async () => {
+    try {
+      const response = await axios.get("http://localhost:3001/harvests");
+      if (response.data && response.data.harvestTable) {
+        const newData = response.data.harvestTable;
+        if (JSON.stringify(newData) !== JSON.stringify(lastHarvestData)) {
+          lastHarvestData = newData;
+          socket.emit("harvestData", { harvestTable: newData });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching harvest data for socket:", error);
+    }
+  }, 5000);
+
+  // Poll for rejection reasons data
+  let lastRejectedData = null;
+  const intervalIdRejected = setInterval(async () => {
+    try {
+      const response = await axios.get("http://localhost:3001/reason_for_rejection");
+      if (response.data && response.data.rejectedTable) {
+        const newRejectedData = response.data.rejectedTable;
+        if (JSON.stringify(newRejectedData) !== JSON.stringify(lastRejectedData)) {
+          lastRejectedData = newRejectedData;
+          socket.emit("RejectData", { rejectedTable: newRejectedData });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching rejected data for socket:", error);
+    }
+  }, 5000);
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected:", socket.id);
+    clearInterval(intervalIdHarvest);
+    clearInterval(intervalIdRejected);
+  });
 });
 
 // Error handling middleware
@@ -71,12 +114,11 @@ app.use((err, req, res, next) => {
   res.status(500).send("Something is wrong!");
 });
 
-// Conditionally start the server locally if not deployed to Vercel
+// Start the server (or export for serverless deployment)
 if (!process.env.VERCEL) {
   server.listen(port, () => {
     console.log(`Backend server is running on http://localhost:${port}`);
   });
 }
 
-// Export the Express app for Vercel serverless deployment
 export default app;

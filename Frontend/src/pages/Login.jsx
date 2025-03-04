@@ -9,8 +9,8 @@ import {
   Link,
 } from "@mui/material";
 import { FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
-import Swal from "sweetalert2"; // Import SweetAlert
-import { useAuth } from "../contexts/AuthContext"; // Import AuthContext
+import Swal from "sweetalert2";  
+import { useAuth } from "../contexts/AuthContext";  
 import ForgotPasswordModal from "../components/ForgotPassModal";
 import "../../public/login.css";
 
@@ -30,7 +30,7 @@ function Login() {
     e.preventDefault();
     let newErrors = { username: "", password: "" };
 
-    // Validation logic
+    
     if (!username) newErrors.username = "*Email is required";
     if (!password) newErrors.password = "*Password is required";
 

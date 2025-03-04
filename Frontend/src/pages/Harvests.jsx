@@ -6,7 +6,7 @@ import {
   Grid,
   TablePagination,
 } from "@mui/material";
-import { useHarvestItems } from "../hooks/TotalHarvestHooks";
+import { useHarvestItems } from "../hooks/HarvestPerDayChart";
 import HarvestSkeliton from "../skelitons/HarvestSkeliton";
 import DashboardSkeliton from "../skelitons/DashboardSkeliton";
 import {
@@ -96,13 +96,15 @@ const Harvest = () => {
     })
     .reduce((sum, item) => sum + item.total_yield, 0);
 
-  // CHOOSE DATE metrics (only include items whose date exactly matches customFrom or customTo)
+  // CHOOSE DATE metrics: include all items whose harvest_date falls between customFrom and customTo (inclusive)
   const customAccepted =
     customFrom && customTo
       ? harvestItems
           .filter((item) => {
             const date = new Date(item.harvest_date);
-            return isSameDay(date, customFrom) || isSameDay(date, customTo);
+            const adjustedCustomTo = new Date(customTo);
+            adjustedCustomTo.setHours(23, 59, 59, 999);
+            return date >= customFrom && date <= adjustedCustomTo;
           })
           .reduce((sum, item) => sum + item.accepted, 0)
       : 0;
@@ -111,7 +113,9 @@ const Harvest = () => {
       ? harvestItems
           .filter((item) => {
             const date = new Date(item.harvest_date);
-            return isSameDay(date, customFrom) || isSameDay(date, customTo);
+            const adjustedCustomTo = new Date(customTo);
+            adjustedCustomTo.setHours(23, 59, 59, 999);
+            return date >= customFrom && date <= adjustedCustomTo;
           })
           .reduce((sum, item) => sum + item.total_rejected, 0)
       : 0;
@@ -120,7 +124,9 @@ const Harvest = () => {
       ? harvestItems
           .filter((item) => {
             const date = new Date(item.harvest_date);
-            return isSameDay(date, customFrom) || isSameDay(date, customTo);
+            const adjustedCustomTo = new Date(customTo);
+            adjustedCustomTo.setHours(23, 59, 59, 999);
+            return date >= customFrom && date <= adjustedCustomTo;
           })
           .reduce((sum, item) => sum + item.total_yield, 0)
       : 0;
@@ -254,9 +260,13 @@ const Harvest = () => {
       : overallLoseRateLoading;
 
   // Table filtering – sort items by harvest_date descending
-  const sortedHarvestItems = [...harvestItems].sort(
-    (a, b) => new Date(b.harvest_date) - new Date(a.harvest_date)
-  );
+  const sortedHarvestItems = [...harvestItems].sort((a, b) => {
+    // First, compare the dates in descending order
+    const dateDiff = new Date(b.harvest_date) - new Date(a.harvest_date);
+    // If dates are equal, sort by harvest_id in descending order
+    return dateDiff !== 0 ? dateDiff : b.harvest_id - a.harvest_id;
+  });
+  
   const filterByDate = (item) => {
     const itemDate = new Date(item.harvest_date);
     const today = new Date();
@@ -281,19 +291,24 @@ const Harvest = () => {
     }
     if (harvestFilter === "CHOOSE DATE") {
       if (!customFrom || !customTo) return true;
-      return isSameDay(itemDate, customFrom) || isSameDay(itemDate, customTo);
+      const adjustedCustomTo = new Date(customTo);
+      adjustedCustomTo.setHours(23, 59, 59, 999);
+      return itemDate >= customFrom && itemDate <= adjustedCustomTo;
     }
     return true;
   };
+
+  // Updated filtering: search in harvest_date, notes, and full_name
   const filteredHarvestItems = sortedHarvestItems.filter((item) => {
     const dateMatch = filterByDate(item);
     const searchTerm = harvestSearchTerm.toLowerCase();
-    const harvestDate = item.harvest_date
-      ? item.harvest_date.toLowerCase()
-      : "";
+    const harvestDate = item.harvest_date ? item.harvest_date.toLowerCase() : "";
     const notes = item.notes ? item.notes.toLowerCase() : "";
+    const name = item.full_name ? item.full_name.toLowerCase() : "";
     const searchMatch =
-      harvestDate.includes(searchTerm) || notes.includes(searchTerm);
+      harvestDate.includes(searchTerm) ||
+      notes.includes(searchTerm) ||
+      name.includes(searchTerm);
     return dateMatch && searchMatch;
   });
 
@@ -307,7 +322,7 @@ const Harvest = () => {
     }
   };
 
-  // Apply custom date range
+  // Apply custom date range (filtering happens only when Apply is clicked)
   const handleApplyCustomDates = () => {
     if (customFrom && customTo) {
       setHarvestFilter("CHOOSE DATE");
@@ -317,7 +332,8 @@ const Harvest = () => {
 
   return (
     <Container maxWidth="xxl" sx={{ p: 3 }}>
-     {/* <Grid container spacing={3}>
+      {/* Uncomment the Metric section if needed
+      <Grid container spacing={3}>
         <Grid item xs={12} md={3}>
           <Metric
             title="Accepted"
@@ -350,8 +366,8 @@ const Harvest = () => {
             icon={<TrendingDownIcon sx={{ fontSize: "4rem", color: "#fff" }} />}
           />
         </Grid>
-      </Grid> */}
-
+      </Grid>
+      */}
       <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 3, mt: 3 }}>
         <FilterSearchSection
           harvestSearchTerm={harvestSearchTerm}
@@ -361,7 +377,7 @@ const Harvest = () => {
           openDateModalHandler={() => setOpenDateModal(true)}
         />
 
-        <Box sx={{ mt: 3 }}>
+        <Box sx={{ mt: 2 }}>
           {harvestLoading ? (
             <HarvestSkeliton />
           ) : (
@@ -386,20 +402,20 @@ const Harvest = () => {
       </Paper>
 
       <CustomDateModal
-            openDateModal={openDateModal}
-            setOpenDateModal={(value) => {
-              setOpenDateModal(value);
-              if (!value && (!customFrom || !customTo)) {
-                // If the modal is closed without applying a range, revert filter back to "all"
-                setFilterOption("all");
-              }
-            }}
-            customFrom={customFrom}
-            setCustomFrom={setCustomFrom}
-            customTo={customTo}
-            setCustomTo={setCustomTo}
-            handleApplyCustomDates={handleApplyCustomDates}
-          />
+        openDateModal={openDateModal}
+        setOpenDateModal={(value) => {
+          setOpenDateModal(value);
+          if (!value && (!customFrom || !customTo)) {
+            // If the modal is closed without applying a range, revert filter back to "ALL"
+            setHarvestFilter("ALL");
+          }
+        }}
+        customFrom={customFrom}
+        setCustomFrom={setCustomFrom}
+        customTo={customTo}
+        setCustomTo={setCustomTo}
+        handleApplyCustomDates={handleApplyCustomDates}
+      />
     </Container>
   );
 };

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { useHarvestItems } from "./TotalHarvestHooks";
+import { useHarvestItems } from "./HarvestPerDayChart";
 
 const useAcceptedChart = () => {
     const [harvestData, setHarvestData] = useState([]);

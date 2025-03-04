@@ -12,9 +12,10 @@ const HarvestTable = ({ filteredHarvestItems, harvestLoading, harvestPage, rowsP
           <TableRow sx={{ backgroundColor: "#06402B" }}>
             {[
               "Accepted",
-              "Plant Type",
               "Total Rejected",
               "Total Yield",
+              "Plant Type",
+              "Name",
               "Notes",
               "Harvest Date",
             ].map((header) => (
@@ -35,9 +36,10 @@ const HarvestTable = ({ filteredHarvestItems, harvestLoading, harvestPage, rowsP
               <TableRow key={item.harvest_id}>
                 {[
                   item.accepted,
-                  item.plant_type,
                   item.total_rejected,
                   item.total_yield,
+                  item.plant_type,
+                  item.full_name,
                   item.notes,
                   item.harvest_date,
                 ].map((value, index) => (

@@ -58,7 +58,6 @@ const FilterSearchSection = ({
             <MenuItem value="CURRENT DAY">CURRENT DAY</MenuItem>
             <MenuItem value="LAST 7 DAYS">LAST 7 DAYS</MenuItem>
             <MenuItem value="THIS MONTH">THIS MONTH</MenuItem>
-            
             <MenuItem value="CHOOSE DATE" onMouseDown={openDateModalHandler}>
               CHOOSE DATE
             </MenuItem>

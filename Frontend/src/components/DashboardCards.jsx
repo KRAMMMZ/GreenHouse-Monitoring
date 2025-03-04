@@ -121,7 +121,7 @@ const MetricCard = ({ title, value, chartType, data }) => {
             <BarChart data={chartData}>
               <Tooltip contentStyle={{ fontSize: "12px" }} itemStyle={{ fontSize: "12px" }} />
               <Bar dataKey="accepted" fill="#ff6b35" name="Accepted Items" />
-              <Bar dataKey="rejected" fill="#1d3557" name="Rejected Items" />
+              <Bar dataKey="rejected" fill="#2e6f40" name="Rejected Items" />
               <Bar dataKey="totalYield" fill="#4169E1" name="Total Yield" />
             </BarChart>
           ) : chartType === "area" ? (
