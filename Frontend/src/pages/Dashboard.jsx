@@ -14,8 +14,8 @@ import RejectionPieChart from "../components/RejectionPieChart";
  
 import DashboardSkeliton from "../skelitons/DashboardSkeliton";
 import HarvestSkeliton from "../skelitons/HarvestSkeliton";
-import {useTotalHarvestsToday,useHarvestHistory } from "../hooks/HarvestPerDayChart"
-import { useTotalRejectToday, RejectedPieChart } from "../hooks/RejectionTotalHooks";
+import {useTotalHarvestsToday,useHarvestHistory } from "../hooks/HarvestHooks"
+import { useTotalRejectToday, RejectedPieChart } from "../hooks/RejectionHooks";
 import Metric from "../props/MetricSection";
 import { useMaintenanceToday } from "../hooks/MaintenanceHooks";
 import EngineeringIcon from '@mui/icons-material/Engineering';

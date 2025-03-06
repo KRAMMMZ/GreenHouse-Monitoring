@@ -71,8 +71,6 @@ function UserManagement() {
   );
 
   // Handler for verification modal's verify action.
-  // It first verifies admin credentials. If that succeeds, it triggers the activation/deactivation.
-  // The modal only closes on success.
   const handleVerification = async (adminPassword) => {
     if (!selectedUser) return;
     const { user_id, currentActive, userEmail } = selectedUser;
@@ -107,14 +105,14 @@ function UserManagement() {
           user.user_id === user_id ? { ...user, isActive: !user.isActive } : user
         )
       );
-      
+
       Swal.fire({
         title: currentActive ? "User deactivated!" : "User activated!",
         icon: "success",
         timer: 1500,
         showConfirmButton: false,
       });
-      
+
       // Close modal only on successful verification.
       setOpenVerificationModal(false);
     } catch (error) {
@@ -187,7 +185,7 @@ function UserManagement() {
   };
 
   return (
-    <Container maxWidth="xxl" sx={{ p: 3 }}>
+    <Container maxWidth="xl" sx={{ p: { xs: 2, sm: 3 } }}>
       {usersLoading ? (
         <HarvestSkeliton />
       ) : (
@@ -198,8 +196,8 @@ function UserManagement() {
             borderRadius: "10px",
             boxShadow: 15,
             p: { xs: 1, sm: 2, md: 3 },
-            mb: 5,
-            mt: 3,
+            mb: { xs: 3, sm: 5 },
+            mt: { xs: 2, sm: 3 },
           }}
         >
           {/* Top Controls */}
@@ -209,7 +207,7 @@ function UserManagement() {
               flexDirection: { xs: "column", sm: "row" },
               justifyContent: "space-between",
               alignItems: "center",
-              mb: 2,
+              mb: { xs: 2, sm: 3 },
               gap: 2,
             }}
           >
@@ -234,10 +232,18 @@ function UserManagement() {
                   : "(Deactivated Accounts)"}
               </Typography>
             </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                alignItems: "center",
+                gap: { xs: 1, sm: 2 },
+                width: { xs: "100%", sm: "auto" },
+              }}
+            >
               <Button
                 variant="contained"
-                startIcon={<EmailIcon />}
+                startIcon={<EmailIcon sx={{ fontSize: { xs: "1rem", sm: "1.2rem" } }} />}
                 onClick={() => setOpenEmailModal(true)}
                 sx={{
                   backgroundColor: "#06402B",
@@ -257,7 +263,7 @@ function UserManagement() {
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <SearchIcon />
+                      <SearchIcon sx={{ fontSize: { xs: "1rem", sm: "1.2rem" } }} />
                     </InputAdornment>
                   ),
                 }}
@@ -270,11 +276,14 @@ function UserManagement() {
               />
             </Box>
           </Box>
-          <TableContainer>
+          <TableContainer sx={{ overflowX: "auto" }}>
             <Table sx={{ minWidth: 650, backgroundColor: "#fff" }}>
               <TableHead>
                 <TableRow
-                  sx={{ backgroundColor: "#06402B", borderRadius: "10px" }}
+                  sx={{
+                    backgroundColor: "#06402B",
+                    borderRadius: "10px",
+                  }}
                 >
                   {headers.map((header) => (
                     <TableCell
@@ -300,7 +309,7 @@ function UserManagement() {
                             onClick={() => setFilterActive((prev) => !prev)}
                             sx={{ color: "#fff" }}
                           >
-                            <ArrowDropDownIcon />
+                            <ArrowDropDownIcon sx={{ fontSize: { xs: "1rem", sm: "1.2rem" } }} />
                           </IconButton>
                         </Box>
                       ) : (
@@ -332,7 +341,7 @@ function UserManagement() {
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              mt: 2,
+              mt: { xs: 2, sm: 3 },
             }}
           >
             <TablePagination
@@ -347,10 +356,10 @@ function UserManagement() {
         </Paper>
       )}
 
-      {/* Use the SendEmailModal component */}
+      {/* Email Modal */}
       <SendEmailModal open={openEmailModal} onClose={handleCloseEmailModal} />
 
-      {/* Use the VerificationModal component */}
+      {/* Verification Modal */}
       <VerificationModal
         open={openVerificationModal}
         onClose={() => setOpenVerificationModal(false)}

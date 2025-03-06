@@ -1,4 +1,3 @@
-// server.js
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
@@ -101,10 +100,64 @@ io.on("connection", (socket) => {
     }
   }, 5000);
 
+  // Poll for activity logs data
+  let lastActivityLogs = null;
+  const intervalIdLogs = setInterval(async () => {
+    try {
+      const [
+        adminResponse,
+        userResponse,
+        rejectionResponse,
+        maintenanceResponse,
+        harvestResponse,
+      ] = await Promise.all([
+        axios.get("http://localhost:3001/logs/admin"),
+        axios.get("http://localhost:3001/logs/user"),
+        axios.get("http://localhost:3001/logs/rejection"),
+        axios.get("http://localhost:3001/logs/maintenance"),
+        axios.get("http://localhost:3001/logs/harvest"),
+      ]);
+
+      const logsData = {
+        AdminLogsTable: adminResponse.data.AdminLogsTable || [],
+        UserLogsTable: userResponse.data.UserLogsTable || [],
+        RejectionTable: rejectionResponse.data.RejectionTable || [],
+        MaintenanceTable: maintenanceResponse.data.MaintenanceTable || [],
+        harvestLogsTable: harvestResponse.data.harvestLogsTable || [],
+      };
+
+      if (JSON.stringify(logsData) !== JSON.stringify(lastActivityLogs)) {
+        lastActivityLogs = logsData;
+        socket.emit("ActivityLogsData", logsData);
+      }
+    } catch (error) {
+      console.error("Error fetching activity logs for socket:", error);
+    }
+  }, 5000);
+
+  // Poll for maintenance data
+  let lastMaintenanceData = null;
+  const intervalIdMaintenance = setInterval(async () => {
+    try {
+      const response = await axios.get("http://localhost:3001/maintenance");
+      if (response.data && response.data.maintenanceTable) {
+        const newMaintenanceData = response.data.maintenanceTable;
+        if (JSON.stringify(newMaintenanceData) !== JSON.stringify(lastMaintenanceData)) {
+          lastMaintenanceData = newMaintenanceData;
+          socket.emit("maintenanceData", { maintenanceTable: newMaintenanceData });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching maintenance data for socket:", error);
+    }
+  }, 5000);
+
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
     clearInterval(intervalIdHarvest);
     clearInterval(intervalIdRejected);
+    clearInterval(intervalIdLogs);
+    clearInterval(intervalIdMaintenance);
   });
 });
 

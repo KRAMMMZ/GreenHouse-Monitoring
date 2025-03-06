@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Box, useMediaQuery, useTheme } from "@mui/material";
 import axios from "axios";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-import { Box } from "@mui/material";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "../public/dashboard.css";
+
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Sidebar from "./components/Sidebar";
+import MobileAppBar from "./components/MobileAppBar";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Reports from "./pages/Reports";
@@ -19,19 +17,19 @@ import Harvests from "./pages/Harvests";
 import Rejected from "./pages/Rejected";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ActivityLogs from "./pages/ActivityLogs";
-import Maintenance from "./pages/Maintenance";
-import Loading from "./components/LoadingAlert";
-import HttpError from "./pages/HttpError";
-import "../public/dashboard.css";
+// (Other imports like Maintenance, Loading, HttpError can be added as needed)
 
 const drawerWidth = 300;
 const closedDrawerWidth = 65;
+const closed = 0;
 
 function App() {
   const [open, setOpen] = useState(true);
   const [httpError, setHttpError] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
-  // Load the sidebar state from localStorage on component mount
+  // Load sidebar state from localStorage (desktop only)
   useEffect(() => {
     const savedSidebarState = localStorage.getItem("sidebarOpen");
     setOpen(savedSidebarState === "true");
@@ -39,21 +37,19 @@ function App() {
 
   const toggleSidebar = () => {
     setOpen((prev) => {
-      localStorage.setItem("sidebarOpen", !prev); // Save the new state to localStorage
+      localStorage.setItem("sidebarOpen", !prev);
       return !prev;
     });
   };
 
-  // Global axios interceptor for handling 500 errors
+  // Global axios interceptor for HTTP 500 errors
   useEffect(() => {
     const interceptor = axios.interceptors.response.use(
       (response) => {
-        // Clear the error overlay if response is ok
         setHttpError(false);
         return response;
       },
       (error) => {
-        // If the error is a 500, display the error overlay
         if (error.response && error.response.status === 500) {
           setHttpError(true);
         }
@@ -67,26 +63,33 @@ function App() {
     <Router>
       <AuthProvider>
         <Box sx={{ display: "flex", minHeight: "100vh" }}>
-          <AuthRoutes open={open} setOpen={toggleSidebar} />
+          <AuthRoutes open={open} setOpen={toggleSidebar} isMobile={isMobile} />
         </Box>
-        {/* Display global error overlay if HTTP 500 error occurs  
-        {httpError && <HttpError />}*/}
+        {/* You can show a global error overlay here if needed:
+        {httpError && <HttpError />} */}
       </AuthProvider>
     </Router>
   );
 }
 
-const AuthRoutes = ({ open, setOpen }) => {
+const AuthRoutes = ({ open, setOpen, isMobile }) => {
   const { user } = useAuth();
-
+  const theme = useTheme();
   return (
     <Box sx={{ display: "flex", height: "100vh", width: "100vw" }}>
-      {user && <Sidebar open={open} setOpen={setOpen} />}
+      {user && !isMobile && <Sidebar open={open} setOpen={setOpen} />}
+      {user && isMobile && <MobileAppBar />}
       <Box
         component="main"
         sx={{
           flex: 1,
           padding: user ? "2rem" : "0rem",
+          // If the user is not logged in, paddingTop is removed (set to 0)
+          paddingTop: user
+            ? isMobile
+              ? `calc(${theme.mixins.toolbar.minHeight}px + 2rem)`
+              : "2rem"
+            : "0rem",
           height: "100vh",
           backgroundColor: "#ddd",
           overflowY: "auto",
@@ -95,12 +98,8 @@ const AuthRoutes = ({ open, setOpen }) => {
               easing: theme.transitions.easing.sharp,
               duration: theme.transitions.duration.standard,
             }),
-          marginLeft: user
-            ? `${open ? drawerWidth : closedDrawerWidth}px`
-            : "0",
-          width: user
-            ? `calc(100% - ${open ? drawerWidth : closedDrawerWidth}px)`
-            : "100%",
+          marginLeft: user && isMobile ? "-45px" : user ? `${open ? drawerWidth : closedDrawerWidth}px` : "0",
+          width: user && !isMobile ? `calc(100% - ${open ? drawerWidth : closedDrawerWidth}px)` : "100%",
         }}
       >
         <Routes>
@@ -135,7 +134,7 @@ const AuthRoutes = ({ open, setOpen }) => {
                   </ProtectedRoute>
                 }
               />
-                <Route
+              <Route
                 path="/rejected"
                 element={
                   <ProtectedRoute>
@@ -159,7 +158,6 @@ const AuthRoutes = ({ open, setOpen }) => {
                   </ProtectedRoute>
                 }
               />
-              
               <Route
                 path="/activitylogs"
                 element={

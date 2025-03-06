@@ -3,10 +3,10 @@ import React from "react";
 const HarvestCard = ({ title, value, icon, iconSize = "10rem" }) => {
   return (
     <div
-      className="d-flex flex-column flex-md-row align-items-center p-3 w-100 "
+      className="d-flex flex-column flex-md-row align-items-center p-3 w-100"
       style={{
         borderRadius: "8px",
-        backgroundColor: "#06402B   ",
+        backgroundColor: "#06402B",
         overflow: "hidden",
         minHeight: "150px",
         boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.15)",
@@ -14,11 +14,11 @@ const HarvestCard = ({ title, value, icon, iconSize = "10rem" }) => {
     >
       {/* Text Section */}
       <div
-        className="text-center text-md-left d-flex flex-column justify-content-center "
+        className="text-center text-md-left d-flex flex-column justify-content-center"
         style={{
           flex: "1",
-          padding: "8px",
-          height:"100%",
+          padding: "4px",
+          height: "100%",
         }}
       >
         <h2
@@ -28,7 +28,7 @@ const HarvestCard = ({ title, value, icon, iconSize = "10rem" }) => {
             fontSize: "clamp(2.5rem, 4vw, 3rem)",
           }}
         >
-          {value}
+          {value} 
         </h2>
         <p
           className="medium fw-bold mb-0"
@@ -41,9 +41,9 @@ const HarvestCard = ({ title, value, icon, iconSize = "10rem" }) => {
         </p>
       </div>
 
-      {/* Icon Section */}
+      {/* Icon Section - Hidden on medium and below */}
       <div
-        className="d-flex justify-content-center align-items-center "
+        className="d-none d-lg-flex justify-content-center align-items-center"
         style={{
           flex: "1",
           height: "100%",

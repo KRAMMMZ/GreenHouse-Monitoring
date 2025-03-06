@@ -14,7 +14,7 @@ const BarChartSkeliton = () => {
   return (
     <Paper
       elevation={3}
-      sx={{ p: 3, mb: 2, backgroundColor: "#d8d8d8", borderRadius: "20px" }}
+      sx={{ p: 3, mb: 2, backgroundColor: "#fff", borderRadius: "20px" }}
     >
       <Typography variant="h6" gutterBottom>
         Harvest History (Last 7 Days)

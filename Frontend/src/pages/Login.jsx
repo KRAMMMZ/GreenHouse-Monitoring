@@ -9,8 +9,8 @@ import {
   Link,
 } from "@mui/material";
 import { FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
-import Swal from "sweetalert2";  
-import { useAuth } from "../contexts/AuthContext";  
+import Swal from "sweetalert2";
+import { useAuth } from "../contexts/AuthContext";
 import ForgotPasswordModal from "../components/ForgotPassModal";
 import "../../public/login.css";
 
@@ -19,7 +19,7 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [openForgotPassword, setOpenForgotPassword] = useState(false); 
+  const [openForgotPassword, setOpenForgotPassword] = useState(false);
   const [errors, setErrors] = useState({ username: "", password: "" });
 
   const handleClickShowPassword = () => {
@@ -30,7 +30,6 @@ function Login() {
     e.preventDefault();
     let newErrors = { username: "", password: "" };
 
-    
     if (!username) newErrors.username = "*Email is required";
     if (!password) newErrors.password = "*Password is required";
 
@@ -46,18 +45,17 @@ function Login() {
   const handleForgotPasswordClick = (e) => {
     e.preventDefault();
 
-    // Show a quick SweetAlert loading alert for the forgot password flow
     Swal.fire({
       title: "Please wait...",
       text: "Loading...",
       allowOutsideClick: false,
       allowEscapeKey: false,
-      timer: 300, // Shown briefly
+      timer: 300,
       didOpen: () => {
         Swal.showLoading();
       },
     }).then(() => {
-      setOpenForgotPassword(true); // Open modal after the alert disappears
+      setOpenForgotPassword(true);
     });
   };
 
@@ -80,7 +78,6 @@ function Login() {
 
   return (
     <div>
-      {/* Render the login container only when the forgot password modal is not open */}
       {!openForgotPassword && (
         <div className="login">
           <Card className="card rad">
@@ -121,7 +118,6 @@ function Login() {
                     }}
                   />
                 </div>
-
                 <label className="mb-1">Password: </label>
                 <div className="mb-4">
                   <TextField
@@ -173,7 +169,6 @@ function Login() {
                     Forgot your password?
                   </Link>
                 </div>
-
                 <Button
                   type="submit"
                   variant="contained"

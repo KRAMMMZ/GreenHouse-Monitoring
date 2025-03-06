@@ -14,10 +14,19 @@ const getDateString = (date) => {
 };
 
 // Helper to create a friendly label (e.g., "Feb 14")
-const formatDateLabel = (dateStr) => {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-};
+function formatDateLabel(dateStr) {
+  const [year, month, day] = dateStr.split('-');
+  // e.g. "2025-02-01" -> "Feb 1, 2025"
+  return new Date(+year, +month - 1, +day).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+function parseDateLocal(dateString) {
+  const [year, month, day] = dateString.split('-');
+  return new Date(+year, +month - 1, +day);
+}
 
 const useHarvestHistory = () => {
   const [harvestHistory, setHarvestHistory] = useState([]);
@@ -147,7 +156,7 @@ const useHarvestHistory = () => {
     ];
   }, [rawHarvestTable]);
 
-  // Function: Get overall total harvest data (aggregated)
+  // Function: Get overall total harvest data (aggregated) 
   const getOverallTotalData = useCallback(() => {
     return rawHarvestTable.reduce(
       (totals, item) => {

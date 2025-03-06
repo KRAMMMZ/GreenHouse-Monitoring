@@ -100,7 +100,7 @@ function Reports() {
   );
 
   return (
-    <Container maxWidth="xxl" sx={{ p: 3 }}>
+    <Container maxWidth="xl" sx={{ p: { xs: 2, sm: 3 } }}>
       {maintenanceLoading ? (
         <HarvestSkeliton />
       ) : (
@@ -110,9 +110,9 @@ function Reports() {
             overflow: "hidden",
             borderRadius: "10px",
             boxShadow: 15,
-            p: 2,
-            mb: 5,
-            mt:3,
+            p: { xs: 2, sm: 3 },
+            mb: { xs: 3, sm: 5 },
+            mt: { xs: 2, sm: 3 },
           }}
         >
           {/* Responsive header with title and search/filter controls */}
@@ -123,15 +123,14 @@ function Reports() {
               justifyContent: "space-between",
               alignItems: { xs: "flex-start", sm: "center" },
               gap: 2,
-              mb: 2,
-            
+              mb: { xs: 2, sm: 3 },
             }}
           >
             <Typography
               variant="h5"
               sx={{
                 fontWeight: "bold",
-                fontSize: "clamp(1rem, 1.5vw, 1.5rem)",
+                fontSize: { xs: "1.2rem", sm: "1.5rem", md: "1.8rem" },
               }}
             >
               MAINTENANCE
@@ -154,7 +153,11 @@ function Reports() {
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <SearchIcon />
+                      <SearchIcon
+                        sx={{
+                          fontSize: { xs: "1rem", sm: "1.2rem" },
+                        }}
+                      />
                     </InputAdornment>
                   ),
                 }}
@@ -172,12 +175,7 @@ function Reports() {
                   <MenuItem value="currentDay">Current Day</MenuItem>
                   <MenuItem value="last7Days">Last 7 Days</MenuItem>
                   <MenuItem value="currentMonth">Current Month</MenuItem>
-                  <MenuItem
-                    value="custom"
-                    onClick={() => setOpenDateModal(true)}
-                  >
-                    SELECT DATE
-                  </MenuItem>
+                  <MenuItem value="custom">SELECT DATE</MenuItem>
                 </Select>
               </FormControl>
             </Box>
@@ -185,7 +183,12 @@ function Reports() {
           <TableContainer sx={{ overflowX: "auto" }}>
             <Table sx={{ minWidth: 650, backgroundColor: "#fff" }}>
               <TableHead>
-                <TableRow sx={{ backgroundColor: "#06402B", borderRadius: "10px" }}>
+                <TableRow
+                  sx={{
+                    backgroundColor: "#06402B",
+                    borderRadius: "10px",
+                  }}
+                >
                   {["Title", "Description", "Email", "Date Completed"].map(
                     (header) => (
                       <TableCell
@@ -195,7 +198,7 @@ function Reports() {
                           fontWeight: "bold",
                           color: "#fff",
                           fontSize: { xs: "0.9rem", sm: "1.1rem" },
-                          py: 2.5,
+                          py: { xs: 2, sm: 2.5 },
                         }}
                       >
                         {header}
@@ -222,7 +225,10 @@ function Reports() {
                         <TableCell
                           key={idx}
                           align="center"
-                          sx={{ fontSize: { xs: "0.8rem", sm: "1rem" }, py: 1.5 }}
+                          sx={{
+                            fontSize: { xs: "0.8rem", sm: "1rem" },
+                            py: { xs: 1, sm: 1.5 },
+                          }}
                         >
                           {value}
                         </TableCell>
@@ -237,7 +243,7 @@ function Reports() {
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              mt: 2,
+              mt: { xs: 2, sm: 3 },
             }}
           >
             <TablePagination

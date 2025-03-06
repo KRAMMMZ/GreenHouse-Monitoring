@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { useActivityLogs } from "../hooks/AdminLogsHooks";
 import HarvestSkeliton from "../skelitons/HarvestSkeliton";
-
+ 
 function ActivityLogs() {
   // Retrieve all logs from the custom hook
   const {
@@ -19,6 +19,7 @@ function ActivityLogs() {
     userActivityLogs = [],
     rejectionLogs = [],
     maintenanceLogs = [],
+    harvestLogs = [],
     logsLoading,
   } = useActivityLogs();
 
@@ -28,6 +29,7 @@ function ActivityLogs() {
     ...userActivityLogs.map((log) => ({ ...log, logType: "USERS" })),
     ...rejectionLogs.map((log) => ({ ...log, logType: "REJECTION" })),
     ...maintenanceLogs.map((log) => ({ ...log, logType: "MAINTENANCE" })),
+    ...harvestLogs.map((log) => ({ ...log, logType: "HARVESTS" })),
   ];
 
   // Sort logs by date (most recent first) and limit display to 5 entries

@@ -50,7 +50,7 @@ import {
   usePhysicallyDamageCurrentDay,
   useTooSmallCurrentDay,
   useRejectedTableItems,
-} from "../hooks/RejectionTotalHooks";
+} from "../hooks/RejectionHooks";
 
  
 const Rejected = () => {

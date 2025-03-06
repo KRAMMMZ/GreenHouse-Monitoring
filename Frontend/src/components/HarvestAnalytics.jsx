@@ -176,9 +176,9 @@ const HarvestAnalytics = ({
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="accepted" stroke="#ff6b35" name="Accepted Items" strokeWidth={5} />
-                <Line type="monotone" dataKey="rejected" stroke="#1d3557" name="Rejected Items" strokeWidth={5} />
-                <Line type="monotone" dataKey="totalYield" stroke="#4169E1" name="Total Yield" strokeWidth={5} />
+                <Line type="monotone" dataKey="accepted" stroke="#06402B" name="Accepted Items" strokeWidth={7} />
+                <Line type="monotone" dataKey="rejected" stroke="#FF0000" name="Rejected Items" strokeWidth={7} />
+              {/*  <Line type="monotone" dataKey="totalYield" stroke="#000" name="Total " strokeWidth={5} /> */}
               </LineChart>
             </ResponsiveContainer>
           </Box>
@@ -210,7 +210,7 @@ const HarvestAnalytics = ({
                 <Box sx={{ height: "100%", backgroundColor: "#fff", borderRadius: 2, p: 2, display: "flex", alignItems: "center", justifyContent: "space-between", "& .MuiTypography-root": { color: "#000" } }}>
                   <Box>
                     <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: "1.5rem", md: "2rem" } }}>{summaryTotals.totalYield}</Typography>
-                    <Typography variant="body2">Yield</Typography>
+                    <Typography variant="body2">Total</Typography>
                   </Box>
                   <Grain sx={{ fontSize: { xs: 30, sm: 40, md: 48 }, color: "#2196f3" }} />
                 </Box>

@@ -193,7 +193,7 @@ const useRejectionData = () => {
       physically_damaged: groupedData[dateStr] ? groupedData[dateStr].physically_damaged : 0,
       too_small: groupedData[dateStr] ? groupedData[dateStr].too_small : 0,
     }));
-  };
+  }; 
 
   return {
     timeSeriesData,

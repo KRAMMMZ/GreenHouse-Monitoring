@@ -4,8 +4,8 @@ import { ThemeProvider, createTheme, responsiveFontSizes } from "@mui/material/s
 import HarvestAnalytics from "../components/HarvestAnalytics";
 import RejectionAnalytics from "../components/RejectionAnalytics";
 import AnalyticsDashboardSkeleton from "../skelitons/AnalyticsSkeliton";
-import useHarvestHistory from "../hooks/BarChartHooks";
-import useRejectionData from "../hooks/PieChartHooks";
+import useHarvestHistory from "../hooks/HarvestBarChartHooks";
+import useRejectionData from "../hooks/RejectionLineChartHooks";
 
 const AnalyticsDashboard = () => {
   const {
@@ -22,7 +22,7 @@ const AnalyticsDashboard = () => {
     timeSeriesData,
     loading: rejectionLoading,
     getCurrentDayDataRejection,
-    getOverallTotalData: getOverallTotalRejectionData,
+     getOverallTotalRejectionData,
     getRejectionCurrentMonthData,
     getRejectionMonthData,
     filterRejectionData,

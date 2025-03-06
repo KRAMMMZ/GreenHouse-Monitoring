@@ -1,5 +1,12 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
+import { io } from "socket.io-client";
+
+// Create a single socket connection instance
+const socket = io("http://localhost:3001");
+
+// Use your API base URL (you might use an env variable) 
+const baseUrl = "http://localhost:3001";
 
 export const useActivityLogs = () => {
   const [adminActivityLogs, setAdminActivityLogs] = useState([]);
@@ -9,9 +16,6 @@ export const useActivityLogs = () => {
   const [maintenanceLogs, setMaintenanceLogs] = useState([]);
   const [logsLoading, setLogsLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Use environment variable for API base URL
-  const baseUrl =   "http://localhost:3001";
 
   useEffect(() => {
     const source = axios.CancelToken.source();
@@ -43,7 +47,6 @@ export const useActivityLogs = () => {
         } else {
           console.error("Error fetching logs:", error);
           setError("Failed to fetch logs.");
-          // Optionally, clear logs in case of an error
           setAdminActivityLogs([]);
           setUserActivityLogs([]);
           setRejectionLogs([]);
@@ -55,11 +58,23 @@ export const useActivityLogs = () => {
       }
     };
 
+    // Initial fetch of logs
     fetchLogs();
 
-    // Cancel the request on component unmount
+    // Listen for real-time updates via Socket.IO on "ActivityLogsData"
+    socket.on("ActivityLogsData", (data) => {
+      if (data) {
+        setAdminActivityLogs(data.AdminLogsTable || []);
+        setUserActivityLogs(data.UserLogsTable || []);
+        setRejectionLogs(data.RejectionTable || []);
+        setMaintenanceLogs(data.MaintenanceTable || []);
+        setHarvestLogs(data.harvestLogsTable || []);
+      }
+    });
+
     return () => {
       source.cancel("Component unmounted, canceling request");
+      socket.off("ActivityLogsData");
     };
   }, [baseUrl]);
 

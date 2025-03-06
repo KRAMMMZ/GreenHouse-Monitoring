@@ -13,9 +13,8 @@ import {
   Tooltip,
 } from "recharts";
 
-const COLORS = ["#ff6b35", "#1d3557", "#4169E1" ];
+const COLORS = ["#ff6b35", "#82D682", "#4169E1"];
 
-// Dummy data for when there's no actual datas
 const dummyData = [
   { name: "Loading", value: 0 },
   { name: "Loading", value: 0 },
@@ -45,7 +44,6 @@ const renderCustomizedLabel = ({
 };
 
 const MetricCard = ({ title, value, chartType, data }) => {
-  // If no data is available, use dummy data
   const chartData = data && data.length > 0 ? data : dummyData;
 
   return (
@@ -53,10 +51,10 @@ const MetricCard = ({ title, value, chartType, data }) => {
       className="d-flex flex-column flex-md-row align-items-center text-white p-3 w-100"
       style={{
         borderRadius: "8px",
-        backgroundColor: "#06402B ",
+        backgroundColor: "#06402B",
         overflow: "hidden",
         minHeight: "100px",
-        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.15)", // Added box shadow
+        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.15)",
       }}
     >
       {/* Text Section */}
@@ -87,9 +85,9 @@ const MetricCard = ({ title, value, chartType, data }) => {
         </p>
       </div>
 
-      {/* Chart Section */}
+      {/* Chart Section (Visible only on large screens and above) */}
       <div
-        className="d-flex justify-content-center align-items-center"
+        className="d-none d-lg-flex justify-content-center align-items-center"
         style={{
           flex: "1",
           height: "100%",
@@ -121,7 +119,7 @@ const MetricCard = ({ title, value, chartType, data }) => {
             <BarChart data={chartData}>
               <Tooltip contentStyle={{ fontSize: "12px" }} itemStyle={{ fontSize: "12px" }} />
               <Bar dataKey="accepted" fill="#ff6b35" name="Accepted Items" />
-              <Bar dataKey="rejected" fill="#2e6f40" name="Rejected Items" />
+              <Bar dataKey="rejected" fill="#82D682" name="Rejected Items" />
               <Bar dataKey="totalYield" fill="#4169E1" name="Total Yield" />
             </BarChart>
           ) : chartType === "area" ? (
@@ -146,23 +144,22 @@ const MetricCard = ({ title, value, chartType, data }) => {
             </AreaChart>
           ) : chartType === "pie" ? (
             <PieChart width={200} height={200}>
-            <Pie
-              data={chartData}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              outerRadius={50}
-              labelLine={false}       // remove default label lines
-              label={renderCustomizedLabel}  // render text inside the pie
-            >
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip contentStyle={{ fontSize: "12px" }} itemStyle={{ fontSize: "12px" }} />
-          </PieChart>
-          
+              <Pie
+                data={chartData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={50}
+                labelLine={false}
+                label={renderCustomizedLabel}
+              >
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip contentStyle={{ fontSize: "12px" }} itemStyle={{ fontSize: "12px" }} />
+            </PieChart>
           ) : null}
         </ResponsiveContainer>
       </div>

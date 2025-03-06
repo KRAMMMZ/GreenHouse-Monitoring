@@ -6,7 +6,7 @@ import {
   Grid,
   TablePagination,
 } from "@mui/material";
-import { useHarvestItems } from "../hooks/HarvestPerDayChart";
+import { useHarvestItems } from "../hooks/HarvestHooks";
 import HarvestSkeliton from "../skelitons/HarvestSkeliton";
 import DashboardSkeliton from "../skelitons/DashboardSkeliton";
 import {
@@ -19,7 +19,7 @@ import {
   useAcceptedToday,
   useRejectedToday,
   useTotalYieldToday,
-} from "../hooks/HarvestPerDayChart";
+} from "../hooks/HarvestHooks";
 import FilterSearchSection from "../props/FilterSearchSection";
 import HarvestTable from "../props/HarvestTable";
 import CustomDateModal from "../props/CustomDateModal";

@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      // Show a loading alert (no timer) before making the request
+      // Show a loading alert (no timer) before making the request 
       Swal.fire({
         title: "Please wait...",
         text: "Loading...",

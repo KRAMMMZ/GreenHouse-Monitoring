@@ -10,7 +10,7 @@ import {
   ResponsiveContainer
 } from "recharts";
 import { Paper, Typography, Box } from "@mui/material";
-import useRejectionData from "../hooks/PieChartHooks";
+import useRejectionData from "../hooks/RejectionLineChartHooks";
 import PieChartSkeliton from "../skelitons/PieChartSkeliton"
 
 const RejectionBarChart = () => {

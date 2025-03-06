@@ -79,6 +79,15 @@ function ChangePasswordModal({ open, onClose }) {
     }
 
     try {
+      Swal.fire({
+        title: "Please wait...",
+        text: "Loading...",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
       // Call the dedicated change-password endpoint.
       // Make sure to include withCredentials so that the cookie is sent.
       const response = await axios.put(

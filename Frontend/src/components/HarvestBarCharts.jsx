@@ -1,6 +1,6 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Paper, Typography } from '@mui/material';
-import useHarvestHistory from '../hooks/BarChartHooks'; // Using the same hook
+import useHarvestHistory from '../hooks/HarvestBarChartHooks'; // Using the same hook
 import BarChartSkeliton from '../skelitons/BarChartSkeliton';
 
 const HarvestLineChart = () => {
