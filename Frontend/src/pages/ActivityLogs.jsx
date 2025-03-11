@@ -35,13 +35,16 @@ function ActivityLogs() {
   } = useActivityLogs();
 
   // Combine all logs into a single array and add type identifiers, memoized for performance
-  const allLogs = useMemo(() => [
-    ...adminActivityLogs.map(log => ({ ...log, logType: "ADMIN" })),
-    ...userActivityLogs.map(log => ({ ...log, logType: "USERS" })),
-    ...rejectionLogs.map(log => ({ ...log, logType: "REJECTION" })),
-    ...maintenanceLogs.map(log => ({ ...log, logType: "MAINTENANCE" })),
-    ...harvestLogs.map(log => ({ ...log, logType: "HARVEST" })),
-  ], [adminActivityLogs, userActivityLogs, rejectionLogs, maintenanceLogs, harvestLogs]);
+  const allLogs = useMemo(
+    () => [
+      ...adminActivityLogs.map((log) => ({ ...log, logType: "ADMIN" })),
+      ...userActivityLogs.map((log) => ({ ...log, logType: "USERS" })),
+      ...rejectionLogs.map((log) => ({ ...log, logType: "REJECTION" })),
+      ...maintenanceLogs.map((log) => ({ ...log, logType: "MAINTENANCE" })),
+      ...harvestLogs.map((log) => ({ ...log, logType: "HARVEST" })),
+    ],
+    [adminActivityLogs, userActivityLogs, rejectionLogs, maintenanceLogs, harvestLogs]
+  );
 
   // Local state for filter, search term, and pagination
   const [selectedFilter, setSelectedFilter] = useState("ALL");
@@ -55,9 +58,9 @@ function ActivityLogs() {
     const logsByType =
       selectedFilter === "ALL"
         ? allLogs
-        : allLogs.filter(log => log.logType === selectedFilter);
+        : allLogs.filter((log) => log.logType === selectedFilter);
 
-    return logsByType.filter(log => {
+    return logsByType.filter((log) => {
       const description = log.logs_description?.toLowerCase() || "";
       const name = log.name?.toLowerCase() || "";
       const date = log.log_date?.toLowerCase() || "";
@@ -69,7 +72,7 @@ function ActivityLogs() {
     });
   }, [allLogs, selectedFilter, normalizedSearchTerm]);
 
-  // Memoize sorted logs
+  // Memoize sorted logs by date (descending)
   const sortedLogs = useMemo(() => {
     return filteredLogs.sort(
       (a, b) => new Date(b.log_date) - new Date(a.log_date)
@@ -80,6 +83,23 @@ function ActivityLogs() {
     selectedFilter === "ALL"
       ? "ALL ACTIVITY LOGS"
       : `${selectedFilter} ACTIVITY LOGS`;
+
+  // Render error messages safely as valid React nodes
+  const renderErrors = () => {
+    if (!error) return null;
+    if (typeof error === "object") {
+      return Object.entries(error).map(([key, message]) => (
+        <Alert severity="error" sx={{ mb: 2 }} key={key}>
+          {message}
+        </Alert>
+      ));
+    }
+    return (
+      <Alert severity="error" sx={{ mb: 2 }}>
+        {error}
+      </Alert>
+    );
+  };
 
   if (logsLoading) return <HarvestSkeleton />;
 
@@ -153,12 +173,8 @@ function ActivityLogs() {
           </Box>
         </Box>
 
-        {/* Display error alert if needed */}
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+        {/* Display error alerts if any */}
+        {renderErrors()}
 
         {/* Logs Table */}
         <TableContainer>

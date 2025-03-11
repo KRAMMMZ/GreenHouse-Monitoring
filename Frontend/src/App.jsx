@@ -17,6 +17,8 @@ import Harvests from "./pages/Harvests";
 import Rejected from "./pages/Rejected";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ActivityLogs from "./pages/ActivityLogs";
+import HardwareComponents from "./pages/HardwareComponents";
+import HardwareStatus from "./pages/HardwareStatus";
 // (Other imports like Maintenance, Loading, HttpError can be added as needed)
 
 const drawerWidth = 300;
@@ -62,7 +64,7 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <Box sx={{ display: "flex", minHeight: "100vh" }}>
+        <Box sx={{ display: "flex", minHeight: "100vh",  backgroundColor: "#ddd" }}>
           <AuthRoutes open={open} setOpen={toggleSidebar} isMobile={isMobile} />
         </Box>
         {/* You can show a global error overlay here if needed:
@@ -163,6 +165,22 @@ const AuthRoutes = ({ open, setOpen, isMobile }) => {
                 element={
                   <ProtectedRoute>
                     <ActivityLogs />
+                  </ProtectedRoute>
+                }
+              />
+               <Route
+                path="/hardware-components"
+                element={
+                  <ProtectedRoute>
+                    <HardwareComponents />
+                  </ProtectedRoute>
+                }
+              />
+               <Route
+                path="/hardware-status"
+                element={
+                  <ProtectedRoute>
+                    <HardwareStatus />
                   </ProtectedRoute>
                 }
               />

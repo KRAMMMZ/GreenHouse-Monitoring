@@ -147,7 +147,7 @@ const HarvestAnalytics = ({
   return (
     <Paper elevation={3} sx={{ p: { xs: 2, md: 3 }, mb: 4, backgroundColor: "#FDFCFB", boxShadow: "0px 4px 10px rgba(0,0,0,0.3)", borderRadius: "15px" }}>
       <Box display="flex" flexDirection={{ xs: "column", md: "row" }} justifyContent="space-between" alignItems="center" mb={5}>
-        <Typography variant="h4" sx={{ fontWeight: "bold", fontSize: "clamp(0.875rem, 1.7vw, 2rem)" }}>
+        <Typography variant="h4" sx={{ fontWeight: "bold", fontSize: "clamp(1.2rem, 1.7vw, 2rem)" }}>
           Harvest Analytics
         </Typography>
         <FormControl variant="outlined" size="small" sx={{ minWidth: 150, mt: { xs: 2, md: 0 } }}>
@@ -164,7 +164,7 @@ const HarvestAnalytics = ({
         </FormControl>
       </Box>
 
-      <Typography variant="h6" gutterBottom>{getChartTitle()}</Typography>
+      <Typography variant="h6" sx={{fontSize:"clamp(0.875rem, 1.7vw, 2rem)"}}  gutterBottom>{getChartTitle()}</Typography>
 
       <Grid container spacing={2}>
         <Grid item xs={12} md={8}>

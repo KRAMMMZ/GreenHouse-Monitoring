@@ -22,8 +22,8 @@ import {
   Button,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import HarvestSkeliton from "../skelitons/HarvestSkeliton";
-import { useFilteredMaintenance } from "../hooks/MaintenanceHooks";
+import HardwareSkeliton from "../skelitons/HarvestSkeliton";
+import { useFilteredHardwareStatus } from "../hooks/HarvestStatusHooks";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -47,13 +47,7 @@ function formatDate(date) {
 }
 
 // Compute filter description text based on active filter
-function getFilterDescription(
-  filter,
-  customFrom,
-  customTo,
-  selectedMonth,
-  selectedYear
-) {
+function getFilterDescription(filter, customFrom, customTo, selectedMonth, selectedYear) {
   if (filter === "all" || filter === "none") return "";
 
   const today = new Date();
@@ -71,11 +65,7 @@ function getFilterDescription(
 
   if (filter === "currentMonth") {
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const lastDayOfMonth = new Date(
-      today.getFullYear(),
-      today.getMonth() + 1,
-      0
-    );
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
     return `Current Month: ${formatDate(firstDayOfMonth)} - ${formatDate(lastDayOfMonth)}`;
   }
 
@@ -92,7 +82,7 @@ function getFilterDescription(
   return "";
 }
 
-function Reports() {
+function HardwareStatus() {
   const [page, setPage] = useState(0);
   const rowsPerPage = 10;
 
@@ -158,8 +148,8 @@ function Reports() {
   // Disable APPLY button if custom dates are not both selected
   const isApplyDisabled = !customFrom || !customTo;
 
-  // Get filtered maintenance data from hook
-  const { filteredMaintenance, loading } = useFilteredMaintenance({
+  // Get filtered hardware status data from hook
+  const { filteredHardwareStatus, loading } = useFilteredHardwareStatus({
     filterOption: appliedFilter,
     customFrom,
     customTo,
@@ -167,19 +157,18 @@ function Reports() {
     selectedYear: appliedFilter === "selectMonth" ? selectedYear : null,
   });
 
-  // Additional search filtering (search by title, description, or email)
-  const searchFilteredMaintenance = filteredMaintenance.filter((item) => {
-    const inTitle = item.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const inDescription = item.description
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const inEmail = item.email.toLowerCase().includes(searchTerm.toLowerCase());
-    return inTitle || inDescription || inEmail;
+  // Additional search filtering (search by component_id, statusNote, or lastChecked)
+  const searchFilteredHardwareStatus = filteredHardwareStatus.filter((item) => {
+    const searchTermLower = searchTerm.toLowerCase();
+    const inComponent = item.component_id.toString().toLowerCase().includes(searchTermLower);
+    const inStatusNote = item.statusNote.toLowerCase().includes(searchTermLower);
+    const inLastChecked = item.lastChecked.toLowerCase().includes(searchTermLower);
+    return inComponent || inStatusNote || inLastChecked;
   });
 
-  // Sort maintenance items by date_completed descending
-  const sortedMaintenance = [...searchFilteredMaintenance].sort(
-    (a, b) => new Date(b.date_completed) - new Date(a.date_completed)
+  // Sort hardware status items by lastChecked descending
+  const sortedHardwareStatus = [...searchFilteredHardwareStatus].sort(
+    (a, b) => new Date(b.lastChecked) - new Date(a.lastChecked)
   );
 
   // Compute the filter description text
@@ -194,7 +183,7 @@ function Reports() {
   return (
     <Container maxWidth="xl" sx={{ p: { xs: 2, sm: 3 } }}>
       {loading ? (
-        <HarvestSkeliton />
+        <HardwareSkeliton />
       ) : (
         <Paper
           sx={{
@@ -225,7 +214,7 @@ function Reports() {
                 fontSize: { xs: "1.2rem", sm: "1.5rem", md: "1.8rem" },
               }}
             >
-              MAINTENANCE{" "}
+              HARDWARE STATUS{" "}
               {filterDescription && (
                 <span
                   style={{
@@ -249,7 +238,7 @@ function Reports() {
             >
               <TextField
                 fullWidth
-                label="Search Maintenance"
+                label="Search Hardware"
                 variant="outlined"
                 size="small"
                 value={searchTerm}
@@ -257,9 +246,7 @@ function Reports() {
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <SearchIcon
-                        sx={{ fontSize: { xs: "1rem", sm: "1.2rem" } }}
-                      />
+                      <SearchIcon sx={{ fontSize: { xs: "1rem", sm: "1.2rem" } }} />
                     </InputAdornment>
                   ),
                 }}
@@ -289,41 +276,34 @@ function Reports() {
           <TableContainer sx={{ overflowX: "auto" }}>
             <Table sx={{ minWidth: 650, backgroundColor: "#fff" }}>
               <TableHead>
-                <TableRow
-                  sx={{ backgroundColor: "#06402B", borderRadius: "10px" }}
-                >
-                  {["Title", "Description", "Email", "Date Completed"].map(
-                    (header) => (
-                      <TableCell
-                        key={header}
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          color: "#fff",
-                          fontSize: { xs: "0.9rem", sm: "1.1rem" },
-                          py: { xs: 2, sm: 2.5 },
-                        }}
-                      >
-                        {header}
-                      </TableCell>
-                    )
-                  )}
+                <TableRow sx={{ backgroundColor: "#06402B", borderRadius: "10px" }}>
+                  {["Component ID", "Status Note", "Last Checked"].map((header) => (
+                    <TableCell
+                      key={header}
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        color: "#fff",
+                        fontSize: { xs: "0.9rem", sm: "1.1rem" },
+                        py: { xs: 2, sm: 2.5 },
+                      }}
+                    >
+                      {header}
+                    </TableCell>
+                  ))}
                 </TableRow>
               </TableHead>
               <TableBody>
-                {sortedMaintenance
+                {sortedHardwareStatus
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((item, index) => (
-                    <TableRow
-                      key={`${item.maintenance_id}-${index}`}
-                      hover
-                      sx={{ borderRadius: "10px" }}
-                    >
+                    <TableRow key={`${item.component_id}-${index}`} hover sx={{ borderRadius: "10px" }}>
                       {[
-                        item.title,
-                        item.description,
-                        item.email,
-                        new Date(item.date_completed).toLocaleDateString(),
+                        item.component_id,
+                        item.statusNote,
+                          // Display date_of_installation as a UTC string (e.g., "Sun, 09 Mar 2025 18:50:19 GMT")
+                      new Date(item.lastChecked).toUTCString(),
+                         
                       ].map((value, idx) => (
                         <TableCell
                           key={idx}
@@ -353,7 +333,7 @@ function Reports() {
           >
             <TablePagination
               component="div"
-              count={sortedMaintenance.length}
+              count={sortedHardwareStatus.length}
               rowsPerPage={rowsPerPage}
               page={page}
               onPageChange={(event, newPage) => setPage(newPage)}
@@ -362,7 +342,6 @@ function Reports() {
           </Box>
 
           {/* Custom Date Range Modal */}
-
           <Modal
             open={openDateModal}
             onClose={() => {
@@ -370,13 +349,7 @@ function Reports() {
               setUiFilter("all");
             }}
           >
-            <Box
-              sx={{
-                ...modalStyle,
-                p: 3,
-                width: 300, // Set a compact width
-              }}
-            >
+            <Box sx={{ ...modalStyle, p: 3, width: 300 }}>
               <Typography variant="h6" sx={{ mb: 2 }}>
                 Choose Date Range
               </Typography>
@@ -387,8 +360,7 @@ function Reports() {
                   onChange={(newValue) => setCustomFrom(newValue)}
                   renderInput={(params) => <TextField {...params} fullWidth />}
                 />
-                <Box sx={{ height: 16 }} />{" "}
-                {/* Adds space between the DatePickers */}
+                <Box sx={{ height: 16 }} />
                 <DatePicker
                   label="TO"
                   value={customTo}
@@ -396,28 +368,11 @@ function Reports() {
                   renderInput={(params) => <TextField {...params} fullWidth />}
                 />
               </LocalizationProvider>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  gap: 1,
-                  mt: 3,
-                }}
-              >
-                <Button
-                  onClick={() => setOpenDateModal(false)}
-                  color="secondary"
-                  size="small"
-                >
+              <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 3 }}>
+                <Button onClick={() => setOpenDateModal(false)} color="secondary" size="small">
                   Cancel
                 </Button>
-                <Button
-                  onClick={handleApplyCustomDates}
-                  variant="contained"
-                  color="primary"
-                  size="small"
-                  disabled={isApplyDisabled}
-                >
+                <Button onClick={handleApplyCustomDates} variant="contained" color="primary" size="small" disabled={isApplyDisabled}>
                   Apply
                 </Button>
               </Box>
@@ -428,44 +383,40 @@ function Reports() {
           <Modal
             open={openMonthModal}
             onClose={() => setOpenMonthModal(false)}
-            aria-labelledby="harvest-month-modal"
+            aria-labelledby="hardware-month-modal"
           >
             <Box sx={modalStyle}>
               <Typography variant="h6" sx={{ mb: 2 }}>
                 Select Month and Year
               </Typography>
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel id="harvest-month-label">Month</InputLabel>
+                <InputLabel id="hardware-month-label">Month</InputLabel>
                 <Select
-                  labelId="harvest-month-label"
+                  labelId="hardware-month-label"
                   value={selectedMonth}
                   label="Month"
                   onChange={(e) => setSelectedMonth(e.target.value)}
                 >
                   {Array.from({ length: 12 }, (_, i) => (
                     <MenuItem key={i + 1} value={i + 1}>
-                      {new Date(0, i).toLocaleString("default", {
-                        month: "long",
-                      })}
+                      {new Date(0, i).toLocaleString("default", { month: "long" })}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel id="harvest-year-label">Year</InputLabel>
+                <InputLabel id="hardware-year-label">Year</InputLabel>
                 <Select
-                  labelId="harvest-year-label"
+                  labelId="hardware-year-label"
                   value={selectedYear}
                   label="Year"
                   onChange={(e) => setSelectedYear(e.target.value)}
                 >
-                  {Array.from({ length: 11 }, (_, i) => 2020 + i).map(
-                    (year) => (
-                      <MenuItem key={year} value={year}>
-                        {year}
-                      </MenuItem>
-                    )
-                  )}
+                  {Array.from({ length: 11 }, (_, i) => 2020 + i).map((year) => (
+                    <MenuItem key={year} value={year}>
+                      {year}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
               <Divider sx={{ my: 3 }} />
@@ -480,11 +431,7 @@ function Reports() {
                 >
                   CANCEL
                 </Button>
-                <Button
-                  onClick={handleApplySelectedMonth}
-                  variant="contained"
-                  color="primary"
-                >
+                <Button onClick={handleApplySelectedMonth} variant="contained" color="primary">
                   APPLY
                 </Button>
               </Box>
@@ -496,4 +443,4 @@ function Reports() {
   );
 }
 
-export default Reports;
+export default HardwareStatus;

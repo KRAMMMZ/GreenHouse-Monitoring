@@ -10,7 +10,7 @@ import {
 } from "../hooks/CardChartHooks";
 import "../../public/dashboard.css";
 import HarvestChart from "../components/HarvestBarCharts";
-import RejectionPieChart from "../components/RejectionPieChart";
+import RejectionBarChart from "../components/RejectionPieChart";
  
 import DashboardSkeliton from "../skelitons/DashboardSkeliton";
 import HarvestSkeliton from "../skelitons/HarvestSkeliton";
@@ -100,9 +100,9 @@ function Dashboard() {
         </div>
         
       </div>
-      <div className="row g-4 mb-2">
+      <div className="row g-4 mb-3">
         <div className="col-12 col-md-6">
-          <RejectionPieChart />
+          <RejectionBarChart />
         </div>
         <div className="col-12 col-md-6">
           {logsLoading ? (

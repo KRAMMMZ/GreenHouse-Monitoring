@@ -1,4 +1,3 @@
-// routeLogin.js
 import axios from "axios";
 import qs from "qs";
 import jwt from "jsonwebtoken";
@@ -46,18 +45,31 @@ const login = async (req, res) => {
         user_data: user_data,
       });
     } else {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid Credentials" });
+      // If "success" is false but we have a message from the API:
+      return res.status(400).json({
+        success: false,
+        message: response.data.message || "Invalid Credentials",
+      });
     }
   } catch (error) {
     console.error(
       "Error during authentication:",
       error.response ? error.response.data : error.message
     );
+
+    // 1) Determine the status from the error response; default to 500
     const status = error.response?.status || 500;
-    // If the error is a 500 (Internal Server Error), show that message; otherwise, show "Invalid Credentials".
-    const message = status === 500 ? "Internal Server Error" : "Invalid Credentials";
+
+    // 2) Extract the real error message if it exists
+    //    For example, if your remote API returns: { error: { message: 'Password incorrect.' } }
+    //    then error.response.data.error.message will be "Password incorrect."
+    const message =
+      error.response?.data?.error?.message ||
+      error.response?.data?.message ||
+      error.message ||
+      "Something went wrong.";
+
+    // 3) Return that exact message to the client
     return res.status(status).json({ success: false, message });
   }
 };

@@ -45,8 +45,8 @@ function ActivityLogs() {
      <Paper
       elevation={3}
       sx={{
-        p: 1.4,
-        mb: 2,
+        p: 1.7,
+        
         
         backgroundColor: "#FDFCFB",
         position: "relative",
@@ -64,7 +64,7 @@ function ActivityLogs() {
                     sx={{
                       color: "white",
                       fontWeight: "bold",
-                      fontSize: "1.1rem",
+                      fontSize: "1rem",
                        
                     }}
                   >
@@ -76,9 +76,9 @@ function ActivityLogs() {
             <TableBody>
               {displayLogs.map((log, index) => (
                 <TableRow key={`${log.log_id}-${index}`} hover>
-                  <TableCell align="center" sx={{  fontSize: { xs: ".7rem", sm: ".8rem", md: ".8rem" }}}>{log.log_date}</TableCell>
-                  <TableCell align="center" sx={{  fontSize: { xs: ".7rem", sm: ".8rem", md: ".8rem" }}}>{log.logs_description}</TableCell>
-                  <TableCell align="center" sx={{  fontSize: { xs: ".7rem", sm: ".8rem", md: ".8rem" }}}>{log.name}</TableCell>
+                  <TableCell align="center" sx={{  fontSize: { xs: ".5rem", sm: ".6rem", md: ".8rem" }}}>{log.log_date}</TableCell>
+                  <TableCell align="center" sx={{  fontSize: { xs: ".5rem", sm: ".6rem", md: ".8rem" }}}>{log.logs_description}</TableCell>
+                  <TableCell align="center" sx={{  fontSize: { xs: ".5rem", sm: ".6rem", md: ".8rem" }}}>{log.name}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

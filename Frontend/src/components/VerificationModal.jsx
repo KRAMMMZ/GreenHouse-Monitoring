@@ -13,7 +13,7 @@ const VerificationModal = ({ open, onClose, onVerify, selectedUser }) => {
   const [adminPassword, setAdminPassword] = useState("");
   const [errorText, setErrorText] = useState("");
 
-  // Clear the password field and error message when the modal closes.
+  // Clear the password field and error message when the modal closes. 
   useEffect(() => {
     if (!open) {
       setAdminPassword("");

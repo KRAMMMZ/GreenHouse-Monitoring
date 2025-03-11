@@ -3,8 +3,9 @@
     border-radius: 20px !important;
  }
  
- .S{
+ .s{
    border:1px solid red;
+   min-height: 400px;
  }
  .logo {
   height: 15em;

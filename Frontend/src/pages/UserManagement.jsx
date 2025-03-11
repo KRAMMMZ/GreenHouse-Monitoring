@@ -80,8 +80,18 @@ function UserManagement() {
       ? "http://localhost:3001/verify-user/deactivate"
       : "http://localhost:3001/verify-user/activate";
 
+      Swal.fire({
+        title: "Please wait...",
+        text: "Loading...",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+      
     try {
-      // Verify admin credentials.
+      // Verify admin credentials. 
       await axios.post(
         verifyEndpoint,
         { email: userEmail, password: adminPassword },
@@ -90,8 +100,8 @@ function UserManagement() {
 
       // After successful verification, trigger the activation/deactivation API.
       const activationEndpoint = currentActive
-        ? "http://localhost:3001/user/deactivate"
-        : "http://localhost:3001/user/activate";
+        ? "http://localhost:3001/admin/deactivate"
+        : "http://localhost:3001/admin/activate";
 
       await axios.post(
         activationEndpoint,

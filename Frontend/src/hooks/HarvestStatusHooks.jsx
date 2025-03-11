@@ -15,21 +15,21 @@ const getTodayDateString = () => {
 };
 
 /**
- * useMaintenanceData
- * Fetches maintenance data once and listens for real-time updates via Socket.IO.
+ * useHardwareStatusData
+ * Fetches hardware status data once and listens for real-time updates via Socket.IO.
  */
-const useMaintenanceData = () => {
-  const [maintenanceData, setMaintenanceData] = useState([]);
+const useHardwareStatusData = () => {
+  const [hardwareStatusData, setHardwareStatusData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch data from API
   const fetchData = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/maintenance");
-      setMaintenanceData(response.data.maintenanceTable || []);
+      const response = await axios.get("http://localhost:3001/hardware_status");
+      setHardwareStatusData(response.data.hardwareStatusTable || []);
     } catch (error) {
-      console.error("Error fetching maintenance data:", error);
-      setMaintenanceData([]);
+      console.error("Error fetching hardware status data:", error);
+      setHardwareStatusData([]);
     } finally {
       setLoading(false);
     }
@@ -39,57 +39,56 @@ const useMaintenanceData = () => {
     // Initial fetch
     fetchData();
 
-    // Listen for real-time updates on the "maintenanceData" event
-    socket.on("maintenanceData", (data) => {
-      if (data && data.maintenanceTable) {
-        setMaintenanceData(data.maintenanceTable);
+    // Listen for real-time updates on the "hardwareStatusData" event
+    socket.on("hardwareStatusData", (data) => {
+      if (data && data.hardwareStatusTable) {
+        setHardwareStatusData(data.hardwareStatusTable);
         setLoading(false);
       }
     });
 
     // Cleanup the socket event on unmount
     return () => {
-      socket.off("maintenanceData");
+      socket.off("hardwareStatusData");
     };
   }, []);
 
-  return { maintenanceData, loading };
+  return { hardwareStatusData, loading };
 };
 
 /**
- * useMaintenance
- * Returns the complete maintenance data and its loading state.
+ * useHardwareStatus
+ * Returns the complete hardware status data and its loading state.
  */
-const useMaintenance = () => {
-  const { maintenanceData, loading } = useMaintenanceData();
-  return { maintenance: maintenanceData, maintenanceLoading: loading };
+const useHardwareStatus = () => {
+  const { hardwareStatusData, loading } = useHardwareStatusData();
+  return { hardwareStatus: hardwareStatusData, hardwareStatusLoading: loading };
 };
 
 /**
- * useMaintenanceToday
- * Returns the count of maintenance records completed today.
+ * useHardwareStatusToday
+ * Returns the count of hardware status records updated today.
+ * Assumes each record has a "lastChecked" field.
  */
-const useMaintenanceToday = () => {
-  const { maintenanceData, loading } = useMaintenanceData();
+const useHardwareStatusToday = () => {
+  const { hardwareStatusData, loading } = useHardwareStatusData();
 
-  const maintenanceToday = useMemo(() => {
+  const hardwareStatusToday = useMemo(() => {
     const todayDate = getTodayDateString();
-    const todayMaintenance = maintenanceData.filter((item) => {
-      const maintenanceDate = new Date(item.date_completed);
-      const maintenanceDateString = `${maintenanceDate.getFullYear()}-${String(
-        maintenanceDate.getMonth() + 1
-      ).padStart(2, "0")}-${String(maintenanceDate.getDate()).padStart(2, "0")}`;
-      return maintenanceDateString === todayDate;
+    const todayRecords = hardwareStatusData.filter((item) => {
+      const checkedDate = new Date(item.lastChecked);
+      const checkedDateString = `${checkedDate.getFullYear()}-${String(checkedDate.getMonth() + 1).padStart(2, "0")}-${String(checkedDate.getDate()).padStart(2, "0")}`;
+      return checkedDateString === todayDate;
     });
-    return todayMaintenance.length;
-  }, [maintenanceData]);
+    return todayRecords.length;
+  }, [hardwareStatusData]);
 
-  return { maintenanceToday, maintenanceTodayLoading: loading };
+  return { hardwareStatusToday, hardwareStatusTodayLoading: loading };
 };
 
 /**
- * useFilteredMaintenance
- * Returns filtered maintenance data based on the provided filter options.
+ * useFilteredHardwareStatus
+ * Returns filtered hardware status data based on the provided filter options.
  * 
  * @param {object} options - Filtering options:
  *    filterOption: "all" | "currentDay" | "last7Days" | "currentMonth" | "selectMonth" | "custom"
@@ -98,33 +97,33 @@ const useMaintenanceToday = () => {
  *    selectedMonth: month number for "selectMonth".
  *    selectedYear: year number for "selectMonth".
  */
-const useFilteredMaintenance = ({
+const useFilteredHardwareStatus = ({
   filterOption = "all",
   customFrom = null,
   customTo = null,
   selectedMonth = null,
   selectedYear = null,
 } = {}) => {
-  const { maintenanceData, loading } = useMaintenanceData();
+  const { hardwareStatusData, loading } = useHardwareStatusData();
   const today = new Date();
 
-  const filteredMaintenance = useMemo(() => {
-    let filtered = maintenanceData;
+  const filteredHardwareStatus = useMemo(() => {
+    let filtered = hardwareStatusData;
     if (filterOption === "currentDay") {
       filtered = filtered.filter((item) => {
-        const itemDate = new Date(item.date_completed);
+        const itemDate = new Date(item.lastChecked);
         return itemDate.toDateString() === today.toDateString();
       });
     } else if (filterOption === "last7Days") {
       filtered = filtered.filter((item) => {
-        const itemDate = new Date(item.date_completed);
+        const itemDate = new Date(item.lastChecked);
         const sevenDaysAgo = new Date(today);
         sevenDaysAgo.setDate(today.getDate() - 7);
         return itemDate >= sevenDaysAgo && itemDate <= today;
       });
     } else if (filterOption === "currentMonth") {
       filtered = filtered.filter((item) => {
-        const itemDate = new Date(item.date_completed);
+        const itemDate = new Date(item.lastChecked);
         return (
           itemDate.getMonth() === today.getMonth() &&
           itemDate.getFullYear() === today.getFullYear()
@@ -132,7 +131,7 @@ const useFilteredMaintenance = ({
       });
     } else if (filterOption === "selectMonth" && selectedMonth && selectedYear) {
       filtered = filtered.filter((item) => {
-        const itemDate = new Date(item.date_completed);
+        const itemDate = new Date(item.lastChecked);
         return (
           itemDate.getMonth() + 1 === Number(selectedMonth) &&
           itemDate.getFullYear() === Number(selectedYear)
@@ -144,14 +143,14 @@ const useFilteredMaintenance = ({
       // Include the entire end day
       toDate.setHours(23, 59, 59, 999);
       filtered = filtered.filter((item) => {
-        const itemDate = new Date(item.date_completed);
+        const itemDate = new Date(item.lastChecked);
         return itemDate >= fromDate && itemDate <= toDate;
       });
     }
     return filtered;
-  }, [maintenanceData, filterOption, customFrom, customTo, selectedMonth, selectedYear, today]);
+  }, [hardwareStatusData, filterOption, customFrom, customTo, selectedMonth, selectedYear, today]);
 
-  return { filteredMaintenance, loading };
+  return { filteredHardwareStatus, loading };
 };
 
-export { useMaintenance, useMaintenanceToday, useFilteredMaintenance };
+export { useHardwareStatus, useHardwareStatusToday, useFilteredHardwareStatus };

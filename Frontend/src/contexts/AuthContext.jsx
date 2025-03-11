@@ -38,7 +38,54 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      // Show a loading alert (no timer) before making the request 
+      // Show a loading alert (no timer) before making the request
+      Swal.fire({
+        title: "Please wait...",
+        text: "Loading...",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+  
+      const response = await axios.post(
+        "http://localhost:3001/admin/login",
+        { email, password },
+        { withCredentials: true }
+      );
+  
+      // Close the loading alert once the request is done
+      Swal.close();
+  
+      if (response.data.success) {
+        // On success, store user info, redirect, etc.
+        setUser(response.data.user_data);
+        setIsLoggedIn(true);
+        Swal.fire("Success", "Login Successful!", "success");
+        navigate("/dashboard");
+      } else {
+        // If the response indicates failure, throw an error
+        throw new Error(response.data.message || "Authentication failed");
+      }
+    } catch (error) {
+      // Ensure the loading alert is closed
+      Swal.close();
+  
+      // Show an error alert with the EXACT message from the backend
+      Swal.fire(
+        "Error",
+        error.response?.data?.message || error.message || "Something went wrong.",
+        "error"
+      );
+  
+      console.error("Login Error:", error);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      
       Swal.fire({
         title: "Please wait...",
         text: "Loading...",
@@ -49,37 +96,6 @@ export const AuthProvider = ({ children }) => {
         },
       });
 
-      const response = await axios.post(
-        "http://localhost:3001/admin/login",
-        { email, password },
-        { withCredentials: true }
-      );
-
-      // Close the loading alert once the request is done
-      Swal.close();
-
-      if (response.data.success) {
-        setUser(response.data.user_data);
-        setIsLoggedIn(true);
-        Swal.fire("Success", "Login Successful!", "success");
-        navigate("/dashboard");
-      } else {
-        throw new Error(response.data.message || "Authentication failed");
-      }
-    } catch (error) {
-      // Ensure the loading alert is closed and show an error alert
-      Swal.close();
-      Swal.fire(
-        "Error",
-        error.response?.data?.message || "Invalid Credentials",
-        "error"
-      );
-      console.error("Login Error:", error);
-    }
-  };
-
-  const logout = async () => {
-    try {
       const response = await axios.post(
         "http://localhost:3001/admin/logout",
         { email: user?.email },
