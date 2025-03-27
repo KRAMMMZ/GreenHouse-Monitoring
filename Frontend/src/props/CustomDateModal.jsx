@@ -39,7 +39,6 @@ const CustomDateModal = ({
   setCustomTo,
   handleApplyCustomDates,
 }) => {
-  // Validate that the FROM date is not after the TO date.
   const isDateError =
     customFrom && customTo && new Date(customFrom) > new Date(customTo);
 
@@ -82,9 +81,7 @@ const CustomDateModal = ({
                   fullWidth
                   sx={{ mb: 4 }}
                   error={isDateError}
-                  helperText={
-                    isDateError ? "From date cannot be later than To date" : ""
-                  }
+                  helperText={isDateError ? "From date cannot be later than To date" : ""}
                 />
               )}
             />

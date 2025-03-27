@@ -57,7 +57,7 @@ const RejectionBarChart = () => {
 
   return (
     <Paper
-      ref={containerRef}
+      
       elevation={3}
       sx={{
         p: 3,
@@ -74,13 +74,7 @@ const RejectionBarChart = () => {
         Rejection History (Last 7 Days)
       </Typography>
 
-      <Box
-        sx={{
-          width: "100%",
-          backgroundColor: "#fff",
-          height: chartHeight,
-        }}
-      >
+      <div style={{ height: 400, width: "100%", backgroundColor: "#fff"}}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={timeSeriesData}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -88,18 +82,15 @@ const RejectionBarChart = () => {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey="diseased" fill="#ff6b35" />
-            <Bar dataKey="physically_damaged" fill="#1d3557" />
-            <Bar dataKey="too_small" fill="#4169E1" />
+            <Bar dataKey="diseased"  name="Diseased" fill="#ff6b35" />
+            <Bar dataKey="physically_damaged"   name="Physically Damaged"  fill="#1d3557" />
+            <Bar dataKey="too_small" name="Too small" fill="#4169E1" />
           </BarChart>
         </ResponsiveContainer>
-      </Box>
+        </div>
+        
 
-      <Box sx={{ position: "absolute", bottom: 7, left: 15 }}>
-        <Typography variant="h7" color="textSecondary">
-          {new Date().toLocaleDateString()}
-        </Typography>
-      </Box>
+      
     </Paper>
   );
 };

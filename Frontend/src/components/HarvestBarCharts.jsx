@@ -12,19 +12,23 @@ const HarvestLineChart = () => {
 
   return (
     <Paper
+      
       elevation={3}
       sx={{
         p: 3,
         mb: 2,
+        borderRadius: "5px",
         backgroundColor: "#FDFCFB",
-        borderRadius: "20px",
-        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.3)"
+        position: "relative",
+        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.3)",
+        height: "100%",
+       
       }}
     >
       <Typography variant="h6" gutterBottom>
         Harvest History (Last 7 Days)
       </Typography>
-      <div style={{ height: 300, width: '100%', backgroundColor: "#FDFCFB", borderRadius: "20px" }}>
+      <div style={{ height: 400, width: '100%', backgroundColor: "#FDFCFB", borderRadius: "20px" }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={harvestHistory}

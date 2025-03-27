@@ -36,7 +36,7 @@ function ActivityLogs() {
   const sortedLogs = allLogs.sort(
     (a, b) => new Date(b.log_date) - new Date(a.log_date)
   );
-  const displayLogs = sortedLogs.slice(0, 6);
+  const displayLogs = sortedLogs.slice(0, 11);
 
   if (logsLoading) return <HarvestSkeliton />;
 

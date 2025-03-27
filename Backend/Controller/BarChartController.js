@@ -5,7 +5,7 @@ const BarChart = async (req, res) => {
     console.log("Fetching harvests data from external API...");
 
     // Fetch harvests data from external API
-    const response = await axios.get('https://agreemo-api.onrender.com/harvests', {
+    const response = await axios.get('https://agreemo-api-v2.onrender.com/harvests', {
       headers: {
         'x-api-key': process.env.API_KEY, // Ensure the API key is correctly set in your environment variables
       },

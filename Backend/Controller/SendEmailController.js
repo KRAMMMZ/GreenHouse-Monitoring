@@ -12,7 +12,7 @@ const SendEmail = async (req, res) => {
     
     const config = {
       method: 'post',
-      url: 'https://agreemo-api.onrender.com/apk-link-sender',
+      url: 'https://agreemo-api-v2.onrender.com/apk-link-sender',
       maxBodyLength: Infinity,
       headers: { 
         'x-api-key': process.env.API_KEY || "fallback_key",

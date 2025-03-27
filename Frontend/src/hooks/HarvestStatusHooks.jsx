@@ -68,7 +68,7 @@ const useHardwareStatus = () => {
 /**
  * useHardwareStatusToday
  * Returns the count of hardware status records updated today.
- * Assumes each record has a "lastChecked" field.
+ * Assumes each record has a "lastChecked" field. 
  */
 const useHardwareStatusToday = () => {
   const { hardwareStatusData, loading } = useHardwareStatusData();

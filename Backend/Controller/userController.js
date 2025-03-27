@@ -10,7 +10,7 @@ export const activateUser = async (req, res) => {
 
     const config = {
       method: "post",
-      url: "https://agreemo-api.onrender.com/admin/activate",
+      url: "https://agreemo-api-v2.onrender.com/admin/activate",
       headers: {
         "x-api-key": process.env.API_KEY || "fallback_key",
       },
@@ -40,7 +40,7 @@ export const deactivateUser = async (req, res) => {
 
     const config = {
       method: "post",
-      url: "https://agreemo-api.onrender.com/admin/deactivate",
+      url: "https://agreemo-api-v2.onrender.com/admin/deactivate",
       headers: {
         "x-api-key": process.env.API_KEY || "fallback_key",
       },

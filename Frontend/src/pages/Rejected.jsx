@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Container,
   Box,
@@ -20,180 +20,165 @@ import {
   TableHead,
   TableRow,
   TablePagination,
-  Grid,
+  Alert,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import ViewListIcon from "@mui/icons-material/ViewList";
+import TodayIcon from "@mui/icons-material/Today";
+import DateRangeIcon from "@mui/icons-material/DateRange";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import CalendarViewMonthIcon from "@mui/icons-material/CalendarViewMonth";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import axios from "axios";
-import Metric from "../props/MetricSection";
-import BugReportIcon from "@mui/icons-material/BugReport";
-import ReportProblemIcon from "@mui/icons-material/ReportProblem";
-import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
-import DashboardSkeliton from "../skelitons/DashboardSkeliton";
 import HarvestSkeliton from "../skelitons/HarvestSkeliton";
-import MetricCard from "../components/DashboardCards";
+import { useRejectedTableItems } from "../hooks/RejectionHooks";
 
-// Import all hooks including current day functions
-import {
-  useDiseasedOverall,
-  usePhysicallyDamageOverall,
-  useTooSmallOverall,
-  useDiseasedLast7Days,
-  usePhysicallyDamageLast7Days,
-  useTooSmallLast7Days,
-  useDiseasedLast31Days,
-  usePhysicallyDamageLast31Days,
-  useTooSmallLast31Days,
-  useDiseasedCurrentDay,
-  usePhysicallyDamageCurrentDay,
-  useTooSmallCurrentDay,
-  useRejectedTableItems,
-} from "../hooks/RejectionHooks";
+// Helper function to format a Date into a short readable format
+function formatDate(date) {
+  return date.toLocaleDateString("default", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
- 
+// Function to generate filter description text (for the header)
+// We map our filter values to corresponding description formats.
+function getFilterDescription(filter, customFrom, customTo, selectedMonth, selectedYear) {
+  switch (filter) {
+    case "ALL":
+      return "";
+    case "CURRENT DAY":
+      return `CURRENT DAY: ${formatDate(new Date())}`;
+    case "LAST 7 DAYS": {
+      const today = new Date();
+      const startDate = new Date();
+      startDate.setDate(today.getDate() - 6);
+      return `LAST 7 DAYS: ${formatDate(startDate)} - ${formatDate(today)}`;
+    }
+    case "THIS MONTH": {
+      const today = new Date();
+      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      return `THIS MONTH: ${formatDate(firstDayOfMonth)} - ${formatDate(lastDayOfMonth)}`;
+    }
+    case "SELECT MONTH": {
+      if (selectedMonth && selectedYear) {
+        const firstDay = new Date(selectedYear, selectedMonth - 1, 1);
+        const lastDay = new Date(selectedYear, selectedMonth, 0);
+        return `SELECT MONTH: ${formatDate(firstDay)} - ${formatDate(lastDay)}`;
+      }
+      return "";
+    }
+    case "CHOOSE DATE": {
+      if (customFrom && customTo) {
+        return `CUSTOM: ${formatDate(new Date(customFrom))} - ${formatDate(new Date(customTo))}`;
+      }
+      return "";
+    }
+    default:
+      return "";
+  }
+}
+
 const Rejected = () => {
-  // Metric hooks for overall, last 7 days, last 31 days, and current day
-  const { overallDiseased, overallDiseasedLoading } = useDiseasedOverall();
-  const { overallPhysicallyDamage, overallPhysicallyDamageLoading } = usePhysicallyDamageOverall();
-  const { overallTooSmall, overallTooSmallLoading } = useTooSmallOverall();
-
-  const { diseasedLast7Days, diseasedLast7DaysLoading } = useDiseasedLast7Days();
-  const { physicallyDamageLast7Days, physicallyDamageLast7DaysLoading } = usePhysicallyDamageLast7Days();
-  const { tooSmallLast7Days, tooSmallLast7DaysLoading } = useTooSmallLast7Days();
-
-  const { diseasedLast31Days, diseasedLast31DaysLoading } = useDiseasedLast31Days();
-  const { physicallyDamageLast31Days, physicallyDamageLast31DaysLoading } = usePhysicallyDamageLast31Days();
-  const { tooSmallLast31Days, tooSmallLast31DaysLoading } = useTooSmallLast31Days();
-
-  const { diseasedCurrentDay, diseasedCurrentDayLoading } = useDiseasedCurrentDay();
-  const { physicallyDamageCurrentDay, physicallyDamageCurrentDayLoading } = usePhysicallyDamageCurrentDay();
-  const { tooSmallCurrentDay, tooSmallCurrentDayLoading } = useTooSmallCurrentDay();
-
   // Table data hook
   const { rejectItems, rejectLoading } = useRejectedTableItems();
 
-  // Local state for pagination, search, and filtering
+  // Pagination and search
   const [rejectPage, setRejectPage] = useState(0);
   const rowsPerPage = 10;
   const [rejectSearchTerm, setRejectSearchTerm] = useState("");
+
+  // Active filter state (for options other than modals, it is updated immediately)
   const [rejectFilter, setRejectFilter] = useState("ALL");
 
-  // State for custom date filtering
+  // CHOOSE DATE states: temporary & applied
   const [openDateModal, setOpenDateModal] = useState(false);
-  const [customFrom, setCustomFrom] = useState(null);
-  const [customTo, setCustomTo] = useState(null);
+  const [tempCustomFrom, setTempCustomFrom] = useState(null);
+  const [tempCustomTo, setTempCustomTo] = useState(null);
+  const [appliedCustomFrom, setAppliedCustomFrom] = useState(null);
+  const [appliedCustomTo, setAppliedCustomTo] = useState(null);
 
-  // Adjust customTo to include the entire day (set time to 23:59:59.999)
-  const getAdjustedCustomTo = () => {
-    if (!customTo) return null;
-    const adjusted = new Date(customTo);
-    adjusted.setHours(23, 59, 59, 999);
-    return adjusted;
-  };
+  // SELECT MONTH states: temporary & applied
+  const currentMonth = (new Date().getMonth() + 1).toString();
+  const currentYear = new Date().getFullYear().toString();
+  const [openMonthModal, setOpenMonthModal] = useState(false);
+  const [tempSelectedMonth, setTempSelectedMonth] = useState(currentMonth);
+  const [tempSelectedYear, setTempSelectedYear] = useState(currentYear);
+  const [appliedSelectedMonth, setAppliedSelectedMonth] = useState(currentMonth);
+  const [appliedSelectedYear, setAppliedSelectedYear] = useState(currentYear);
 
-  // For custom filtering: filter table data by date range
-  const customFilteredItems =
-    customFrom && customTo
-      ? rejectItems.filter((item) => {
-          const itemDate = new Date(item.rejection_date);
-          return itemDate >= customFrom && itemDate <= getAdjustedCustomTo();
-        })
-      : [];
+  // When modals open, initialize temporary states to applied values
+  useEffect(() => {
+    if (openDateModal) {
+      setTempCustomFrom(appliedCustomFrom);
+      setTempCustomTo(appliedCustomTo);
+    }
+  }, [openDateModal, appliedCustomFrom, appliedCustomTo]);
 
-  const customDiseased = customFilteredItems.reduce((sum, item) => sum + Number(item.diseased || 0), 0);
-  const customPhysicallyDamage = customFilteredItems.reduce(
-    (sum, item) => sum + Number(item.physically_damaged || 0),
-    0
-  );
-  const customTooSmall = customFilteredItems.reduce((sum, item) => sum + Number(item.too_small || 0), 0);
+  useEffect(() => {
+    if (openMonthModal) {
+      setTempSelectedMonth(appliedSelectedMonth);
+      setTempSelectedYear(appliedSelectedYear);
+    }
+  }, [openMonthModal, appliedSelectedMonth, appliedSelectedYear]);
 
-  // Determine which metrics to display based on the selected filter
-  const diseasedMetric =
-    rejectFilter === "ALL"
-      ? overallDiseased
-      : rejectFilter === "LAST 7 DAYS"
-      ? diseasedLast7Days
-      : rejectFilter === "LAST 31 DAYS"
-      ? diseasedLast31Days
-      : rejectFilter === "CURRENT DAY"
-      ? diseasedCurrentDay
-      : rejectFilter === "CHOOSE DATE"
-      ? customDiseased
-      : overallDiseased;
-
-  const physicallyDamageMetric =
-    rejectFilter === "ALL"
-      ? overallPhysicallyDamage
-      : rejectFilter === "LAST 7 DAYS"
-      ? physicallyDamageLast7Days
-      : rejectFilter === "LAST 31 DAYS"
-      ? physicallyDamageLast31Days
-      : rejectFilter === "CURRENT DAY"
-      ? physicallyDamageCurrentDay
-      : rejectFilter === "CHOOSE DATE"
-      ? customPhysicallyDamage
-      : overallPhysicallyDamage;
-
-  const tooSmallMetric =
-    rejectFilter === "ALL"
-      ? overallTooSmall
-      : rejectFilter === "LAST 7 DAYS"
-      ? tooSmallLast7Days
-      : rejectFilter === "LAST 31 DAYS"
-      ? tooSmallLast31Days
-      : rejectFilter === "CURRENT DAY"
-      ? tooSmallCurrentDay
-      : rejectFilter === "CHOOSE DATE"
-      ? customTooSmall
-      : overallTooSmall;
-
-  const metricsLoading =
-    (rejectFilter === "ALL" &&
-      (overallDiseasedLoading || overallPhysicallyDamageLoading || overallTooSmallLoading)) ||
-    (rejectFilter === "LAST 7 DAYS" &&
-      (diseasedLast7DaysLoading || physicallyDamageLast7DaysLoading || tooSmallLast7DaysLoading)) ||
-    (rejectFilter === "LAST 31 DAYS" &&
-      (diseasedLast31DaysLoading || physicallyDamageLast31DaysLoading || tooSmallLast31DaysLoading)) ||
-    (rejectFilter === "CURRENT DAY" &&
-      (diseasedCurrentDayLoading || physicallyDamageCurrentDayLoading || tooSmallCurrentDayLoading)) ||
-    (rejectFilter === "CHOOSE DATE" && rejectLoading);
-
-  // Table data filtering: sort by rejection_date then filter by date and search term
-  const sortedRejectItems = [...rejectItems].sort(
-    (a, b) => new Date(b.rejection_date) - new Date(a.rejection_date)
+  // Compute filter description text for the header
+  const filterDescription = getFilterDescription(
+    rejectFilter,
+    appliedCustomFrom,
+    appliedCustomTo,
+    appliedSelectedMonth,
+    appliedSelectedYear
   );
 
+  // Filtering logic using applied states for modal-based filters
   const filterByDate = (item) => {
     const itemDate = new Date(item.rejection_date);
     const today = new Date();
-    if (rejectFilter === "ALL") return true;
-    if (rejectFilter === "LAST 7 DAYS") {
-      const pastDate = new Date();
-      pastDate.setDate(today.getDate() - 6);
-      return itemDate >= pastDate && itemDate <= today;
+    switch (rejectFilter) {
+      case "ALL":
+        return true;
+      case "CURRENT DAY":
+        return (
+          itemDate.getDate() === today.getDate() &&
+          itemDate.getMonth() === today.getMonth() &&
+          itemDate.getFullYear() === today.getFullYear()
+        );
+      case "LAST 7 DAYS": {
+        const pastDate = new Date();
+        pastDate.setDate(today.getDate() - 6);
+        return itemDate >= pastDate && itemDate <= today;
+      }
+      case "THIS MONTH":
+        return (
+          itemDate.getMonth() === today.getMonth() &&
+          itemDate.getFullYear() === today.getFullYear()
+        );
+      case "CHOOSE DATE": {
+        if (!appliedCustomFrom || !appliedCustomTo) return true;
+        const adjustedCustomTo = new Date(appliedCustomTo);
+        adjustedCustomTo.setHours(23, 59, 59, 999);
+        return itemDate >= appliedCustomFrom && itemDate <= adjustedCustomTo;
+      }
+      case "SELECT MONTH": {
+        if (!appliedSelectedMonth || !appliedSelectedYear) return true;
+        return (
+          itemDate.getMonth() + 1 === parseInt(appliedSelectedMonth) &&
+          itemDate.getFullYear() === parseInt(appliedSelectedYear)
+        );
+      }
+      default:
+        return true;
     }
-    if (rejectFilter === "THIS MONTH") {
-      return (
-        itemDate.getMonth() === today.getMonth() &&
-        itemDate.getFullYear() === today.getFullYear()
-      );
-    }
-    if (rejectFilter === "CURRENT DAY") {
-      return (
-        itemDate.getDate() === today.getDate() &&
-        itemDate.getMonth() === today.getMonth() &&
-        itemDate.getFullYear() === today.getFullYear()
-      );
-    }
-    if (rejectFilter === "CHOOSE DATE") {
-      if (!customFrom || !customTo) return true;
-      const adjustedCustomTo = getAdjustedCustomTo();
-      return itemDate >= customFrom && itemDate <= adjustedCustomTo;
-    }
-    return true;
   };
+
+  const sortedRejectItems = [...rejectItems].sort(
+    (a, b) => new Date(b.rejection_date) - new Date(a.rejection_date)
+  );
 
   const filteredRejectItems = sortedRejectItems.filter((item) => {
     const dateMatch = filterByDate(item);
@@ -203,26 +188,96 @@ const Rejected = () => {
     return dateMatch && (rejectionDate.includes(searchTerm) || comments.includes(searchTerm));
   });
 
-  // Handle filter change (opens modal if CHOOSE DATE is selected)
+  // Handle filter change for non-modal options.
   const handleFilterChange = (e) => {
     const value = e.target.value;
-    if (value === "CHOOSE DATE") {
-      setOpenDateModal(true);
-    } else {
+    // For modal based filters, the onClick on MenuItem will handle opening the modal.
+    if (value !== "CHOOSE DATE" && value !== "SELECT MONTH") {
       setRejectFilter(value);
     }
   };
 
-  // Apply custom date range from modal only on clicking Apply
+  // Apply handlers for modals: update applied values and active filter only on Apply click.
   const handleApplyCustomDates = () => {
-    if (customFrom && customTo && customFrom <= customTo) {
+    if (tempCustomFrom && tempCustomTo && tempCustomFrom <= tempCustomTo) {
+      setAppliedCustomFrom(tempCustomFrom);
+      setAppliedCustomTo(tempCustomTo);
       setRejectFilter("CHOOSE DATE");
       setOpenDateModal(false);
     }
   };
 
-  // Determine if the Apply button should be disabled
-  const isApplyDisabled = !customFrom || !customTo || customFrom > customTo;
+  const handleApplySelectedMonth = () => {
+    if (tempSelectedMonth && tempSelectedYear) {
+      setAppliedSelectedMonth(tempSelectedMonth);
+      setAppliedSelectedYear(tempSelectedYear);
+      setRejectFilter("SELECT MONTH");
+      setOpenMonthModal(false);
+    }
+  };
+
+  const isApplyDisabled = !tempCustomFrom || !tempCustomTo || tempCustomFrom > tempCustomTo;
+
+  // Build the no-data message based on the active filter.
+  const getNoDataMessage = () => {
+    switch (rejectFilter) {
+      case "CURRENT DAY": {
+        const today = new Date();
+        const formatted = today.toLocaleDateString("default", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        });
+        return `No data for current day (${formatted})`;
+      }
+      case "LAST 7 DAYS": {
+        const today = new Date();
+        const pastDate = new Date();
+        pastDate.setDate(today.getDate() - 6);
+        const formattedStart = pastDate.toLocaleDateString("default", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        });
+        const formattedEnd = today.toLocaleDateString("default", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        });
+        return `No data for last 7 days (${formattedStart} - ${formattedEnd})`;
+      }
+      case "THIS MONTH": {
+        const today = new Date();
+        const formatted = today.toLocaleDateString("default", { month: "long", year: "numeric" });
+        return `No data for this month (${formatted})`;
+      }
+      case "CHOOSE DATE": {
+        const from = appliedCustomFrom
+          ? appliedCustomFrom.toLocaleDateString("default", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })
+          : "";
+        const to = appliedCustomTo
+          ? appliedCustomTo.toLocaleDateString("default", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })
+          : "";
+        return `No data for chosen date range (${from} - ${to})`;
+      }
+      case "SELECT MONTH": {
+        const monthIndex = parseInt(appliedSelectedMonth) - 1;
+        const dateForMonth = new Date(appliedSelectedYear, monthIndex);
+        const formatted = dateForMonth.toLocaleDateString("default", { month: "long", year: "numeric" });
+        return `No data for selected month (${formatted})`;
+      }
+      default:
+        return "No data";
+    }
+  };
 
   const modalStyle = {
     position: "absolute",
@@ -238,33 +293,6 @@ const Rejected = () => {
 
   return (
     <Container maxWidth="xxl" sx={{ p: 3 }}>
-      {/* Metrics Section */}
-      {/* <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
-          <Metric
-            title="Diseased"
-            value={diseasedMetric}
-            loading={metricsLoading}
-            icon={<BugReportIcon sx={{ fontSize: "4rem", color: "#fff" }} />}
-          />
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Metric
-            title="Physically Damaged"
-            value={physicallyDamageMetric}
-            loading={metricsLoading}
-            icon={<ReportProblemIcon sx={{ fontSize: "4rem", color: "#fff" }} />}
-          />
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Metric
-            title="Too Small"
-            value={tooSmallMetric}
-            loading={metricsLoading}
-            icon={<RemoveCircleOutlineIcon sx={{ fontSize: "4rem", color: "#fff" }} />}
-          />
-        </Grid>
-      </Grid> */}
       {/* Filter/Search and Table Section */}
       <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 3, mt: 3 }}>
         <Box
@@ -277,7 +305,12 @@ const Rejected = () => {
           }}
         >
           <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-            REJECTED ITEMS
+            REJECTED ITEMS{" "}
+            {filterDescription && (
+              <span style={{ fontSize: "0.8rem", fontWeight: "normal", marginLeft: "10px" }}>
+                ({filterDescription})
+              </span>
+            )}
           </Typography>
           <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
             <TextField
@@ -295,15 +328,30 @@ const Rejected = () => {
               }}
               sx={{ width: { xs: "100%", sm: "100%", md: "auto" } }}
             />
-            <FormControl variant="outlined" size="small" sx={{ width: { xs: "100%", sm: "100%", md: "auto" } }}>
+            <FormControl
+              variant="outlined"
+              size="small"
+              sx={{ width: { xs: "100%", sm: "100%", md: "auto" } }}
+            >
               <InputLabel>Filter</InputLabel>
               <Select label="Filter" value={rejectFilter} onChange={handleFilterChange}>
-                <MenuItem value="ALL">ALL</MenuItem>
-                <MenuItem value="CURRENT DAY">CURRENT DAY</MenuItem>
-                <MenuItem value="LAST 7 DAYS">LAST 7 DAYS</MenuItem>
-                <MenuItem value="THIS MONTH">THIS MONTH</MenuItem>
+                <MenuItem value="ALL">
+                  <ViewListIcon fontSize="small" sx={{ mr: 1 }} /> ALL
+                </MenuItem>
+                <MenuItem value="CURRENT DAY">
+                  <TodayIcon fontSize="small" sx={{ mr: 1 }} /> CURRENT DAY
+                </MenuItem>
+                <MenuItem value="LAST 7 DAYS">
+                  <DateRangeIcon fontSize="small" sx={{ mr: 1 }} /> LAST 7 DAYS
+                </MenuItem>
+                <MenuItem value="THIS MONTH">
+                  <CalendarMonthIcon fontSize="small" sx={{ mr: 1 }} /> THIS MONTH
+                </MenuItem>
+                <MenuItem value="SELECT MONTH" onClick={() => setOpenMonthModal(true)}>
+                  <CalendarViewMonthIcon fontSize="small" sx={{ mr: 1 }} /> SELECT MONTH
+                </MenuItem>
                 <MenuItem value="CHOOSE DATE" onClick={() => setOpenDateModal(true)}>
-                  CHOOSE DATE
+                  <CalendarTodayIcon fontSize="small" sx={{ mr: 1 }} /> CHOOSE DATE
                 </MenuItem>
               </Select>
             </FormControl>
@@ -320,7 +368,11 @@ const Rejected = () => {
                   <TableRow sx={{ backgroundColor: "#06402B" }}>
                     {["Diseased", "Physically Damaged", "Too Small", "Comments", "Rejection Date"].map(
                       (header) => (
-                        <TableCell key={header} align="center" sx={{ fontWeight: "bold", fontSize: "1.1rem", color: "#fff" }}>
+                        <TableCell
+                          key={header}
+                          align="center"
+                          sx={{ fontWeight: "bold", fontSize: "1.1rem", color: "#fff" }}
+                        >
                           {header}
                         </TableCell>
                       )
@@ -328,17 +380,26 @@ const Rejected = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {filteredRejectItems
-                    .slice(rejectPage * rowsPerPage, rejectPage * rowsPerPage + rowsPerPage)
-                    .map((item) => (
-                      <TableRow key={item.rejection_id} hover>
-                        <TableCell align="center">{item.diseased}</TableCell>
-                        <TableCell align="center">{item.physically_damaged}</TableCell>
-                        <TableCell align="center">{item.too_small}</TableCell>
-                        <TableCell align="center">{item.comments}</TableCell>
-                        <TableCell align="center">{item.rejection_date}</TableCell>
-                      </TableRow>
-                    ))}
+                  {filteredRejectItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center">
+                      <Alert variant="filled" severity="warning">{getNoDataMessage()}</Alert>
+                       
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredRejectItems
+                      .slice(rejectPage * rowsPerPage, rejectPage * rowsPerPage + rowsPerPage)
+                      .map((item) => (
+                        <TableRow key={item.rejection_id} hover>
+                          <TableCell align="center">{item.diseased}</TableCell>
+                          <TableCell align="center">{item.physically_damaged}</TableCell>
+                          <TableCell align="center">{item.too_small}</TableCell>
+                          <TableCell align="center">{item.comments}</TableCell>
+                          <TableCell align="center">{item.rejection_date}</TableCell>
+                        </TableRow>
+                      ))
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -356,7 +417,7 @@ const Rejected = () => {
         </Box>
       </Paper>
 
-      {/* Custom Date Modal */}
+      {/* CHOOSE DATE Modal */}
       <Modal open={openDateModal} onClose={() => setOpenDateModal(false)}>
         <Box sx={modalStyle}>
           <Typography variant="h6" sx={{ mb: 2 }}>
@@ -365,15 +426,15 @@ const Rejected = () => {
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <DatePicker
               label="FROM"
-              value={customFrom}
-              onChange={(newValue) => setCustomFrom(newValue)}
+              value={tempCustomFrom}
+              onChange={(newValue) => setTempCustomFrom(newValue)}
               renderInput={(params) => <TextField {...params} fullWidth sx={{ mb: 4 }} />}
             />
             <Divider sx={{ my: 2, bgcolor: "grey.300" }} />
             <DatePicker
               label="TO"
-              value={customTo}
-              onChange={(newValue) => setCustomTo(newValue)}
+              value={tempCustomTo}
+              onChange={(newValue) => setTempCustomTo(newValue)}
               renderInput={(params) => <TextField {...params} fullWidth sx={{ mb: 4 }} />}
             />
           </LocalizationProvider>
@@ -382,8 +443,69 @@ const Rejected = () => {
             <Button onClick={() => setOpenDateModal(false)} color="secondary">
               Cancel
             </Button>
-            <Button onClick={handleApplyCustomDates} variant="contained" color="primary" disabled={isApplyDisabled}>
+            <Button
+              onClick={handleApplyCustomDates}
+              variant="contained"
+              color="primary"
+              disabled={isApplyDisabled}
+            >
               Apply
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
+
+      {/* SELECT MONTH Modal */}
+      <Modal open={openMonthModal} onClose={() => setOpenMonthModal(false)} aria-labelledby="hardware-month-modal">
+        <Box sx={modalStyle}>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Select Month and Year
+          </Typography>
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel id="hardware-month-label">Month</InputLabel>
+            <Select
+              labelId="hardware-month-label"
+              value={tempSelectedMonth}
+              label="Month"
+              onChange={(e) => setTempSelectedMonth(e.target.value)}
+            >
+              {Array.from({ length: 12 }, (_, i) => (
+                <MenuItem key={i + 1} value={i + 1}>
+                  {new Date(0, i).toLocaleString("default", { month: "long" })}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel id="hardware-year-label">Year</InputLabel>
+            <Select
+              labelId="hardware-year-label"
+              value={tempSelectedYear}
+              label="Year"
+              onChange={(e) => setTempSelectedYear(e.target.value)}
+            >
+              {Array.from({ length: 11 }, (_, i) => 2020 + i).map((year) => (
+                <MenuItem key={year} value={year}>
+                  {year}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Divider sx={{ my: 3 }} />
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+            <Button
+              onClick={() => {
+                setOpenMonthModal(false);
+                setTempSelectedMonth(appliedSelectedMonth);
+                setTempSelectedYear(appliedSelectedYear);
+              }}
+              variant="outlined"
+              color="secondary"
+            >
+              CANCEL
+            </Button>
+            <Button onClick={handleApplySelectedMonth} variant="contained" color="primary">
+              APPLY
             </Button>
           </Box>
         </Box>

@@ -3,9 +3,7 @@ import { useState, useEffect } from "react";
 import { io } from "socket.io-client";
 
 // Create a single socket connection instance
-// Consider moving this to a separate module if used across components.
 const socket = io("http://localhost:3001");
-
 // Use your API base URL (consider using an environment variable)
 const baseUrl = "http://localhost:3001";
 
@@ -15,6 +13,9 @@ export const useActivityLogs = () => {
   const [userActivityLogs, setUserActivityLogs] = useState([]);
   const [rejectionLogs, setRejectionLogs] = useState([]);
   const [maintenanceLogs, setMaintenanceLogs] = useState([]);
+  const [hardwareComponentsLogs, setHardwareComponentsLogs] = useState([]);
+  const [hardwareStatusLogs, setHardwareStatusLogs] = useState([]);
+  const [controlsLog, setControlsLog] = useState([]);
   const [logsLoading, setLogsLoading] = useState(true);
   // Store errors as an object to keep track of which route failed
   const [error, setError] = useState({});
@@ -30,6 +31,9 @@ export const useActivityLogs = () => {
         axios.get(`${baseUrl}/logs/rejection`, { signal: controller.signal }),
         axios.get(`${baseUrl}/logs/maintenance`, { signal: controller.signal }),
         axios.get(`${baseUrl}/logs/harvest`, { signal: controller.signal }),
+        axios.get(`${baseUrl}/logs/hardware_components`, { signal: controller.signal }),
+        axios.get(`${baseUrl}/logs/hardware_status`, { signal: controller.signal }),
+        axios.get(`${baseUrl}/logs/control/logsd`, { signal: controller.signal }),
       ]);
 
       // Reset the error object before processing
@@ -70,11 +74,29 @@ export const useActivityLogs = () => {
       } else {
         setError(prev => ({ ...prev, harvest: "Failed to fetch harvest logs" }));
       }
+
+      // Hardware Components logs
+      if (results[5].status === "fulfilled") {
+        setHardwareComponentsLogs(results[5].value.data.hardwareComponentsLogsTable || []);
+      } else {
+        setError(prev => ({ ...prev, hardware_components: "Failed to fetch hardware components logs" }));
+      }
+
+      // Hardware Status logs
+      if (results[6].status === "fulfilled") {
+        setHardwareStatusLogs(results[6].value.data.hardwareStatusLogsTable || []);
+      } else {
+        setError(prev => ({ ...prev, hardware_status: "Failed to fetch hardware status logs" }));
+      }
+      if (results[7].status === "fulfilled") {
+        setControlsLog(results[7].value.data.controlsLogTable || []);
+      } else {
+        setError(prev => ({ ...prev, controls: "Failed to fetch controls logs" }));
+      }
     };
 
     fetchLogs()
       .catch(err => {
-        // Log unexpected errors (other than individual fetch failures)
         console.error("Unexpected error: ", err);
       })
       .finally(() => {
@@ -89,6 +111,9 @@ export const useActivityLogs = () => {
         setRejectionLogs(data.RejectionTable || []);
         setMaintenanceLogs(data.MaintenanceTable || []);
         setHarvestLogs(data.harvestLogsTable || []);
+        setHardwareComponentsLogs(data.hardwareComponentsLogsTable || []);
+        setHardwareStatusLogs(data.hardwareStatusLogsTable || []);
+        setControlsLog(data.controlsLogTable || []);
       }
     };
 
@@ -100,7 +125,7 @@ export const useActivityLogs = () => {
       controller.abort();
       socket.off("ActivityLogsData", handleActivityLogsData);
     };
-  }, []); // Empty dependency array since baseUrl is constant
+  }, []);
 
   return {
     adminActivityLogs,
@@ -108,6 +133,9 @@ export const useActivityLogs = () => {
     rejectionLogs,
     maintenanceLogs,
     harvestLogs,
+    hardwareComponentsLogs,
+    hardwareStatusLogs,
+    controlsLog,
     logsLoading,
     error,
   };

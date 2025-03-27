@@ -18,7 +18,7 @@ const ForgotPassword = async (req, res) => {
 
         const config = {
             method: "post",
-            url: "https://agreemo-api.onrender.com/admin",
+            url: "https://agreemo-api-v2.onrender.com/admin",
             headers: {
                 "x-api-key": apiKey,
             },

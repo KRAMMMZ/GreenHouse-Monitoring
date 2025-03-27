@@ -2,7 +2,7 @@ import axios from "axios";
 
 const totalHarvests = async (req, res) => {
   try {
-    const response = await axios.get('https://agreemo-api.onrender.com/harvests', {
+    const response = await axios.get('https://agreemo-api-v2.onrender.com/harvests', {
       headers: {
         'x-api-key': process.env.API_KEY // Use backend environment variable
       }

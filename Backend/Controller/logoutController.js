@@ -10,7 +10,7 @@ const logout = async (req, res) => {
 
   const config = {
     method: "post",
-    url: "https://agreemo-api.onrender.com/admin/logout",
+    url: "https://agreemo-api-v2.onrender.com/admin/logout",
     headers: {
       "x-api-key": process.env.API_KEY || "fallback_key",
     },

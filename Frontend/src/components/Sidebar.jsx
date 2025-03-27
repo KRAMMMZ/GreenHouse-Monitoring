@@ -10,7 +10,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import { Typography, Tooltip, Menu, MenuItem } from "@mui/material";
+import { Typography, Menu, MenuItem } from "@mui/material";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import EventNoteIcon from "@mui/icons-material/EventNote";
 import BarChartIcon from "@mui/icons-material/BarChart";
@@ -25,10 +25,14 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import BuildIcon from "@mui/icons-material/Build";
 import SettingsIcon from "@mui/icons-material/Settings";
 import DevicesIcon from "@mui/icons-material/Devices";
+import InventoryIcon from "@mui/icons-material/Inventory";
+ 
+import LocalFloristIcon from "@mui/icons-material/LocalFlorist";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import MenuPopupState from "./UserLogout";
 import ChangePasswordModal from "./ChangePassModal";
+import ProfileModal from "./ProfileModal"; // <--- NEW
 
 const drawerWidth = 300;
 
@@ -59,27 +63,27 @@ const closedMixin = (theme) => ({
   height: "100vh",
 });
 
-const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== "open" })(
-  ({ theme, open }) => ({
+const Drawer = styled(MuiDrawer, {
+  shouldForwardProp: (prop) => prop !== "open",
+})(({ theme, open }) => ({
+  position: "fixed",
+  width: open ? drawerWidth : 0,
+  flexShrink: 0,
+  whiteSpace: "nowrap",
+  boxSizing: "border-box",
+  "& .MuiDrawer-paper": {
     position: "fixed",
-    width: open ? drawerWidth : 0,
-    flexShrink: 0,
-    whiteSpace: "nowrap",
-    boxSizing: "border-box",
-    "& .MuiDrawer-paper": {
-      position: "fixed",
-      width: drawerWidth,
-      height: "100vh",
-      overflowX: "hidden",
-      transition: theme.transitions.create("width", {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.standard,
-      }),
-      ...(!open && closedMixin(theme)),
-      ...(open && openedMixin(theme)),
-    },
-  })
-);
+    width: drawerWidth,
+    height: "100vh",
+    overflowX: "hidden", 
+    transition: theme.transitions.create("width", {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.standard,
+    }),
+    ...(!open && closedMixin(theme)),
+    ...(open && openedMixin(theme)),
+  },
+}));
 
 const DrawerHeader = styled("div")(({ theme }) => ({
   display: "flex",
@@ -89,10 +93,12 @@ const DrawerHeader = styled("div")(({ theme }) => ({
   ...theme.mixins.toolbar,
 }));
 
-// Non-dropdown menu items
+// Non-dropdown menu items reordered
 const menuItems = [
   { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
   { text: "Graphs", icon: <BarChartIcon />, path: "/graphs" },
+  { text: "Planted Crops", icon: <LocalFloristIcon />, path: "/planted-crops" },
+  { text: "Inventory", icon: <InventoryIcon />, path: "/inventory" },
   { text: "User Management", icon: <GroupIcon />, path: "/userManagement" },
   { text: "Activity Logs", icon: <EventNoteIcon />, path: "/activitylogs" },
 ];
@@ -105,8 +111,16 @@ const harvestSubItems = [
 
 const maintenanceSubItems = [
   { label: "Reports", path: "/reports", icon: <ReportIcon /> },
-  { label: "Hardware Components", path: "/hardware-components", icon: <DevicesIcon /> },
-  { label: "Hardware Status", path: "/hardware-status", icon: <SettingsIcon /> },
+  {
+    label: "Hardware Components",
+    path: "/hardware-components",
+    icon: <DevicesIcon />,
+  },
+  {
+    label: "Hardware Status",
+    path: "/hardware-status",
+    icon: <SettingsIcon />,
+  },
 ];
 
 // Common style objects
@@ -134,6 +148,9 @@ const Sidebar = ({ open, setOpen }) => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [openChangePassModal, setOpenChangePassModal] = useState(false);
 
+  // NEW: Profile modal state
+  const [openProfileModal, setOpenProfileModal] = useState(false);
+
   // Dropdown states for Harvest and Maintenance
   const [harvestOpen, setHarvestOpen] = useState(false);
   const [harvestAnchorEl, setHarvestAnchorEl] = useState(null);
@@ -151,8 +168,14 @@ const Sidebar = ({ open, setOpen }) => {
     navigate(path);
   };
 
+  // Functions for change password modal
   const changePassModal = () => setOpenChangePassModal(true);
   const closeChangePassModal = () => setOpenChangePassModal(false);
+
+  // NEW: Functions for profile modal
+  const showProfileModal = () => setOpenProfileModal(true);
+  const closeProfileModal = () => setOpenProfileModal(false);
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -162,7 +185,8 @@ const Sidebar = ({ open, setOpen }) => {
     }
   };
 
-  const isHarvestActive = selectedItem === "/harvests" || selectedItem === "/rejected";
+  const isHarvestActive =
+    selectedItem === "/harvests" || selectedItem === "/rejected";
   const isMaintenanceActive =
     selectedItem === "/reports" ||
     selectedItem === "/hardware-components" ||
@@ -170,10 +194,17 @@ const Sidebar = ({ open, setOpen }) => {
 
   // Render a regular (non-dropdown) menu item
   const renderMenuItem = (item) => (
-    <ListItem key={item.text} disablePadding sx={{ display: "flex", justifyContent: "center" }}>
+    <ListItem
+      key={item.text}
+      disablePadding
+      sx={{ display: "flex", justifyContent: "center" }}
+    >
       <ListItemButton
         onClick={() => handleNavigation(item.path)}
-        sx={{ ...commonButtonStyle, ...getActiveStyle(selectedItem === item.path) }}
+        sx={{
+          ...commonButtonStyle,
+          ...getActiveStyle(selectedItem === item.path),
+        }}
       >
         <ListItemIcon
           sx={{
@@ -202,9 +233,21 @@ const Sidebar = ({ open, setOpen }) => {
   );
 
   // Render a dropdown button (for expanded sidebar)
-  const renderDropdownButton = ({ label, icon, active, openState, onClick }) => (
+  const renderDropdownButton = ({
+    label,
+    icon,
+    active,
+    openState,
+    onClick,
+  }) => (
     <ListItem disablePadding sx={{ display: "flex", justifyContent: "center" }}>
-      <ListItemButton onClick={onClick} sx={{ ...commonButtonStyle, ...getActiveStyle(active) }}>
+      <ListItemButton
+        onClick={onClick}
+        sx={{
+          ...commonButtonStyle,
+          ...getActiveStyle(active),
+        }}
+      >
         <ListItemIcon
           sx={{
             minWidth: 0,
@@ -212,7 +255,6 @@ const Sidebar = ({ open, setOpen }) => {
             justifyContent: "center",
             color: active ? "#000000" : "#FFFFFF",
             "& svg": { fontSize: 25, verticalAlign: "middle" },
-            
           }}
         >
           {icon}
@@ -318,11 +360,15 @@ const Sidebar = ({ open, setOpen }) => {
 
   // Handlers for dropdown clicks (expanded vs. collapsed behavior)
   const handleHarvestClick = (event) => {
-    open ? setHarvestOpen(!harvestOpen) : setHarvestAnchorEl(event.currentTarget);
+    open
+      ? setHarvestOpen(!harvestOpen)
+      : setHarvestAnchorEl(event.currentTarget);
   };
 
   const handleMaintenanceClick = (event) => {
-    open ? setMaintenanceOpen(!maintenanceOpen) : setMaintenanceAnchorEl(event.currentTarget);
+    open
+      ? setMaintenanceOpen(!maintenanceOpen)
+      : setMaintenanceAnchorEl(event.currentTarget);
   };
 
   return (
@@ -347,12 +393,15 @@ const Sidebar = ({ open, setOpen }) => {
             )}
           </IconButton>
         </DrawerHeader>
+
         <Divider sx={{ my: 2, backgroundColor: "#FFFFFF" }} />
+
         <List sx={{ mx: 2, display: "flex", flexDirection: "column", height: "100%" }}>
           <div style={{ flexGrow: 1 }}>
-            {menuItems.slice(0, 2).map(renderMenuItem)}
+            {/* Top group: Dashboard, Graphs, Greenhouse, Inventory */}
+            {menuItems.slice(0, 4).map(renderMenuItem)}
 
-            {/* Harvest Dropdown */}
+            {/* Dropdown menus remain as before */}
             {renderDropdownButton({
               label: "Harvests Items",
               icon: <GrainIcon />,
@@ -362,7 +411,6 @@ const Sidebar = ({ open, setOpen }) => {
             })}
             {open && renderDropdownCollapse(harvestSubItems, harvestOpen)}
 
-            {/* Maintenance Dropdown */}
             {renderDropdownButton({
               label: "Maintenance",
               icon: <BuildIcon />,
@@ -372,16 +420,30 @@ const Sidebar = ({ open, setOpen }) => {
             })}
             {open && renderDropdownCollapse(maintenanceSubItems, maintenanceOpen)}
 
-            {menuItems.slice(2).map(renderMenuItem)}
+            {/* Remaining items */}
+            {menuItems.slice(4).map(renderMenuItem)}
           </div>
+
           <Divider sx={{ my: 1, backgroundColor: "#FFFFFF" }} />
-          <MenuPopupState handleLogout={handleLogout} changePassModal={changePassModal} />
+
+          {/* Pass the new showProfileModal prop to MenuPopupState */}
+          <MenuPopupState
+            handleLogout={handleLogout}
+            changePassModal={changePassModal}
+            showProfileModal={showProfileModal}
+          />
+
+          {/* Existing modals */}
           <ChangePasswordModal open={openChangePassModal} onClose={closeChangePassModal} />
+          {/* NEW: Profile modal */}
+          <ProfileModal open={openProfileModal} onClose={closeProfileModal} />
         </List>
       </Drawer>
 
       {/* Collapsed dropdown menus */}
-      {renderCollapsedMenu(harvestAnchorEl, harvestSubItems, () => setHarvestAnchorEl(null))}
+      {renderCollapsedMenu(harvestAnchorEl, harvestSubItems, () =>
+        setHarvestAnchorEl(null)
+      )}
       {renderCollapsedMenu(maintenanceAnchorEl, maintenanceSubItems, () =>
         setMaintenanceAnchorEl(null)
       )}

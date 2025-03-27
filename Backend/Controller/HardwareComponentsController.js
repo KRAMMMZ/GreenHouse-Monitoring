@@ -6,7 +6,7 @@ const HardwareComponents = async (req,res ) => {
 
    
      
-    const response = await axios.get('https://agreemo-api.onrender.com/hardware_components', {
+    const response = await axios.get('https://agreemo-api-v2.onrender.com/hardware_components', {
         headers: {
           'x-api-key': process.env.API_KEY, // Ensure the API key is correctly set isn your environment variables
         },

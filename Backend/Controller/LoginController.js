@@ -8,10 +8,10 @@ const login = async (req, res) => {
   const { email, password } = req.body;
 
   const data = qs.stringify({ email, password });
-
+ 
   const configAxios = {
     method: "post",
-    url: "https://agreemo-api.onrender.com/admin/login",
+    url: "https://agreemo-api-v2.onrender.com/admin/login",
     headers: {
       "x-api-key": process.env.API_KEY || "fallback_key",
     },

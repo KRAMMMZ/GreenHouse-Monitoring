@@ -55,6 +55,12 @@ const useHardwareComponentsData = () => {
   return { hardwareComponentsData, loading };
 };
 
+
+const useHardwareComponents= () => {
+  const { hardwareComponentsData, loading } = useHardwareComponentsData();
+  return { hardwareComponents: hardwareComponentsData, hardwareStatusLoading: loading };
+};
+
 /**
  * useHardwareComponentsToday
  * Returns the count of hardware components records installed today.
@@ -109,7 +115,7 @@ const useFilteredHardwareComponents = ({
     } else if (filterOption === "last7Days") {
       filtered = filtered.filter((item) => {
         const itemDate = new Date(item.date_of_installation);
-        const sevenDaysAgo = new Date(today);
+        const sevenDaysAgo = new Date(today); 
         sevenDaysAgo.setDate(today.getDate() - 7);
         return itemDate >= sevenDaysAgo && itemDate <= today;
       });
@@ -140,6 +146,7 @@ const useFilteredHardwareComponents = ({
 };
 
 export { 
+  useHardwareComponents,
   useHardwareComponentsToday, 
   useFilteredHardwareComponents 
 };

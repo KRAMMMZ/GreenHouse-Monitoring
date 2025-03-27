@@ -25,14 +25,18 @@ import DevicesIcon from "@mui/icons-material/Devices";
 import SettingsIcon from "@mui/icons-material/Settings";
 import LockIcon from "@mui/icons-material/Lock";
 import LogoutIcon from "@mui/icons-material/Logout";
+import InventoryIcon from "@mui/icons-material/Inventory";
+import LocalFloristIcon from "@mui/icons-material/LocalFlorist";
 
 import { useAuth } from "../contexts/AuthContext";
 import ChangePasswordModal from "./ChangePassModal";
 
-// Main menu items (removed "Reports" because it now lives in Maintenance dropdown)
+// Main menu items (with new items added and ordered)
 const menuItems = [
   { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
   { text: "Graphs", icon: <BarChartIcon />, path: "/graphs" },
+  { text: "Planted Crops", icon: <LocalFloristIcon />, path: "/planted-crops" },
+  { text: "Inventory", icon: <InventoryIcon />, path: "/inventory" },
   { text: "User Management", icon: <GroupIcon />, path: "/userManagement" },
   { text: "Activity Logs", icon: <EventNoteIcon />, path: "/activitylogs" },
 ];

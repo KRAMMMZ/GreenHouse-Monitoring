@@ -6,7 +6,7 @@ const Maintenance = async (req,res ) => {
 
    
      
-    const response = await axios.get('https://agreemo-api.onrender.com/maintenance', {
+    const response = await axios.get('https://agreemo-api-v2.onrender.com/maintenance', {
         headers: {
           'x-api-key': process.env.API_KEY, // Ensure the API key is correctly set isn your environment variables
         },

@@ -19,7 +19,7 @@ const ChangePassword = async (req, res) => {
         console.log("Sending to External API:", requestBody);
 
         const response = await axios.put(
-            `https://agreemo-api.onrender.com/admin`,
+            `https://agreemo-api-v2.onrender.com/admin`,
             requestBody,
             {
                 headers: {

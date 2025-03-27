@@ -1,423 +1,377 @@
-  import React, { useState } from "react";
-  import {
-    Container,
-    Box,
-    Paper,
-    Grid,
-    TablePagination,
-  } from "@mui/material";
-  import { useHarvestItems } from "../hooks/HarvestHooks";
-  import HarvestSkeliton from "../skelitons/HarvestSkeliton";
-  import DashboardSkeliton from "../skelitons/DashboardSkeliton";
-  import {
-    useAcceptedOverall,
-    useRejectedOverall,
-    useTotalOverallYield,
-    useAcceptedLast7Days,
-    useRejectedLast7Days,
-    useTotalYieldLast7Days,
-    useAcceptedToday,
-    useRejectedToday,
-    useTotalYieldToday,
-  } from "../hooks/HarvestHooks";
-  import FilterSearchSection from "../props/FilterSearchSection";
-  import HarvestTable from "../props/HarvestTable";
-  import CustomDateModal from "../props/CustomDateModal";
-  import Metric from "../props/MetricSection";
+import React, { useState, useMemo, useCallback } from "react";
+import {
+  Container,
+  Box,
+  Paper,
+  TablePagination,
+  Divider,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Typography,
+  Modal,
+} from "@mui/material";
+import { useHarvestItems } from "../hooks/HarvestHooks";
+import HarvestSkeliton from "../skelitons/HarvestSkeliton";
+import FilterSearchSection from "../props/FilterSearchSection";
+import HarvestTable from "../props/HarvestTable";
+import CustomDateModal from "../props/CustomDateModal";
 
-  import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-  import HighlightOffIcon from "@mui/icons-material/HighlightOff";
-  import GrainIcon from "@mui/icons-material/Grain";
-  import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+// Helper function to format dates
+function formatDate(date) {
+  return date.toLocaleDateString("default", { month: "long", day: "numeric", year: "numeric" });
+}
 
-  // Helper function to compare only the date parts (ignoring time)
-  const isSameDay = (date1, date2) => {
-    return (
-      date1.getFullYear() === date2.getFullYear() &&
-      date1.getMonth() === date2.getMonth() &&
-      date1.getDate() === date2.getDate()
-    );
-  };
+// Function to generate filter description text (for the header)
+function getFilterDescription(filter, customFrom, customTo, selectedMonth, selectedYear) {
+  if (filter === "ALL" || filter === "NONE") return "";
+  const today = new Date();
+  if (filter === "CURRENT DAY") {
+    return `CURRENT DAY: ${formatDate(today)}`;
+  }
+  if (filter === "LAST 7 DAYS") {
+    const endDate = new Date();
+    const startDate = new Date();
+    // Adjusting to show 7 days including today
+    startDate.setDate(endDate.getDate() - 6);
+    return `LAST 7 DAYS: ${formatDate(startDate)} - ${formatDate(endDate)}`;
+  }
+  if (filter === "THIS MONTH") {
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    return `THIS MONTH: ${formatDate(firstDayOfMonth)} - ${formatDate(lastDayOfMonth)}`;
+  }
+  if (filter === "SELECT MONTH" && selectedMonth && selectedYear) {
+    const firstDay = new Date(selectedYear, selectedMonth - 1, 1);
+    const lastDay = new Date(selectedYear, selectedMonth, 0);
+    return `SELECT MONTH: ${formatDate(firstDay)} - ${formatDate(lastDay)}`;
+  }
+  if (filter === "CHOOSE DATE" && customFrom && customTo) {
+    return `CUSTOM: ${formatDate(new Date(customFrom))} - ${formatDate(new Date(customTo))}`;
+  }
+  return "";
+}
 
-  const Harvest = () => {
-    const { harvestItems, harvestLoading } = useHarvestItems();
-    const [harvestPage, setHarvestPage] = useState(0);
-    const rowsPerPage = 10;
-    const [harvestSearchTerm, setHarvestSearchTerm] = useState("");
-    const [harvestFilter, setHarvestFilter] = useState("ALL");
+const Harvest = () => {
+  const { harvestItems, harvestLoading } = useHarvestItems();
+  const [harvestPage, setHarvestPage] = useState(0);
+  const rowsPerPage = 10;
+  const [harvestSearchTerm, setHarvestSearchTerm] = useState("");
+  const [harvestFilter, setHarvestFilter] = useState("ALL");
 
-    // Custom date state
-    const [openDateModal, setOpenDateModal] = useState(false);
-    const [customFrom, setCustomFrom] = useState(null);
-    const [customTo, setCustomTo] = useState(null);
+  // CHOOSE DATE state (delayed application)
+  const [openDateModal, setOpenDateModal] = useState(false);
+  const [tempCustomFrom, setTempCustomFrom] = useState(null);
+  const [tempCustomTo, setTempCustomTo] = useState(null);
+  const [appliedCustomFrom, setAppliedCustomFrom] = useState(null);
+  const [appliedCustomTo, setAppliedCustomTo] = useState(null);
 
-    // Metrics hooks for overall, last 7 days, etc.
-    const { overallAccepted, overallAcceptedLoading } = useAcceptedOverall();
-    const { overallRejected, overallRejectedLoading } = useRejectedOverall();
-    const { overallTotalYield, overallTotalYieldLoading } = useTotalOverallYield();
-    const { acceptedLast7Days, acceptedLast7DaysLoading } = useAcceptedLast7Days();
-    const { rejectedLast7Days, rejectedLast7DaysLoading } = useRejectedLast7Days();
-    const { totalYieldLast7Days, totalYieldLast7DaysLoading } = useTotalYieldLast7Days();
+  // SELECT MONTH state (delayed application)
+  const currentMonth = (new Date().getMonth() + 1).toString();
+  const currentYear = new Date().getFullYear().toString();
+  const [openMonthModal, setOpenMonthModal] = useState(false);
+  const [tempSelectedMonth, setTempSelectedMonth] = useState(currentMonth);
+  const [tempSelectedYear, setTempSelectedYear] = useState(currentYear);
+  const [appliedSelectedMonth, setAppliedSelectedMonth] = useState(currentMonth);
+  const [appliedSelectedYear, setAppliedSelectedYear] = useState(currentYear);
 
-    // CURRENT DAY hooks
-    const { todayAccepted, todayAcceptedLoading } = useAcceptedToday();
-    const { todayRejected, todayRejectedLoading } = useRejectedToday();
-    const { todayTotalYield, todayTotalYieldLoading } = useTotalYieldToday();
+  // Calculate filter description to pass to the header
+  const filterDescription = useMemo(
+    () =>
+      getFilterDescription(
+        harvestFilter,
+        appliedCustomFrom,
+        appliedCustomTo,
+        appliedSelectedMonth,
+        appliedSelectedYear
+      ),
+    [harvestFilter, appliedCustomFrom, appliedCustomTo, appliedSelectedMonth, appliedSelectedYear]
+  );
 
-    // THIS MONTH metrics (computed inline)
-    const thisMonthAccepted = harvestItems
-      .filter((item) => {
-        const date = new Date(item.harvest_date);
-        const today = new Date();
-        return (
-          date.getMonth() === today.getMonth() &&
-          date.getFullYear() === today.getFullYear()
-        );
-      })
-      .reduce((sum, item) => sum + item.accepted, 0);
-    const thisMonthRejected = harvestItems
-      .filter((item) => {
-        const date = new Date(item.harvest_date);
-        const today = new Date();
-        return (
-          date.getMonth() === today.getMonth() &&
-          date.getFullYear() === today.getFullYear()
-        );
-      })
-      .reduce((sum, item) => sum + item.total_rejected, 0);
-    const thisMonthTotalYield = harvestItems
-      .filter((item) => {
-        const date = new Date(item.harvest_date);
-        const today = new Date();
-        return (
-          date.getMonth() === today.getMonth() &&
-          date.getFullYear() === today.getFullYear()
-        );
-      })
-      .reduce((sum, item) => sum + item.total_yield, 0);
-
-    // CHOOSE DATE metrics: include all items whose harvest_date falls between customFrom and customTo (inclusive)
-    const customAccepted =
-      customFrom && customTo
-        ? harvestItems
-            .filter((item) => {
-              const date = new Date(item.harvest_date);
-              const adjustedCustomTo = new Date(customTo);
-              adjustedCustomTo.setHours(23, 59, 59, 999);
-              return date >= customFrom && date <= adjustedCustomTo;
-            })
-            .reduce((sum, item) => sum + item.accepted, 0)
-        : 0;
-    const customRejected =
-      customFrom && customTo
-        ? harvestItems
-            .filter((item) => {
-              const date = new Date(item.harvest_date);
-              const adjustedCustomTo = new Date(customTo);
-              adjustedCustomTo.setHours(23, 59, 59, 999);
-              return date >= customFrom && date <= adjustedCustomTo;
-            })
-            .reduce((sum, item) => sum + item.total_rejected, 0)
-        : 0;
-    const customTotalYield =
-      customFrom && customTo
-        ? harvestItems
-            .filter((item) => {
-              const date = new Date(item.harvest_date);
-              const adjustedCustomTo = new Date(customTo);
-              adjustedCustomTo.setHours(23, 59, 59, 999);
-              return date >= customFrom && date <= adjustedCustomTo;
-            })
-            .reduce((sum, item) => sum + item.total_yield, 0)
-        : 0;
-
-    // Determine metrics based on filter
-    const acceptedMetric =
-      harvestFilter === "ALL"
-        ? overallAccepted
-        : harvestFilter === "LAST 7 DAYS"
-        ? acceptedLast7Days
-        : harvestFilter === "THIS MONTH"
-        ? thisMonthAccepted
-        : harvestFilter === "CURRENT DAY"
-        ? todayAccepted
-        : harvestFilter === "CHOOSE DATE"
-        ? customAccepted
-        : overallAccepted;
-    const acceptedLoadingMetric =
-      harvestFilter === "ALL"
-        ? overallAcceptedLoading
-        : harvestFilter === "LAST 7 DAYS"
-        ? acceptedLast7DaysLoading
-        : harvestFilter === "THIS MONTH"
-        ? harvestLoading
-        : harvestFilter === "CURRENT DAY"
-        ? todayAcceptedLoading
-        : harvestFilter === "CHOOSE DATE"
-        ? harvestLoading
-        : overallAcceptedLoading;
-
-    const rejectedMetric =
-      harvestFilter === "ALL"
-        ? overallRejected
-        : harvestFilter === "LAST 7 DAYS"
-        ? rejectedLast7Days
-        : harvestFilter === "THIS MONTH"
-        ? thisMonthRejected
-        : harvestFilter === "CURRENT DAY"
-        ? todayRejected
-        : harvestFilter === "CHOOSE DATE"
-        ? customRejected
-        : overallRejected;
-    const rejectedLoadingMetric =
-      harvestFilter === "ALL"
-        ? overallRejectedLoading
-        : harvestFilter === "LAST 7 DAYS"
-        ? rejectedLast7DaysLoading
-        : harvestFilter === "THIS MONTH"
-        ? harvestLoading
-        : harvestFilter === "CURRENT DAY"
-        ? todayRejectedLoading
-        : harvestFilter === "CHOOSE DATE"
-        ? harvestLoading
-        : overallRejectedLoading;
-
-    const totalYieldMetric =
-      harvestFilter === "ALL"
-        ? overallTotalYield
-        : harvestFilter === "LAST 7 DAYS"
-        ? totalYieldLast7Days
-        : harvestFilter === "THIS MONTH"
-        ? thisMonthTotalYield
-        : harvestFilter === "CURRENT DAY"
-        ? todayTotalYield
-        : harvestFilter === "CHOOSE DATE"
-        ? customTotalYield
-        : overallTotalYield;
-    const totalYieldLoadingMetric =
-      harvestFilter === "ALL"
-        ? overallTotalYieldLoading
-        : harvestFilter === "LAST 7 DAYS"
-        ? totalYieldLast7DaysLoading
-        : harvestFilter === "THIS MONTH"
-        ? harvestLoading
-        : harvestFilter === "CURRENT DAY"
-        ? todayTotalYieldLoading
-        : harvestFilter === "CHOOSE DATE"
-        ? harvestLoading
-        : overallTotalYieldLoading;
-
-    // Compute lose rate metrics based on filters
-    const overallTotal = overallAccepted + overallRejected;
-    const overallLoseRate =
-      overallTotal > 0 ? (overallRejected / overallTotal) * 100 : 0;
-    const overallLoseRateLoading =
-      overallAcceptedLoading || overallRejectedLoading;
-
-    const last7Total = acceptedLast7Days + rejectedLast7Days;
-    const loseRateLast7Days =
-      last7Total > 0 ? (rejectedLast7Days / last7Total) * 100 : 0;
-    const loseRateLast7DaysLoading =
-      acceptedLast7DaysLoading || rejectedLast7DaysLoading;
-
-    const thisMonthTotal = thisMonthAccepted + thisMonthRejected;
-    const loseRateThisMonth =
-      thisMonthTotal > 0 ? (thisMonthRejected / thisMonthTotal) * 100 : 0;
-    const loseRateThisMonthLoading = harvestLoading;
-
-    const customTotal = customAccepted + customRejected;
-    const customLoseRate =
-      customTotal > 0 ? (customRejected / customTotal) * 100 : 0;
-    const customLoseRateLoading = harvestLoading;
-
-    // CURRENT DAY lose rate computation
-    const loseRateToday =
-      todayAccepted + todayRejected > 0
-        ? (todayRejected / (todayAccepted + todayRejected)) * 100
-        : 0;
-
-    const loseRateMetric =
-      harvestFilter === "ALL"
-        ? overallLoseRate
-        : harvestFilter === "LAST 7 DAYS"
-        ? loseRateLast7Days
-        : harvestFilter === "THIS MONTH"
-        ? loseRateThisMonth
-        : harvestFilter === "CURRENT DAY"
-        ? loseRateToday
-        : harvestFilter === "CHOOSE DATE"
-        ? customLoseRate
-        : overallLoseRate;
-    const loseRateLoadingMetric =
-      harvestFilter === "ALL"
-        ? overallLoseRateLoading
-        : harvestFilter === "LAST 7 DAYS"
-        ? loseRateLast7DaysLoading
-        : harvestFilter === "CURRENT DAY"
-        ? (todayAcceptedLoading || todayRejectedLoading)
-        : harvestFilter === "THIS MONTH" || harvestFilter === "CHOOSE DATE"
-        ? harvestLoading
-        : overallLoseRateLoading;
-
-    // Table filtering – sort items by harvest_date descending
-    const sortedHarvestItems = [...harvestItems].sort((a, b) => {
-      // First, compare the dates in descending order
+  // Sort harvest items (latest first) using useMemo
+  const sortedHarvestItems = useMemo(() => {
+    return [...harvestItems].sort((a, b) => {
       const dateDiff = new Date(b.harvest_date) - new Date(a.harvest_date);
-      // If dates are equal, sort by harvest_id in descending order
       return dateDiff !== 0 ? dateDiff : b.harvest_id - a.harvest_id;
     });
-    
-    const filterByDate = (item) => {
+  }, [harvestItems]);
+
+  // Filter items based on the active filter and search term
+  const filteredHarvestItems = useMemo(() => {
+    return sortedHarvestItems.filter((item) => {
       const itemDate = new Date(item.harvest_date);
       const today = new Date();
-      if (harvestFilter === "ALL") return true;
-      if (harvestFilter === "LAST 7 DAYS") {
-        const pastDate = new Date();
-        pastDate.setDate(today.getDate() - 6);
-        return itemDate >= pastDate && itemDate <= today;
+      let dateMatch = true;
+      switch (harvestFilter) {
+        case "ALL":
+          dateMatch = true;
+          break;
+        case "LAST 7 DAYS": {
+          const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+          const earliestDay = new Date(startOfToday);
+          earliestDay.setDate(earliestDay.getDate() - 6);
+          const itemDay = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
+          dateMatch = itemDay >= earliestDay && itemDay <= startOfToday;
+          break;
+        }
+        case "THIS MONTH":
+          dateMatch =
+            itemDate.getMonth() === today.getMonth() &&
+            itemDate.getFullYear() === today.getFullYear();
+          break;
+        case "CURRENT DAY":
+          dateMatch =
+            itemDate.getDate() === today.getDate() &&
+            itemDate.getMonth() === today.getMonth() &&
+            itemDate.getFullYear() === today.getFullYear();
+          break;
+        case "CHOOSE DATE":
+          if (!appliedCustomFrom || !appliedCustomTo) {
+            dateMatch = true;
+          } else {
+            const adjustedCustomTo = new Date(appliedCustomTo);
+            adjustedCustomTo.setHours(23, 59, 59, 999);
+            dateMatch = itemDate >= appliedCustomFrom && itemDate <= adjustedCustomTo;
+          }
+          break;
+        case "SELECT MONTH":
+          if (!appliedSelectedMonth || !appliedSelectedYear) {
+            dateMatch = true;
+          } else {
+            dateMatch =
+              itemDate.getMonth() + 1 === parseInt(appliedSelectedMonth) &&
+              itemDate.getFullYear() === parseInt(appliedSelectedYear);
+          }
+          break;
+        default:
+          dateMatch = true;
       }
-      if (harvestFilter === "THIS MONTH") {
-        return (
-          itemDate.getMonth() === today.getMonth() &&
-          itemDate.getFullYear() === today.getFullYear()
-        );
-      }
-      if (harvestFilter === "CURRENT DAY") {
-        return (
-          itemDate.getDate() === today.getDate() &&
-          itemDate.getMonth() === today.getMonth() &&
-          itemDate.getFullYear() === today.getFullYear()
-        );
-      }
-      if (harvestFilter === "CHOOSE DATE") {
-        if (!customFrom || !customTo) return true;
-        const adjustedCustomTo = new Date(customTo);
-        adjustedCustomTo.setHours(23, 59, 59, 999);
-        return itemDate >= customFrom && itemDate <= adjustedCustomTo;
-      }
-      return true;
-    };
-
-    // Updated filtering: search in harvest_date, notes, and full_name
-    const filteredHarvestItems = sortedHarvestItems.filter((item) => {
-      const dateMatch = filterByDate(item);
       const searchTerm = harvestSearchTerm.toLowerCase();
       const harvestDate = item.harvest_date ? item.harvest_date.toLowerCase() : "";
       const notes = item.notes ? item.notes.toLowerCase() : "";
       const name = item.full_name ? item.full_name.toLowerCase() : "";
-      const searchMatch =
-        harvestDate.includes(searchTerm) ||
-        notes.includes(searchTerm) ||
-        name.includes(searchTerm);
-      return dateMatch && searchMatch;
+      const plantType = item.plant_type ? item.plant_type.toLowerCase() : "";
+      return (
+        dateMatch &&
+        (harvestDate.includes(searchTerm) ||
+          notes.includes(searchTerm) ||
+          name.includes(searchTerm) ||
+          plantType.includes(searchTerm))
+      );
     });
+  }, [
+    sortedHarvestItems,
+    harvestFilter,
+    harvestSearchTerm,
+    appliedCustomFrom,
+    appliedCustomTo,
+    appliedSelectedMonth,
+    appliedSelectedYear,
+  ]);
 
-    // Handle filter change
-    const handleFilterChange = (e) => {
-      const value = e.target.value;
-      if (value === "CHOOSE DATE") {
-        setOpenDateModal(true);
-      } else {
-        setHarvestFilter(value);
+  // Handlers
+  const handleFilterChange = useCallback((e) => {
+    const value = e.target.value;
+    if (value === "CHOOSE DATE") {
+      setOpenDateModal(true);
+    } else if (value === "SELECT MONTH") {
+      setOpenMonthModal(true);
+    } else {
+      setHarvestFilter(value);
+    }
+  }, []);
+
+  const handleApplyCustomDates = useCallback(() => {
+    if (tempCustomFrom && tempCustomTo && tempCustomFrom <= tempCustomTo) {
+      setAppliedCustomFrom(tempCustomFrom);
+      setAppliedCustomTo(tempCustomTo);
+      setHarvestFilter("CHOOSE DATE");
+      setOpenDateModal(false);
+    }
+  }, [tempCustomFrom, tempCustomTo]);
+
+  const handleApplySelectedMonth = useCallback(() => {
+    if (tempSelectedMonth && tempSelectedYear) {
+      setAppliedSelectedMonth(tempSelectedMonth);
+      setAppliedSelectedYear(tempSelectedYear);
+      setHarvestFilter("SELECT MONTH");
+      setOpenMonthModal(false);
+    }
+  }, [tempSelectedMonth, tempSelectedYear]);
+
+  // No-data message based on active filter
+  const noDataMessage = useMemo(() => {
+    switch (harvestFilter) {
+      case "CURRENT DAY": {
+        const today = new Date();
+        const formatted = today.toLocaleDateString("default", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        });
+        return `No data for current day (${formatted})`;
       }
-    };
-
-    // Apply custom date range (filtering happens only when Apply is clicked)
-    const handleApplyCustomDates = () => {
-      if (customFrom && customTo) {
-        setHarvestFilter("CHOOSE DATE");
-        setOpenDateModal(false);
+      case "LAST 7 DAYS": {
+        const today = new Date();
+        const pastDate = new Date();
+        pastDate.setDate(today.getDate() - 6);
+        const formattedStart = pastDate.toLocaleDateString("default", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        });
+        const formattedEnd = today.toLocaleDateString("default", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        });
+        return `No data for last 7 days (${formattedStart} - ${formattedEnd})`;
       }
-    };
+      case "THIS MONTH": {
+        const today = new Date();
+        const formatted = today.toLocaleDateString("default", { month: "long", year: "numeric" });
+        return `No data for this month (${formatted})`;
+      }
+      case "CHOOSE DATE": {
+        const from = appliedCustomFrom
+          ? appliedCustomFrom.toLocaleDateString("default", { month: "long", day: "numeric", year: "numeric" })
+          : "";
+        const to = appliedCustomTo
+          ? appliedCustomTo.toLocaleDateString("default", { month: "long", day: "numeric", year: "numeric" })
+          : "";
+        return `No data for chosen date range (${from} - ${to})`;
+      }
+      case "SELECT MONTH": {
+        const monthIndex = parseInt(appliedSelectedMonth) - 1;
+        const dateForMonth = new Date(appliedSelectedYear, monthIndex);
+        const formatted = dateForMonth.toLocaleDateString("default", { month: "long", year: "numeric" });
+        return `No data for selected month (${formatted})`;
+      }
+      default:
+        return "No data";
+    }
+  }, [harvestFilter, appliedCustomFrom, appliedCustomTo, appliedSelectedMonth, appliedSelectedYear]);
 
-    return (
-      <Container maxWidth="xxl" sx={{ p: 3 }}>
-        {/* Uncomment the Metric section if needed
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={3}>
-            <Metric
-              title="Accepted"
-              value={acceptedMetric}
-              loading={acceptedLoadingMetric}
-              icon={<CheckCircleOutlineIcon sx={{ fontSize: "4rem", color: "#fff" }} />}
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Metric
-              title="Rejected"
-              value={rejectedMetric}
-              loading={rejectedLoadingMetric}
-              icon={<HighlightOffIcon sx={{ fontSize: "4rem", color: "#fff" }} />}
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Metric
-              title="Total Yield"
-              value={totalYieldMetric}
-              loading={totalYieldLoadingMetric}
-              icon={<GrainIcon sx={{ fontSize: "4rem", color: "#fff" }} />}
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Metric
-              title="Lose Rate"
-              value={loseRateMetric}
-              loading={loseRateLoadingMetric}
-              icon={<TrendingDownIcon sx={{ fontSize: "4rem", color: "#fff" }} />}
-            />
-          </Grid>
-        </Grid>
-        */}
-        <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 3, mt: 3 }}>
-          <FilterSearchSection
-            harvestSearchTerm={harvestSearchTerm}
-            setHarvestSearchTerm={setHarvestSearchTerm}
-            harvestFilter={harvestFilter}
-            handleFilterChange={handleFilterChange}
-            openDateModalHandler={() => setOpenDateModal(true)}
-          />
-
-          <Box sx={{ mt: 2 }}>
-            {harvestLoading ? (
-              <HarvestSkeliton />
-            ) : (
-              <HarvestTable
-                filteredHarvestItems={filteredHarvestItems}
-                harvestLoading={harvestLoading}
-                harvestPage={harvestPage}
-                rowsPerPage={rowsPerPage}
-              />
-            )}
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-              <TablePagination
-                component="div"
-                count={filteredHarvestItems.length}
-                rowsPerPage={rowsPerPage}
-                page={harvestPage}
-                onPageChange={(event, newPage) => setHarvestPage(newPage)}
-                rowsPerPageOptions={[rowsPerPage]}
-              />
-            </Box>
-          </Box>
-        </Paper>
-
-        <CustomDateModal
-          openDateModal={openDateModal}
-          setOpenDateModal={(value) => {
-            setOpenDateModal(value);
-            if (!value && (!customFrom || !customTo)) {
-              // If the modal is closed without applying a range, revert filter back to "ALL"
-              setHarvestFilter("ALL");
-            }
-          }}
-          customFrom={customFrom}
-          setCustomFrom={setCustomFrom}
-          customTo={customTo}
-          setCustomTo={setCustomTo}
-          handleApplyCustomDates={handleApplyCustomDates}
-        />
-      </Container>
-    );
+  const modalStyle = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: 300,
+    bgcolor: "background.paper",
+    boxShadow: 24,
+    p: 3,
+    borderRadius: 2,
   };
 
-  export default Harvest;
+  return (
+    <Container maxWidth="xxl" sx={{ p: 3 }}>
+      <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 3, mt: 3 }}>
+        <FilterSearchSection
+          harvestSearchTerm={harvestSearchTerm}
+          setHarvestSearchTerm={setHarvestSearchTerm}
+          harvestFilter={harvestFilter}
+          handleFilterChange={handleFilterChange}
+          openDateModalHandler={() => setOpenDateModal(true)}
+          openMonthModalHandler={() => setOpenMonthModal(true)}
+          filterDescription={filterDescription}
+        />
+        <Box sx={{ mt: 2 }}>
+          <HarvestTable
+            filteredHarvestItems={filteredHarvestItems}
+            harvestLoading={harvestLoading}
+            harvestPage={harvestPage}
+            rowsPerPage={rowsPerPage}
+            noDataMessage={noDataMessage}
+          />
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+            <TablePagination
+              component="div"
+              count={filteredHarvestItems.length}
+              rowsPerPage={rowsPerPage}
+              page={harvestPage}
+              onPageChange={(event, newPage) => setHarvestPage(newPage)}
+              rowsPerPageOptions={[rowsPerPage]}
+            />
+          </Box>
+        </Box>
+      </Paper>
+
+      <CustomDateModal
+        openDateModal={openDateModal}
+        setOpenDateModal={(value) => {
+          setOpenDateModal(value);
+          if (!value && (!tempCustomFrom || !tempCustomTo)) {
+            setHarvestFilter("ALL");
+          }
+        }}
+        customFrom={tempCustomFrom}
+        setCustomFrom={setTempCustomFrom}
+        customTo={tempCustomTo}
+        setCustomTo={setTempCustomTo}
+        handleApplyCustomDates={handleApplyCustomDates}
+      />
+
+      <Modal open={openMonthModal} onClose={() => setOpenMonthModal(false)} aria-labelledby="harvest-month-modal">
+        <Box sx={modalStyle}>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Select Month and Year
+          </Typography>
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel id="harvest-month-label">Month</InputLabel>
+            <Select
+              labelId="harvest-month-label"
+              value={tempSelectedMonth}
+              label="Month"
+              onChange={(e) => setTempSelectedMonth(e.target.value)}
+            >
+              {Array.from({ length: 12 }, (_, i) => (
+                <MenuItem key={i + 1} value={i + 1}>
+                  {new Date(0, i).toLocaleString("default", { month: "long" })}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel id="harvest-year-label">Year</InputLabel>
+            <Select
+              labelId="harvest-year-label"
+              value={tempSelectedYear}
+              label="Year"
+              onChange={(e) => setTempSelectedYear(e.target.value)}
+            >
+              {Array.from({ length: 11 }, (_, i) => 2020 + i).map((year) => (
+                <MenuItem key={year} value={year}>
+                  {year}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <Divider sx={{ my: 3 }} />
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+            <Button
+              onClick={() => {
+                setOpenMonthModal(false);
+                setTempSelectedMonth(appliedSelectedMonth);
+                setTempSelectedYear(appliedSelectedYear);
+              }}
+              variant="outlined"
+              color="secondary"
+            >
+              CANCEL
+            </Button>
+            <Button onClick={handleApplySelectedMonth} variant="contained" color="primary">
+              APPLY
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
+    </Container>
+  );
+};
+
+export default Harvest;

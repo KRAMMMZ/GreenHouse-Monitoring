@@ -6,7 +6,7 @@ const UserManagement = async (req,res ) => {
 
    
      
-    const response = await axios.get('https://agreemo-api.onrender.com/users', {
+    const response = await axios.get('https://agreemo-api-v2.onrender.com/users', {
         headers: {
           'x-api-key': process.env.API_KEY, // Ensure the API key is correctly set in your environment variables
         },

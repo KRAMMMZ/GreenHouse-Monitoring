@@ -1,4 +1,3 @@
-// MenuPopupState.jsx
 import React from "react";
 import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
@@ -8,7 +7,11 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import Typography from "@mui/material/Typography";
 import { useAuth } from "../contexts/AuthContext";
 
-export default function MenuPopupState({ handleLogout, changePassModal }) {
+export default function MenuPopupState({
+  handleLogout,
+  changePassModal,
+  showProfileModal, // <--- NEW
+}) {
   const { user } = useAuth(); // Access the user data from AuthContext
 
   return (
@@ -50,6 +53,7 @@ export default function MenuPopupState({ handleLogout, changePassModal }) {
               {user?.name || "Display the name here"}
             </Typography>
           </Button>
+
           <Menu
             {...bindMenu(popupState)}
             anchorOrigin={{
@@ -61,6 +65,22 @@ export default function MenuPopupState({ handleLogout, changePassModal }) {
               horizontal: "right",
             }}
           >
+            {/* NEW Profile menu item */}
+            <MenuItem
+              onClick={() => {
+                popupState.close();
+                showProfileModal(); // <--- Trigger the Profile modal
+              }}
+              sx={{
+                "&:hover": {
+                  backgroundColor: "#06402B",
+                  color: "white",
+                },
+              }}
+            >
+              Profile
+            </MenuItem>
+
             <MenuItem
               onClick={() => {
                 popupState.close();
@@ -75,6 +95,7 @@ export default function MenuPopupState({ handleLogout, changePassModal }) {
             >
               Change Password
             </MenuItem>
+
             <MenuItem
               onClick={async () => {
                 popupState.close();

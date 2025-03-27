@@ -46,7 +46,7 @@ export const verifyDeactivateUser = async (req, res) => {
 
     const config = {
       method: "post",
-      url: "https://agreemo-api.onrender.com/verify-user/deactivate",
+      url: "https://agreemo-api-v2.onrender.com/verify-user/deactivate",
       headers: {
         "x-api-key": process.env.API_KEY || "fallback_key",
       },

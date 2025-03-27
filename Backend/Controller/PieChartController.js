@@ -2,7 +2,7 @@ import axios from "axios";
 
 const totalRejectionsPerDay = async (req, res) => {
   try {
-    const response = await axios.get("https://agreemo-api.onrender.com/reason_for_rejection", {
+    const response = await axios.get("https://agreemo-api-v2.onrender.com/reason_for_rejection", {
       headers: {
         "x-api-key": process.env.API_KEY,
       },

@@ -10,6 +10,12 @@ import {
   MenuItem,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import ViewListIcon from "@mui/icons-material/ViewList";
+import TodayIcon from "@mui/icons-material/Today";
+import CalendarViewWeekIcon from "@mui/icons-material/CalendarViewWeek";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import DateRangeIcon from "@mui/icons-material/DateRange";
+import EventIcon from "@mui/icons-material/Event";
 
 const FilterSearchSection = ({
   harvestSearchTerm,
@@ -17,6 +23,8 @@ const FilterSearchSection = ({
   harvestFilter,
   handleFilterChange,
   openDateModalHandler,
+  openMonthModalHandler,
+  filterDescription,
 }) => {
   return (
     <Box
@@ -29,7 +37,12 @@ const FilterSearchSection = ({
       }}
     >
       <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-        HARVESTED ITEMS
+        HARVESTED ITEMS{" "}
+        {filterDescription && (
+          <span style={{ fontSize: "0.8rem", fontWeight: "normal", marginLeft: "10px" }}>
+            ({filterDescription})
+          </span>
+        )}
       </Typography>
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
         <TextField
@@ -54,11 +67,28 @@ const FilterSearchSection = ({
         >
           <InputLabel>Filter</InputLabel>
           <Select label="Filter" value={harvestFilter} onChange={handleFilterChange}>
-            <MenuItem value="ALL">ALL</MenuItem>
-            <MenuItem value="CURRENT DAY">CURRENT DAY</MenuItem>
-            <MenuItem value="LAST 7 DAYS">LAST 7 DAYS</MenuItem>
-            <MenuItem value="THIS MONTH">THIS MONTH</MenuItem>
+            <MenuItem value="ALL">
+              <ViewListIcon sx={{ mr: 1 }} />
+              ALL
+            </MenuItem>
+            <MenuItem value="CURRENT DAY">
+              <TodayIcon sx={{ mr: 1 }} />
+              CURRENT DAY
+            </MenuItem>
+            <MenuItem value="LAST 7 DAYS">
+              <CalendarViewWeekIcon sx={{ mr: 1 }} />
+              LAST 7 DAYS
+            </MenuItem>
+            <MenuItem value="THIS MONTH">
+              <CalendarMonthIcon sx={{ mr: 1 }} />
+              THIS MONTH
+            </MenuItem>
+            <MenuItem value="SELECT MONTH" onMouseDown={openMonthModalHandler}>
+              <DateRangeIcon sx={{ mr: 1 }} />
+              SELECT MONTH
+            </MenuItem>
             <MenuItem value="CHOOSE DATE" onMouseDown={openDateModalHandler}>
+              <EventIcon sx={{ mr: 1 }} />
               CHOOSE DATE
             </MenuItem>
           </Select>

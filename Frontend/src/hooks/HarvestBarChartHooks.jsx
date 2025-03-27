@@ -20,7 +20,7 @@ function formatDateLabel(dateStr) {
   return new Date(+year, +month - 1, +day).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
-    year: 'numeric',
+  
   });
 }
 function parseDateLocal(dateString) {

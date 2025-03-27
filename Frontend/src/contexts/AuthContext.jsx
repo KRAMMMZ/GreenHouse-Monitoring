@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
   const [authLoading, setAuthLoading] = useState(true);
   const navigate = useNavigate();
 
-  // On app load, check if the user is authenticated using the HTTP-only cookie.
+  // On app load, check if the user is authenticated using the HTTP-only cookie. 
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -72,16 +72,21 @@ export const AuthProvider = ({ children }) => {
       // Ensure the loading alert is closed
       Swal.close();
   
-      // Show an error alert with the EXACT message from the backend
-      Swal.fire(
-        "Error",
-        error.response?.data?.message || error.message || "Something went wrong.",
-        "error"
-      );
+      // Get the original error message
+      const errorMessage =
+        error.response?.data?.message || error.message || "Something went wrong.";
+  
+      // If error message is "Email doesn't exist.", change it to "Invalid Credentials"
+      const displayErrorMessage =
+        errorMessage === "Email doesn't exist." ? "Invalid Credentials" : errorMessage;
+  
+      // Show an error alert with the EXACT message (modified if necessary)
+      Swal.fire("Error", displayErrorMessage, "error");
   
       console.error("Login Error:", error);
     }
   };
+  
 
   const logout = async () => {
     try {

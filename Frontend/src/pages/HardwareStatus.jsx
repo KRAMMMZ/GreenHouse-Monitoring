@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {
+  Alert,
   Typography,
   Table,
   TableBody,
@@ -22,8 +23,16 @@ import {
   Button,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import ViewListIcon from "@mui/icons-material/ViewList";
+import TodayIcon from "@mui/icons-material/Today";
+import HistoryIcon from "@mui/icons-material/History";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import DateRangeIcon from "@mui/icons-material/DateRange";
+import EventIcon from "@mui/icons-material/Event";
 import HardwareSkeliton from "../skelitons/HarvestSkeliton";
 import { useFilteredHardwareStatus } from "../hooks/HarvestStatusHooks";
+import { useHardwareComponents } from "../hooks/HarvestComponentsHooks";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -46,41 +55,73 @@ function formatDate(date) {
   return date.toLocaleDateString();
 }
 
-// Compute filter description text based on active filter
+// Function to generate filter description text (for the header)
 function getFilterDescription(filter, customFrom, customTo, selectedMonth, selectedYear) {
   if (filter === "all" || filter === "none") return "";
-
   const today = new Date();
-
   if (filter === "currentDay") {
-    return `Current Day: ${formatDate(today)}`;
+    return `CURRENT DAY: ${formatDate(today)}`;
   }
-
   if (filter === "last7Days") {
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(endDate.getDate() - 7);
-    return `Last 7 Days: ${formatDate(startDate)} - ${formatDate(endDate)}`;
+    return `LAST 7 DAYS: ${formatDate(startDate)} - ${formatDate(endDate)}`;
   }
-
   if (filter === "currentMonth") {
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    return `Current Month: ${formatDate(firstDayOfMonth)} - ${formatDate(lastDayOfMonth)}`;
+    return `CURRENT MONTH: ${formatDate(firstDayOfMonth)} - ${formatDate(lastDayOfMonth)}`;
   }
-
   if (filter === "selectMonth") {
     const firstDay = new Date(selectedYear, selectedMonth - 1, 1);
     const lastDay = new Date(selectedYear, selectedMonth, 0);
-    return `Select Month: ${formatDate(firstDay)} - ${formatDate(lastDay)}`;
+    return `SELECT MONTH: ${formatDate(firstDay)} - ${formatDate(lastDay)}`;
   }
-
   if (filter === "custom" && customFrom && customTo) {
-    return `Custom: ${formatDate(new Date(customFrom))} - ${formatDate(new Date(customTo))}`;
+    return `CUSTOM: ${formatDate(new Date(customFrom))} - ${formatDate(new Date(customTo))}`;
   }
-
   return "";
 }
+
+// Function to generate no-data alert text based on active filter
+function getNoDataAlertText(filter, customFrom, customTo, selectedMonth, selectedYear) {
+  const today = new Date();
+  if (filter === "currentDay") {
+    return `NO DATA FOR CURRENT DAY (${formatDate(today)})`;
+  }
+  if (filter === "last7Days") {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - 7);
+    return `NO DATA FOR LAST 7 DAYS (${formatDate(startDate)} - ${formatDate(endDate)})`;
+  }
+  if (filter === "currentMonth") {
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    return `NO DATA FOR CURRENT MONTH (${formatDate(firstDayOfMonth)} - ${formatDate(lastDayOfMonth)})`;
+  }
+  if (filter === "selectMonth") {
+    const firstDay = new Date(selectedYear, selectedMonth - 1, 1);
+    const lastDay = new Date(selectedYear, selectedMonth, 0);
+    return `NO DATA FOR SELECT MONTH (${formatDate(firstDay)} - ${formatDate(lastDay)})`;
+  }
+  if (filter === "custom" && customFrom && customTo) {
+    return `NO DATA FOR CUSTOM (${formatDate(new Date(customFrom))} - ${formatDate(new Date(customTo))})`;
+  }
+  return "NO DATA AVAILABLE";
+}
+
+// Define filter options with corresponding icons; "SELECT FILTER" is disabled.
+const filterOptions = [
+  { value: "none", label: "SELECT FILTER", icon: <FilterListIcon fontSize="small" sx={{ mr: 1 }} />, disabled: true },
+  { value: "all", label: "ALL DATA", icon: <ViewListIcon fontSize="small" sx={{ mr: 1 }} /> },
+  { value: "currentDay", label: "CURRENT DAY", icon: <TodayIcon fontSize="small" sx={{ mr: 1 }} /> },
+  { value: "last7Days", label: "LAST 7 DAYS", icon: <HistoryIcon fontSize="small" sx={{ mr: 1 }} /> },
+  { value: "currentMonth", label: "CURRENT MONTH", icon: <CalendarMonthIcon fontSize="small" sx={{ mr: 1 }} /> },
+  { value: "selectMonth", label: "SELECT MONTH", icon: <DateRangeIcon fontSize="small" sx={{ mr: 1 }} /> },
+  { value: "custom", label: "SELECT DATE", icon: <EventIcon fontSize="small" sx={{ mr: 1 }} /> },
+];
 
 function HardwareStatus() {
   const [page, setPage] = useState(0);
@@ -93,16 +134,22 @@ function HardwareStatus() {
   const [uiFilter, setUiFilter] = useState("all");
   const [appliedFilter, setAppliedFilter] = useState("all");
 
-  // Custom date range modal states
-  const [openDateModal, setOpenDateModal] = useState(false);
+  // Actual filter values for custom and month filters
   const [customFrom, setCustomFrom] = useState(null);
   const [customTo, setCustomTo] = useState(null);
-
-  // Select month modal states
   const today = new Date();
-  const [openMonthModal, setOpenMonthModal] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
+
+  // Temporary states for modal changes
+  const [tempCustomFrom, setTempCustomFrom] = useState(null);
+  const [tempCustomTo, setTempCustomTo] = useState(null);
+  const [tempSelectedMonth, setTempSelectedMonth] = useState(today.getMonth() + 1);
+  const [tempSelectedYear, setTempSelectedYear] = useState(today.getFullYear());
+
+  // Modal open states
+  const [openDateModal, setOpenDateModal] = useState(false);
+  const [openMonthModal, setOpenMonthModal] = useState(false);
 
   // Handle search changes: reset page to 0
   const handleSearchChange = (e) => {
@@ -110,46 +157,53 @@ function HardwareStatus() {
     setPage(0);
   };
 
-  // Handle filter changes: reset page to 0
+  // Handle filter changes: for "selectMonth" and "custom", open modal and use temporary states.
   const handleFilterChange = (e) => {
     const value = e.target.value;
     setPage(0);
     if (value === "selectMonth") {
       setUiFilter(value);
+      setTempSelectedMonth(selectedMonth);
+      setTempSelectedYear(selectedYear);
       setOpenMonthModal(true);
     } else if (value === "custom") {
       setUiFilter(value);
+      setTempCustomFrom(customFrom);
+      setTempCustomTo(customTo);
       setOpenDateModal(true);
     } else {
       setUiFilter(value);
       setAppliedFilter(value);
-      // Clear custom date values when switching away
       setCustomFrom(null);
       setCustomTo(null);
     }
   };
 
-  // Apply custom date filter and reset dropdown
+  // Apply custom date filter only when valid and on clicking APPLY
   const handleApplyCustomDates = () => {
     setOpenDateModal(false);
+    setCustomFrom(tempCustomFrom);
+    setCustomTo(tempCustomTo);
     setAppliedFilter("custom");
     setUiFilter("none");
     setPage(0);
   };
 
-  // Apply select month filter and reset dropdown
+  // Apply select month filter only when APPLY is clicked
   const handleApplySelectedMonth = () => {
     setOpenMonthModal(false);
+    setSelectedMonth(tempSelectedMonth);
+    setSelectedYear(tempSelectedYear);
     setAppliedFilter("selectMonth");
     setUiFilter("none");
     setPage(0);
   };
 
-  // Disable APPLY button if custom dates are not both selected
-  const isApplyDisabled = !customFrom || !customTo;
+  // Disable APPLY button if custom dates are not both selected or if FROM is after TO
+  const isApplyDisabled = !tempCustomFrom || !tempCustomTo || new Date(tempCustomFrom) > new Date(tempCustomTo);
 
-  // Get filtered hardware status data from hook
-  const { filteredHardwareStatus, loading } = useFilteredHardwareStatus({
+  // Get filtered hardware status data from hook (using applied filter values)
+  const { filteredHardwareStatus, loading: loadingStatus } = useFilteredHardwareStatus({
     filterOption: appliedFilter,
     customFrom,
     customTo,
@@ -157,21 +211,38 @@ function HardwareStatus() {
     selectedYear: appliedFilter === "selectMonth" ? selectedYear : null,
   });
 
-  // Additional search filtering (search by component_id, statusNote, or lastChecked)
-  const searchFilteredHardwareStatus = filteredHardwareStatus.filter((item) => {
-    const searchTermLower = searchTerm.toLowerCase();
-    const inComponent = item.component_id.toString().toLowerCase().includes(searchTermLower);
-    const inStatusNote = item.statusNote.toLowerCase().includes(searchTermLower);
-    const inLastChecked = item.lastChecked.toLowerCase().includes(searchTermLower);
-    return inComponent || inStatusNote || inLastChecked;
+  // Get hardware components data from hook
+  const { hardwareComponents, loading: loadingComponents } = useHardwareComponents();
+
+  // Combine the two datasets based on component_id
+  // (If a matching hardware component is not found, use "N/A" as the component name)
+  const combinedData = filteredHardwareStatus.map((status) => {
+    const comp = hardwareComponents.find(
+      (component) => component.component_id === status.component_id
+    );
+    return {
+      componentName: comp ? comp.componentName : "N/A",
+      statusNote: status.statusNote,
+      lastChecked: status.lastChecked,
+    };
   });
 
-  // Sort hardware status items by lastChecked descending
-  const sortedHardwareStatus = [...searchFilteredHardwareStatus].sort(
+  // Apply search filtering on the combined data (searching over componentName, statusNote, lastChecked)
+  const searchFilteredData = combinedData.filter((item) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      item.componentName.toLowerCase().includes(term) ||
+      item.statusNote.toLowerCase().includes(term) ||
+      new Date(item.lastChecked).toUTCString().toLowerCase().includes(term)
+    );
+  });
+
+  // Sort the combined data by lastChecked descending
+  const sortedData = [...searchFilteredData].sort(
     (a, b) => new Date(b.lastChecked) - new Date(a.lastChecked)
   );
 
-  // Compute the filter description text
+  // Compute the filter description text for header
   const filterDescription = getFilterDescription(
     appliedFilter,
     customFrom,
@@ -180,130 +251,137 @@ function HardwareStatus() {
     selectedYear
   );
 
+  // If either of the data sets is still loading, show the skeleton
+  if (loadingStatus || loadingComponents) {
+    return <HardwareSkeliton />;
+  }
+
   return (
     <Container maxWidth="xl" sx={{ p: { xs: 2, sm: 3 } }}>
-      {loading ? (
-        <HardwareSkeliton />
-      ) : (
-        <Paper
+      <Paper
+        sx={{
+          width: "100%",
+          overflow: "hidden",
+          borderRadius: "10px",
+          boxShadow: 15,
+          p: { xs: 2, sm: 3 },
+          mb: { xs: 3, sm: 5 },
+          mt: { xs: 2, sm: 3 },
+        }}
+      >
+        {/* Header with title and search/filter controls */}
+        <Box
           sx={{
-            width: "100%",
-            overflow: "hidden",
-            borderRadius: "10px",
-            boxShadow: 15,
-            p: { xs: 2, sm: 3 },
-            mb: { xs: 3, sm: 5 },
-            mt: { xs: 2, sm: 3 },
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            justifyContent: "space-between",
+            alignItems: { xs: "flex-start", sm: "center" },
+            gap: 2,
+            mb: { xs: 2, sm: 3, md: 2 },
           }}
         >
-          {/* Header with title and search/filter controls */}
+          <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+            HARDWARE STATUS{" "}
+            {filterDescription && (
+              <span
+                style={{
+                  fontSize: "0.8rem",
+                  fontWeight: "normal",
+                  marginLeft: "10px",
+                }}
+              >
+                ({filterDescription})
+              </span>
+            )}
+          </Typography>
           <Box
             sx={{
               display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              justifyContent: "space-between",
-              alignItems: { xs: "flex-start", sm: "center" },
+              flexWrap: "wrap",
+              alignItems: "center",
               gap: 2,
-              mb: { xs: 2, sm: 3 },
+              width: { xs: "100%", sm: "auto" },
             }}
           >
-            <Typography
-              variant="h5"
-              sx={{
-                fontWeight: "bold",
-                fontSize: { xs: "1.2rem", sm: "1.5rem", md: "1.8rem" },
+            <TextField
+              fullWidth
+              label="SEARCH HARDWARE"
+              variant="outlined"
+              size="small"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <SearchIcon sx={{ fontSize: { xs: "1rem", sm: "1.2rem" } }} />
+                  </InputAdornment>
+                ),
               }}
+              sx={{ maxWidth: { xs: "100%", sm: "250px" }, textTransform: "uppercase" }}
+            />
+            <FormControl
+              variant="outlined"
+              size="small"
+              sx={{ width: { xs: "100%", sm: "100%", md: "auto" } }}
             >
-              HARDWARE STATUS{" "}
-              {filterDescription && (
-                <span
-                  style={{
-                    fontSize: "0.8rem",
-                    fontWeight: "normal",
-                    marginLeft: "10px",
-                  }}
-                >
-                  ({filterDescription})
-                </span>
-              )}
-            </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                alignItems: "center",
-                gap: 2,
-                width: { xs: "100%", sm: "auto" },
-              }}
-            >
-              <TextField
-                fullWidth
-                label="Search Hardware"
-                variant="outlined"
-                size="small"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <SearchIcon sx={{ fontSize: { xs: "1rem", sm: "1.2rem" } }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ maxWidth: { xs: "100%", sm: "250px" } }}
-              />
-              <FormControl size="small" sx={{ minWidth: 150 }}>
-                <InputLabel id="filter-label">Filter</InputLabel>
-                <Select
-                  labelId="filter-label"
-                  value={uiFilter}
-                  label="Filter"
-                  onChange={handleFilterChange}
-                >
-                  <MenuItem value="none">Select Filter</MenuItem>
-                  <MenuItem value="all">All Data</MenuItem>
-                  <MenuItem value="currentDay">Current Day</MenuItem>
-                  <MenuItem value="last7Days">Last 7 Days</MenuItem>
-                  <MenuItem value="currentMonth">Current Month</MenuItem>
-                  <MenuItem value="selectMonth">Select Month</MenuItem>
-                  <MenuItem value="custom">SELECT DATE</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
+              <InputLabel id="filter-label" sx={{ textTransform: "uppercase" }}>
+                FILTER
+              </InputLabel>
+              <Select
+                labelId="filter-label"
+                value={uiFilter}
+                label="FILTER"
+                onChange={handleFilterChange}
+                sx={{ textTransform: "uppercase" }}
+              >
+                {filterOptions.map((option) => (
+                  <MenuItem
+                    key={option.value}
+                    value={option.value}
+                    disabled={option.disabled}
+                    sx={{ textTransform: "uppercase" }}
+                  >
+                    {option.icon}
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
+        </Box>
 
-          {/* Table */}
-          <TableContainer sx={{ overflowX: "auto" }}>
-            <Table sx={{ minWidth: 650, backgroundColor: "#fff" }}>
-              <TableHead>
-                <TableRow sx={{ backgroundColor: "#06402B", borderRadius: "10px" }}>
-                  {["Component ID", "Status Note", "Last Checked"].map((header) => (
-                    <TableCell
-                      key={header}
-                      align="center"
-                      sx={{
-                        fontWeight: "bold",
-                        color: "#fff",
-                        fontSize: { xs: "0.9rem", sm: "1.1rem" },
-                        py: { xs: 2, sm: 2.5 },
-                      }}
-                    >
-                      {header}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {sortedHardwareStatus
+        {/* Table */}
+        <TableContainer sx={{ overflowX: "auto" }}>
+          <Table sx={{ minWidth: 650, backgroundColor: "#fff" }}>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: "#06402B", borderRadius: "10px" }}>
+                {["COMPONENT NAME", "STATUS NOTE", "LAST CHECKED"].map((header) => (
+                  <TableCell
+                    key={header}
+                    align="center"
+                    sx={{
+                      fontWeight: "bold",
+                      color: "#fff",
+                      fontSize: { xs: "0.9rem", sm: "1.1rem" },
+                      py: { xs: 2, sm: 2.5 },
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {header}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {sortedData.length > 0 ? (
+                sortedData
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((item, index) => (
-                    <TableRow key={`${item.component_id}-${index}`} hover sx={{ borderRadius: "10px" }}>
+                    <TableRow key={`${item.componentName}-${index}`} hover sx={{ borderRadius: "10px" }}>
                       {[
-                        item.component_id,
+                        item.componentName,
                         item.statusNote,
-                          // Display date_of_installation as a UTC string (e.g., "Sun, 09 Mar 2025 18:50:19 GMT")
-                      new Date(item.lastChecked).toUTCString(),
-                         
+                        new Date(item.lastChecked).toUTCString(),
                       ].map((value, idx) => (
                         <TableCell
                           key={idx}
@@ -317,128 +395,144 @@ function HardwareStatus() {
                         </TableCell>
                       ))}
                     </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                  ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={3}>
+                    <Alert variant="filled" severity="warning">
+                      {getNoDataAlertText(appliedFilter, customFrom, customTo, selectedMonth, selectedYear)}
+                    </Alert>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-          {/* Pagination */}
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              mt: { xs: 2, sm: 3 },
-            }}
-          >
-            <TablePagination
-              component="div"
-              count={sortedHardwareStatus.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={(event, newPage) => setPage(newPage)}
-              rowsPerPageOptions={[rowsPerPage]}
-            />
+        {/* Pagination */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            mt: { xs: 2, sm: 3 },
+          }}
+        >
+          <TablePagination
+            component="div"
+            count={sortedData.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(event, newPage) => setPage(newPage)}
+            rowsPerPageOptions={[rowsPerPage]}
+          />
+        </Box>
+
+        {/* Custom Date Range Modal */}
+        <Modal
+          open={openDateModal}
+          onClose={() => {
+            setOpenDateModal(false);
+            setUiFilter("all");
+          }}
+        >
+          <Box sx={{ ...modalStyle, p: 3, width: 300 }}>
+            <Typography variant="h6" sx={{ mb: 2, textTransform: "uppercase" }}>
+              CHOOSE DATE RANGE
+            </Typography>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="FROM"
+                value={tempCustomFrom}
+                onChange={(newValue) => setTempCustomFrom(newValue)}
+                renderInput={(params) => <TextField {...params} fullWidth />}
+              />
+              <Box sx={{ height: 16 }} />
+              <DatePicker
+                label="TO"
+                value={tempCustomTo}
+                onChange={(newValue) => setTempCustomTo(newValue)}
+                renderInput={(params) => <TextField {...params} fullWidth />}
+              />
+            </LocalizationProvider>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 3 }}>
+              <Button onClick={() => setOpenDateModal(false)} color="secondary" size="small">
+                CANCEL
+              </Button>
+              <Button
+                onClick={handleApplyCustomDates}
+                variant="contained"
+                color="primary"
+                size="small"
+                disabled={isApplyDisabled}
+              >
+                APPLY
+              </Button>
+            </Box>
           </Box>
+        </Modal>
 
-          {/* Custom Date Range Modal */}
-          <Modal
-            open={openDateModal}
-            onClose={() => {
-              setOpenDateModal(false);
-              setUiFilter("all");
-            }}
-          >
-            <Box sx={{ ...modalStyle, p: 3, width: 300 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Choose Date Range
-              </Typography>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="FROM"
-                  value={customFrom}
-                  onChange={(newValue) => setCustomFrom(newValue)}
-                  renderInput={(params) => <TextField {...params} fullWidth />}
-                />
-                <Box sx={{ height: 16 }} />
-                <DatePicker
-                  label="TO"
-                  value={customTo}
-                  onChange={(newValue) => setCustomTo(newValue)}
-                  renderInput={(params) => <TextField {...params} fullWidth />}
-                />
-              </LocalizationProvider>
-              <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 3 }}>
-                <Button onClick={() => setOpenDateModal(false)} color="secondary" size="small">
-                  Cancel
-                </Button>
-                <Button onClick={handleApplyCustomDates} variant="contained" color="primary" size="small" disabled={isApplyDisabled}>
-                  Apply
-                </Button>
-              </Box>
+        {/* Select Month Modal */}
+        <Modal open={openMonthModal} onClose={() => setOpenMonthModal(false)} aria-labelledby="hardware-month-modal">
+          <Box sx={modalStyle}>
+            <Typography variant="h6" sx={{ mb: 2, textTransform: "uppercase" }}>
+              SELECT MONTH AND YEAR
+            </Typography>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel id="hardware-month-label" sx={{ textTransform: "uppercase" }}>
+                MONTH
+              </InputLabel>
+              <Select
+                labelId="hardware-month-label"
+                value={tempSelectedMonth}
+                label="MONTH"
+                onChange={(e) => setTempSelectedMonth(e.target.value)}
+                sx={{ textTransform: "uppercase" }}
+              >
+                {Array.from({ length: 12 }, (_, i) => (
+                  <MenuItem key={i + 1} value={i + 1} sx={{ textTransform: "uppercase" }}>
+                    {new Date(0, i).toLocaleString("default", { month: "long" }).toUpperCase()}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel id="hardware-year-label" sx={{ textTransform: "uppercase" }}>
+                YEAR
+              </InputLabel>
+              <Select
+                labelId="hardware-year-label"
+                value={tempSelectedYear}
+                label="YEAR"
+                onChange={(e) => setTempSelectedYear(e.target.value)}
+                sx={{ textTransform: "uppercase" }}
+              >
+                {Array.from({ length: 11 }, (_, i) => 2020 + i).map((year) => (
+                  <MenuItem key={year} value={year} sx={{ textTransform: "uppercase" }}>
+                    {year}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Divider sx={{ my: 3 }} />
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+              <Button
+                onClick={() => {
+                  setOpenMonthModal(false);
+                  setUiFilter("all");
+                }}
+                variant="outlined"
+                color="secondary"
+              >
+                CANCEL
+              </Button>
+              <Button onClick={handleApplySelectedMonth} variant="contained" color="primary">
+                APPLY
+              </Button>
             </Box>
-          </Modal>
-
-          {/* Select Month Modal */}
-          <Modal
-            open={openMonthModal}
-            onClose={() => setOpenMonthModal(false)}
-            aria-labelledby="hardware-month-modal"
-          >
-            <Box sx={modalStyle}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Select Month and Year
-              </Typography>
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel id="hardware-month-label">Month</InputLabel>
-                <Select
-                  labelId="hardware-month-label"
-                  value={selectedMonth}
-                  label="Month"
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                >
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <MenuItem key={i + 1} value={i + 1}>
-                      {new Date(0, i).toLocaleString("default", { month: "long" })}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel id="hardware-year-label">Year</InputLabel>
-                <Select
-                  labelId="hardware-year-label"
-                  value={selectedYear}
-                  label="Year"
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                >
-                  {Array.from({ length: 11 }, (_, i) => 2020 + i).map((year) => (
-                    <MenuItem key={year} value={year}>
-                      {year}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Divider sx={{ my: 3 }} />
-              <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-                <Button
-                  onClick={() => {
-                    setOpenMonthModal(false);
-                    setUiFilter("all");
-                  }}
-                  variant="outlined"
-                  color="secondary"
-                >
-                  CANCEL
-                </Button>
-                <Button onClick={handleApplySelectedMonth} variant="contained" color="primary">
-                  APPLY
-                </Button>
-              </Box>
-            </Box>
-          </Modal>
-        </Paper>
-      )}
+          </Box>
+        </Modal>
+      </Paper>
     </Container>
   );
 }

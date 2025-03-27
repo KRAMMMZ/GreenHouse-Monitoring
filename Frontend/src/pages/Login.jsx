@@ -7,6 +7,8 @@ import {
   InputAdornment,
   IconButton,
   Link,
+  Container,
+  Box,
 } from "@mui/material";
 import { FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import Swal from "sweetalert2";
@@ -77,116 +79,157 @@ function Login() {
   };
 
   return (
-    <div>
-      {!openForgotPassword && (
-        <div className="login">
-          <Card className="card rad">
-            <CardContent>
-              <div className="text-center">
-                <img
-                  src="./src/assets/N_AGREEMO.png"
-                  alt="Logo"
-                  className="logo"
-                />
-              </div>
-              <form onSubmit={handleFormSubmit}>
-                <label className="mb-1">Email: </label>
-                <div className="mb-3">
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    value={username}
-                    onChange={(e) => handleInputChange(e, "username")}
-                    placeholder="Enter your email"
-                    error={!!errors.username}
-                    helperText={errors.username}
-                    autoComplete="off"
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <FaUser className="input-icon" />
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      "& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "red",
-                      },
-                      "& input": {
-                        backgroundColor: "white !important",
-                      },
+    // This wrapping div uses your "login" class with the background overlay
+    <div className="login">
+      <Container maxWidth="xs">
+        <Box
+          display="flex"
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="100vh"
+        >
+          {!openForgotPassword && (
+            <Card
+              className="card rad"
+              sx={{
+                width: { xs: "90%", sm: "400px" },
+                boxShadow: 3,
+                padding: 2,
+                position: "relative", // ensures card is above the background pseudo-element
+                zIndex: 1,
+              }}
+            >
+              <CardContent>
+                <Box textAlign="center" mb={2}>
+                  <img
+                    src="./src/assets/N_AGREEMO.png"
+                    alt="Logo"
+                    className="logo"
+                    style={{
+                      maxWidth: "100%",
+                      height: "auto",
                     }}
                   />
-                </div>
-                <label className="mb-1">Password: </label>
-                <div className="mb-4">
-                  <TextField
-                    fullWidth
-                    type={showPassword ? "text" : "password"}
-                    variant="outlined"
-                    value={password}
-                    onChange={(e) => handleInputChange(e, "password")}
-                    placeholder="Enter your password"
-                    error={!!errors.password}
-                    helperText={errors.password}
-                    autoComplete="off"
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <FaLock className="input-icon" />
-                        </InputAdornment>
-                      ),
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            onClick={handleClickShowPassword}
-                            edge="end"
-                            aria-label="toggle password visibility"
-                          >
-                            {showPassword ? <FaEye /> : <FaEyeSlash />}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      "& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "red",
-                      },
-                      "& input": {
-                        backgroundColor: "white !important",
-                      },
-                    }}
-                  />
-                </div>
-                <div className="d-flex justify-content-end mt-2 mb-4">
-                  <Link
-                    component="button"
-                    type="button"
-                    variant="body2"
+                </Box>
+                <form onSubmit={handleFormSubmit}>
+                  <Box mb={2}>
+                    <label className="mb-1">Email: </label>
+                    <TextField
+                      fullWidth
+                      variant="outlined"
+                      value={username}
+                      onChange={(e) => handleInputChange(e, "username")}
+                      placeholder="Enter your email"
+                      error={!!errors.username}
+                      helperText={errors.username}
+                      autoComplete="off"
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <Box
+                              component="span"
+                              sx={{ fontSize: { xs: "1rem", sm: "1.25rem" }, mr:1  }}
+                            >
+                              <FaUser />
+                            </Box>
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "red",
+                        },
+                        "& input": {
+                          backgroundColor: "white !important",
+                        },
+                      }}
+                    />
+                  </Box>
+                  <Box mb={3}>
+                    <label className="mb-1">Password: </label>
+                    <TextField
+                      fullWidth
+                      type={showPassword ? "text" : "password"}
+                      variant="outlined"
+                      value={password}
+                      onChange={(e) => handleInputChange(e, "password")}
+                      placeholder="Enter your password"
+                      error={!!errors.password}
+                      helperText={errors.password}
+                      autoComplete="off"
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <Box
+                              component="span"
+                              sx={{ fontSize: { xs: "1rem", sm: "1.25rem" }, mr:1 }}
+                            >
+                              <FaLock />
+                            </Box>
+                          </InputAdornment>
+                        ),
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={handleClickShowPassword}
+                              edge="end"
+                              aria-label="toggle password visibility"
+                            >
+                              <Box
+                                component="span"
+                                sx={{ fontSize: { xs: "1rem", sm: "1.25rem" } }}
+                              >
+                                {showPassword ? <FaEye /> : <FaEyeSlash />}
+                              </Box>
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "red",
+                        },
+                        "& input": {
+                          backgroundColor: "white !important",
+                        },
+                      }}
+                    />
+                  </Box>
+                  <Box display="flex" justifyContent="flex-end" mb={3}>
+                    <Link
+                      component="button"
+                      type="button"
+                      variant="body2"
+                      color="primary"
+                      onClick={handleForgotPasswordClick}
+                      sx={{ fontSize: { xs: "0.8rem", sm: "1rem" } }}
+                    >
+                      Forgot your password?
+                    </Link>
+                  </Box>
+                  <Button
+                    type="submit"
+                    variant="contained"
                     color="primary"
-                    onClick={handleForgotPasswordClick}
+                    fullWidth
+                    sx={{
+                      padding: { xs: "10px", sm: "15px" },
+                      fontSize: { xs: "0.9rem", sm: "1rem" },
+                    }}
                   >
-                    Forgot your password?
-                  </Link>
-                </div>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  fullWidth
-                  sx={{ padding: 1.5 }}
-                >
-                  {loading ? "Logging in..." : "Login"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-      <ForgotPasswordModal
-        open={openForgotPassword}
-        onClose={() => setOpenForgotPassword(false)}
-      />
+                    {loading ? "Logging in..." : "Login"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+          <ForgotPasswordModal
+            open={openForgotPassword}
+            onClose={() => setOpenForgotPassword(false)}
+          />
+        </Box>
+      </Container>
     </div>
   );
 }
