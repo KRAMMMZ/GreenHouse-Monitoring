@@ -6,8 +6,10 @@ import {
   MaintenanceLogs, 
   HarvestLogs, 
   HardwareComponentsLogs, 
-  HardwareStatusLogs,
-  ControlsLog
+  //HardwareStatusLogs,
+  ControlsLog,
+  InventoryItemLogs,
+  PlantedCropsLogs
 } from '../Controller/LogsController.js';
 
 const router = Router();
@@ -18,7 +20,9 @@ router.get('/rejection', RejectionLogs);
 router.get('/maintenance', MaintenanceLogs);
 router.get('/harvest', HarvestLogs);
 router.get('/hardware_components', HardwareComponentsLogs);
-router.get('/hardware_status', HardwareStatusLogs);
+//router.get('/hardware_status', HardwareStatusLogs);
 router.get('/control/logsd', ControlsLog);
+router.get('/inventory', InventoryItemLogs);
+router.get('/planted_crops', PlantedCropsLogs);
 
 export default router;

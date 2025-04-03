@@ -18,10 +18,9 @@ import {
   MenuItem,
   Container,
   Alert,
-  Snackbar,
-  useMediaQuery,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import SearchIcon from "@mui/icons-material/Search";
 import AllInboxIcon from "@mui/icons-material/AllInbox";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
@@ -30,9 +29,10 @@ import AgricultureIcon from "@mui/icons-material/Agriculture";
 import CancelIcon from "@mui/icons-material/Cancel";
 import BuildIcon from "@mui/icons-material/Build";
 import DeveloperBoardIcon from "@mui/icons-material/DeveloperBoard";
-import SettingsIcon from "@mui/icons-material/Settings";
+// import SettingsIcon from "@mui/icons-material/Settings"; // Removed SettingsIcon import
 import ControlCameraIcon from "@mui/icons-material/ControlCamera";
 
+import LocalFloristIcon from "@mui/icons-material/LocalFlorist";
 import { useActivityLogs } from "../hooks/AdminLogsHooks";
 import HarvestSkeleton from "../skelitons/HarvestSkeliton";
 
@@ -47,14 +47,16 @@ function ActivityLogs() {
     maintenanceLogs = [],
     harvestLogs = [],
     hardwareComponentsLogs = [],
-    hardwareStatusLogs = [],
+    // hardwareStatusLogs = [], //hardwareStatusLogs REMOVED
     controlsLog = [],
+    plantedCropsLogs = [], // Destructure planted crops logs
     logsLoading,
     error,
+    emptyData, // Get the emptyData state
   } = useActivityLogs();
 
   // Combine all logs with type identifiers.
-  // Note: We now map controlsLog with "CONTROLS" (no extra spaces) so that the filter works correctly.
+  // Note: We now map controlsLog with "CONTROLS" and plantedCropsLogs with "PLANTED CROPS".
   const allLogs = useMemo(
     () => [
       ...adminActivityLogs.map((log) => ({ ...log, logType: "ADMIN" })),
@@ -66,13 +68,17 @@ function ActivityLogs() {
         ...log,
         logType: "HARDWARE COMPONENTS",
       })),
-      ...hardwareStatusLogs.map((log) => ({
-        ...log,
-        logType: "HARDWARE STATUS",
-      })),
+      // ...hardwareStatusLogs.map((log) => ({ //hardwareStatusLogs REMOVED
+      //   ...log,
+      //   logType: "HARDWARE STATUS",
+      // })),
       ...controlsLog.map((log) => ({
         ...log,
         logType: "CONTROLS",
+      })),
+      ...plantedCropsLogs.map((log) => ({
+        ...log,
+        logType: "PLANTED CROPS",
       })),
     ],
     [
@@ -82,13 +88,13 @@ function ActivityLogs() {
       maintenanceLogs,
       harvestLogs,
       hardwareComponentsLogs,
-      hardwareStatusLogs,
+      // hardwareStatusLogs, //hardwareStatusLogs REMOVED
       controlsLog,
+      plantedCropsLogs,
     ]
   );
 
   // Local state for filter, search term, and pagination.
-  // The filter values now use the same names as the logType identifiers.
   const [selectedFilter, setSelectedFilter] = useState("ALL");
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(0);
@@ -123,36 +129,10 @@ function ActivityLogs() {
     );
   }, [filteredLogs]);
 
-  // The HARDWARE STATUS data remains static.
-  const hardwareStatusData = [
-    {
-      duration: "0",
-      status: true,
-      timestamp: "Sun, 16 Mar 2025 19:52:28 GMT",
-    },
-  ];
-
-  const filteredHardwareStatusData = useMemo(() => {
-    return hardwareStatusData.filter((log) => {
-      const ts = log.timestamp.toLowerCase();
-      const dur = log.duration.toLowerCase();
-      const stat = String(log.status).toLowerCase();
-      return (
-        ts.includes(normalizedSearchTerm) ||
-        dur.includes(normalizedSearchTerm) ||
-        stat.includes(normalizedSearchTerm)
-      );
-    });
-  }, [hardwareStatusData, normalizedSearchTerm]);
-
   // Decide which data set to display.
-  // For HARDWARE STATUS, we use the static data; for others, we use sortedLogs.
   const displayData = useMemo(() => {
-    if (selectedFilter === "HARDWARE STATUS") {
-      return filteredHardwareStatusData;
-    }
     return sortedLogs;
-  }, [selectedFilter, filteredHardwareStatusData, sortedLogs]);
+  }, [sortedLogs]);
 
   const headerText =
     selectedFilter === "ALL"
@@ -184,9 +164,10 @@ function ActivityLogs() {
 
   // Define table headers based on the selected filter.
   let tableHeaders;
-  if (selectedFilter === "HARDWARE STATUS") {
-    tableHeaders = ["Timestamp", "Duration", "Status"];
-  } else if (selectedFilter === "CONTROLS") {
+  // if (selectedFilter === "HARDWARE STATUS") { //hardwareStatusLogs REMOVED
+  //   tableHeaders = ["Timestamp", "Duration", "Status"];
+  // } else
+  if (selectedFilter === "CONTROLS") {
     tableHeaders = [
       "Timestamp",
       "Description",
@@ -199,17 +180,32 @@ function ActivityLogs() {
     tableHeaders = ["Log Date", "Description", "Name"];
   }
 
+  const noDataMessage = emptyData[
+    selectedFilter === "ALL"
+      ? "AdminLogsTable" // Just pick one as ALL isn't directly associated
+      : selectedFilter === "ADMIN"
+      ? "AdminLogsTable"
+      : selectedFilter === "USERS"
+      ? "UserLogsTable"
+      : selectedFilter === "REJECTION"
+      ? "RejectionTable"
+      : selectedFilter === "MAINTENANCE"
+      ? "MaintenanceTable"
+      : selectedFilter === "HARVEST"
+      ? "harvestLogsTable"
+      : selectedFilter === "HARDWARE COMPONENTS"
+      ? "hardwareComponentsLogsTable"
+      // : selectedFilter === "HARDWARE STATUS" //hardwareStatusLogs REMOVED
+      // ? "hardwareStatusLogsTable"
+      : selectedFilter === "CONTROLS"
+      ? "controlsLogTable"
+      : selectedFilter === "PLANTED CROPS"
+      ? "plantedCropsLogsTable"
+      : "itemInventoryLogsTable"
+  ];
+
   return (
     <Container maxWidth="xl" sx={{ p: { xs: 2, sm: 3 }, mt: { xs: 2, sm: 3 } }}>
-      {error && (
-        <Snackbar
-          open={Boolean(error)}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        >
-          <Box>{renderErrors()}</Box>
-        </Snackbar>
-      )}
-
       <Paper
         sx={{
           width: "100%",
@@ -291,6 +287,11 @@ function ActivityLogs() {
                     <PeopleIcon sx={{ mr: 1 }} /> USERS
                   </Box>
                 </MenuItem>
+                <MenuItem value="PLANTED CROPS">
+                  <Box display="flex" alignItems="center">
+                    <LocalFloristIcon sx={{ mr: 1 }} /> PLANTED CROPS
+                  </Box>
+                </MenuItem>
                 <MenuItem value="HARVEST">
                   <Box display="flex" alignItems="center">
                     <AgricultureIcon sx={{ mr: 1 }} /> HARVEST
@@ -311,16 +312,17 @@ function ActivityLogs() {
                     <DeveloperBoardIcon sx={{ mr: 1 }} /> HARDWARE COMPONENTS
                   </Box>
                 </MenuItem>
-                <MenuItem value="HARDWARE STATUS">
+                {/* <MenuItem value="HARDWARE STATUS">  //hardwareStatusLogs REMOVED
                   <Box display="flex" alignItems="center">
                     <SettingsIcon sx={{ mr: 1 }} /> HARDWARE STATUS
                   </Box>
-                </MenuItem>
+                </MenuItem> */}
                 <MenuItem value="CONTROLS">
                   <Box display="flex" alignItems="center">
                     <ControlCameraIcon sx={{ mr: 1 }} /> CONTROLS
                   </Box>
                 </MenuItem>
+
               </Select>
             </FormControl>
           </Box>
@@ -347,72 +349,91 @@ function ActivityLogs() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {displayData
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((log, index) => (
-                  <TableRow
-                    key={
-                      selectedFilter === "HARDWARE STATUS"
-                        ? `hardware-status-${index}`
-                        : selectedFilter === "CONTROLS"
-                        ? `controls-${index}`
-                        : `${log.log_id || index}-${index}`
-                    }
-                    hover
-                  >
-                    {selectedFilter === "HARDWARE STATUS" ? (
-                      <>
-                        <TableCell align="center">{log.timestamp}</TableCell>
-                        <TableCell align="center">{log.duration}</TableCell>
-                        <TableCell align="center">
-                          {String(log.status)}
-                        </TableCell>
-                      </>
-                    ) : selectedFilter === "CONTROLS" ? (
-                      <>
-                        <TableCell align="center">{log.timestamp}</TableCell>
-                        <TableCell align="center">
-                          {log.logs_description}
-                        </TableCell>
-                        <TableCell align="center">
-                          {String(log.automode)}
-                        </TableCell>
-                        <TableCell align="center">
-                          {String(log.exhaust)}
-                        </TableCell>
-                        <TableCell align="center">
-                          {String(log.pump1)}
-                        </TableCell>
-                        <TableCell align="center">
-                          {String(log.pump2)}
-                        </TableCell>
-                      </>
+              {displayData.length > 0 ? (
+                displayData
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((log, index) => (
+                    <TableRow
+                      key={
+                        // selectedFilter === "HARDWARE STATUS" //hardwareStatusLogs REMOVED
+                        //   ? `hardware-status-${index}`
+                        //   :
+                         selectedFilter === "CONTROLS"
+                          ? `controls-${index}`
+                          : `${log.log_id || index}-${index}`
+                      }
+                      hover
+                    >
+                      {/* {selectedFilter === "HARDWARE STATUS" ? (  //hardwareStatusLogs REMOVED
+                        <>
+                          <TableCell align="center">{log.timestamp}</TableCell>
+                          <TableCell align="center">{log.duration}</TableCell>
+                          <TableCell align="center">
+                            {String(log.status)}
+                          </TableCell>
+                        </>
+                      ) : */}
+                       { selectedFilter === "CONTROLS" ? (
+                        <>
+                          <TableCell align="center">{log.timestamp}</TableCell>
+                          <TableCell align="center">
+                            {log.logs_description}
+                          </TableCell>
+                          <TableCell align="center">
+                            {String(log.automode)}
+                          </TableCell>
+                          <TableCell align="center">
+                            {String(log.exhaust)}
+                          </TableCell>
+                          <TableCell align="center">
+                            {String(log.pump1)}
+                          </TableCell>
+                          <TableCell align="center">
+                            {String(log.pump2)}
+                          </TableCell>
+                        </>
+                      ) : (
+                        <>
+                          <TableCell align="center">{log.log_date}</TableCell>
+                          <TableCell align="center">
+                            {log.logs_description}
+                          </TableCell>
+                          <TableCell align="center">{log.name}</TableCell>
+                        </>
+                      )}
+                    </TableRow>
+                  ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={tableHeaders.length} align="center">
+                    {noDataMessage ? (
+                      <Typography variant="subtitle1" color="textSecondary">
+                        {noDataMessage}
+                      </Typography>
                     ) : (
-                      <>
-                        <TableCell align="center">{log.log_date}</TableCell>
-                        <TableCell align="center">
-                          {log.logs_description}
-                        </TableCell>
-                        <TableCell align="center">{log.name}</TableCell>
-                      </>
+                      <Typography variant="subtitle1" color="textSecondary">
+                        No logs available.
+                      </Typography>
                     )}
-                  </TableRow>
-                ))}
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>
-
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-          <TablePagination
-            component="div"
-            count={displayData.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={(e, newPage) => setPage(newPage)}
-            rowsPerPageOptions={[rowsPerPage]}
-            sx={{ mt: 2 }}
-          />
-        </Box>
+        {displayData.length > 0 && (
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+            <TablePagination
+              component="div"
+              count={displayData.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={(e, newPage) => setPage(newPage)}
+              rowsPerPageOptions={[rowsPerPage]}
+              sx={{ mt: 2 }}
+            />
+          </Box>
+        )}
       </Paper>
     </Container>
   );

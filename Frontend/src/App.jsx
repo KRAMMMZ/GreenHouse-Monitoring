@@ -21,7 +21,9 @@ import ActivityLogs from "./pages/ActivityLogs";
 import HardwareComponents from "./pages/HardwareComponents";
 import HardwareStatus from "./pages/HardwareStatus";
 import Inventory from "./pages/Inventory";
+import InventoryContainer from "./pages/InventoryContainer";
 import PlantedCrops from "./pages/PlantedCrops";
+import Sales from "./pages/Sales";
 
 // Import the LoadingScreen component
 import LoadingScreen from "./components/LoadingScreen";
@@ -247,11 +249,27 @@ const AuthRoutes = ({ open, setOpen, isMobile }) => {
                   </ProtectedRoute>
                 }
               />
+                 <Route
+                path="/inventory-container"
+                element={
+                  <ProtectedRoute>
+                    <InventoryContainer />
+                  </ProtectedRoute>
+                }
+              /> 
                <Route
                 path="/planted-crops"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute> 
                     <PlantedCrops />
+                  </ProtectedRoute>
+                }
+              />
+               <Route
+                path="/crop-sales"
+                element={
+                  <ProtectedRoute> 
+                    <Sales />
                   </ProtectedRoute>
                 }
               />

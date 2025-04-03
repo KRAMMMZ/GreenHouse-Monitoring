@@ -14,41 +14,31 @@ const HarvestCard = ({ title, value, icon, iconSize = "10rem" }) => {
     >
       {/* Text Section */}
       <div
-        className="text-center text-md-left d-flex flex-column justify-content-center"
-        style={{
-          flex: "1",
-          padding: "4px",
-          height: "100%",
-        }}
+        className="text-center text-md-left d-flex flex-column justify-content-center flex-grow-1 p-2"
       >
         <h2
-          className="display-6 fw-bold mb-2 mb-md-0"
+          className="fw-bold mb-2 mb-md-0"
           style={{
             color: "#fff",
-            fontSize: "clamp(2.5rem, 4vw, 3rem)",
+            fontSize: "clamp(2rem, 4vw, 3rem)",
           }}
         >
-          {value} 
+          {value}
         </h2>
         <p
-          className="medium fw-bold mb-0"
+          className="fw-bold mb-0"
           style={{
             color: "#fff",
-            fontSize: "clamp(0.675rem, 1.7vw, .9rem)",
+            fontSize: "clamp(0.875rem, 1.5vw, 1rem)",
           }}
         >
           {title}
         </p>
       </div>
 
-      {/* Icon Section - Hidden on medium and below */}
+      {/* Icon Section */}
       <div
-        className="d-none d-lg-flex justify-content-center align-items-center"
-        style={{
-          flex: "1",
-          height: "100%",
-          padding: "8px",
-        }}
+        className="d-none d-md-flex justify-content-center align-items-center flex-grow-1 p-2"
       >
         <div style={{ fontSize: iconSize }}>
           {icon}

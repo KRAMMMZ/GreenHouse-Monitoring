@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Alert,
   Typography,
@@ -17,10 +17,10 @@ import {
   Select,
   MenuItem,
   InputLabel,
-  Container,
   Modal,
   Divider,
   Button,
+  Container,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
@@ -30,12 +30,12 @@ import HistoryIcon from "@mui/icons-material/History";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DateRangeIcon from "@mui/icons-material/DateRange";
 import EventIcon from "@mui/icons-material/Event";
+ 
 import HarvestSkeliton from "../skelitons/HarvestSkeliton";
-import { useFilteredPlantedCrops } from "../hooks/PlantedCropHooks";
+import { useFilteredSales } from "../hooks/SalesHooks";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import NutrientControllers from "../components/NutrientController";
 
 // Modal styling
 const modalStyle = {
@@ -124,7 +124,7 @@ const filterOptions = [
   { value: "custom", label: "SELECT DATE", icon: <EventIcon fontSize="small" sx={{ mr: 1 }} /> },
 ];
 
-function PlantedCrops() {
+function Sales() {
   const [page, setPage] = useState(0);
   const rowsPerPage = 10;
   // Search term
@@ -197,8 +197,8 @@ function PlantedCrops() {
   // Disable APPLY button if custom dates are not both selected or if FROM is after TO
   const isApplyDisabled = !tempCustomFrom || !tempCustomTo || new Date(tempCustomFrom) > new Date(tempCustomTo);
 
-  // Get filtered planted crops data from hook (using applied values)
-  const { filteredPlantedCrops, loading } = useFilteredPlantedCrops({
+  // Get filtered sales data from hook (using applied values)
+  const { filteredSales, loading } = useFilteredSales({
     filterOption: appliedFilter,
     customFrom,
     customTo,
@@ -207,19 +207,20 @@ function PlantedCrops() {
   });
 
   // Additional search filtering (searching across several fields)
-  const searchFilteredCrops = filteredPlantedCrops.filter((item) => {
+  const searchFilteredSales = filteredSales.filter((item) => {
     const term = searchTerm.toLowerCase();
-    const inCount = String(item.count || "").toLowerCase().includes(term);
-    const inDaysGrown = String(item.days_grown || "").toLowerCase().includes(term);
-    const inGreenhouseId = String(item.greenhouse_id || "").toLowerCase().includes(term);
-    const inPlantId = String(item.plant_id || "").toLowerCase().includes(term);
-    const inPlantingDate = (item.planting_date || "").toLowerCase().includes(term);
-    return inCount || inDaysGrown || inGreenhouseId || inPlantId || inPlantingDate;
+    const inSaleId = String(item.sale_id || "").toLowerCase().includes(term);
+    const inCropDescription = String(item.cropDescription || "").toLowerCase().includes(term);
+    const inHarvestId = String(item.harvestId || "").toLowerCase().includes(term);
+    const inCurrentPrice = String(item.currentPrice || "").toLowerCase().includes(term);
+    const inOriginalPrice = String(item.originalPrice || "").toLowerCase().includes(term);
+    const inSalesDate = (item.salesDate || "").toLowerCase().includes(term);
+    return inSaleId || inCropDescription || inHarvestId || inCurrentPrice || inOriginalPrice || inSalesDate;
   });
 
-  // Sort crops by planting_date descending
-  const sortedCrops = [...searchFilteredCrops].sort(
-    (a, b) => new Date(b.planting_date) - new Date(a.planting_date)
+  // Sort sales by salesDate descending
+  const sortedSales = [...searchFilteredSales].sort(
+    (a, b) => new Date(b.salesDate) - new Date(a.salesDate)
   );
 
   // Compute the filter description text for header
@@ -230,6 +231,14 @@ function PlantedCrops() {
     selectedMonth,
     selectedYear
   );
+
+  // Compute total current price based on the filtered (and searched) sales
+  const totalCurrentPrice = useMemo(() => {
+    return searchFilteredSales.reduce(
+      (total, sale) => total + parseFloat(sale.currentPrice || 0),
+      0
+    );
+  }, [searchFilteredSales]);
 
   return (
     <Container maxWidth="xl" sx={{ p: { xs: 2, sm: 3 } }}>
@@ -247,7 +256,7 @@ function PlantedCrops() {
             mt: { xs: 2, sm: 3 },
           }}
         >
-          {/* Header with title and search/filter controls */}
+          {/* Header with title, total amount, and search/filter controls */}
           <Box
             sx={{
               display: "flex",
@@ -258,14 +267,19 @@ function PlantedCrops() {
               mb: { xs: 2, sm: 3, md: 2 },
             }}
           >
-            <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-              PLANTED CROPS{" "}
-              {filterDescription && (
-                <span style={{ fontSize: "0.8rem", fontWeight: "normal", marginLeft: "10px" }}>
-                  ({filterDescription})
-                </span>
-              )}
-            </Typography>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+                SALES{" "}
+                {filterDescription && (
+                  <span style={{ fontSize: "0.8rem", fontWeight: "normal", marginLeft: "10px" }}>
+                    ({filterDescription})
+                  </span>
+                )}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                Total Current Price: {totalCurrentPrice.toFixed(2)}
+              </Typography>
+            </Box>
             <Box
               sx={{
                 display: "flex",
@@ -277,7 +291,7 @@ function PlantedCrops() {
             >
               <TextField
                 fullWidth
-                label="Search Crops"
+                label="Search Sales"
                 variant="outlined"
                 size="small"
                 value={searchTerm}
@@ -324,15 +338,12 @@ function PlantedCrops() {
               <TableHead>
                 <TableRow sx={{ backgroundColor: "#06402B", borderRadius: "10px" }}>
                   {[
-                     "GREENHOUSE ",
-                    "CROPS COUNT",
-                    "DAYS OLD",
-                    "DAYS INSIDE GREENHOUSE",           
-                    "PH READING",
-                    "TDS READING",
-                    "DAYS GROWN",
-                    "PLANTED DATE",
-                    "STATUS"
+                    "HARVEST ID",
+                    "CROP DESCRIPTION",
+                    
+                    "CURRENT PRICE",
+                    "ORIGINAL PRICE",
+                    "SALES DATE",
                   ].map((header) => (
                     <TableCell
                       key={header}
@@ -351,27 +362,20 @@ function PlantedCrops() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {sortedCrops.length > 0 ? (
-                  sortedCrops
+                {sortedSales.length > 0 ? (
+                  sortedSales
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((item, index) => (
-                      <TableRow key={`${item.plant_id}-${index}`} hover sx={{ borderRadius: "10px" }}>
+                      <TableRow key={`${item.sale_id}-${index}`} hover sx={{ borderRadius: "10px" }}>
                         {[
-                          item.greenhouse_id,
-                          item.count,
-                          item.seedlings_daysOld,
-                          item.greenhouse_daysOld,
-                          item.ph_reading,
-                          item.tds_reading,
-                          item.total_days_grown,
-                            item.planting_date,
-                              item.status.toUpperCase(),
+                          item.harvestId,
+                          (item.cropDescription || "N/A") ,
+                          
+                          item.currentPrice,
+                          item.originalPrice,
+                          item.salesDate,
                         ].map((value, idx) => (
-                          <TableCell
-                            key={idx}
-                            align="center"
-                            sx={{ fontSize: { xs: "0.8rem", sm: "1rem" }, py: { xs: 1, sm: 1.5 } }}
-                          >
+                          <TableCell key={idx} align="center" sx={{ fontSize: { xs: "0.8rem", sm: "1rem" }, py: { xs: 1, sm: 1.5 } }}>
                             {value}
                           </TableCell>
                         ))}
@@ -379,7 +383,7 @@ function PlantedCrops() {
                     ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={9}>
+                    <TableCell colSpan={6}>
                       <Alert variant="filled" severity="warning">
                         {getNoDataAlertText(appliedFilter, customFrom, customTo, selectedMonth, selectedYear)}
                       </Alert>
@@ -394,15 +398,13 @@ function PlantedCrops() {
           <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", mt: { xs: 2, sm: 3 } }}>
             <TablePagination
               component="div"
-              count={sortedCrops.length}
+              count={sortedSales.length}
               rowsPerPage={rowsPerPage}
               page={page}
               onPageChange={(event, newPage) => setPage(newPage)}
               rowsPerPageOptions={[rowsPerPage]}
             />
           </Box>
-           
-           
 
           {/* Custom Date Range Modal */}
           <Modal
@@ -443,17 +445,17 @@ function PlantedCrops() {
           </Modal>
 
           {/* Select Month Modal */}
-          <Modal open={openMonthModal} onClose={() => setOpenMonthModal(false)} aria-labelledby="planted-crops-month-modal">
+          <Modal open={openMonthModal} onClose={() => setOpenMonthModal(false)} aria-labelledby="sales-month-modal">
             <Box sx={modalStyle}>
               <Typography variant="h6" sx={{ mb: 2, textTransform: "uppercase" }}>
                 SELECT MONTH AND YEAR
               </Typography>
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel id="planted-crops-month-label" sx={{ textTransform: "uppercase" }}>
+                <InputLabel id="sales-month-label" sx={{ textTransform: "uppercase" }}>
                   MONTH
                 </InputLabel>
                 <Select
-                  labelId="planted-crops-month-label"
+                  labelId="sales-month-label"
                   value={tempSelectedMonth}
                   label="MONTH"
                   onChange={(e) => setTempSelectedMonth(e.target.value)}
@@ -467,11 +469,11 @@ function PlantedCrops() {
                 </Select>
               </FormControl>
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel id="planted-crops-year-label" sx={{ textTransform: "uppercase" }}>
+                <InputLabel id="sales-year-label" sx={{ textTransform: "uppercase" }}>
                   YEAR
                 </InputLabel>
                 <Select
-                  labelId="planted-crops-year-label"
+                  labelId="sales-year-label"
                   value={tempSelectedYear}
                   label="YEAR"
                   onChange={(e) => setTempSelectedYear(e.target.value)}
@@ -503,12 +505,9 @@ function PlantedCrops() {
             </Box>
           </Modal>
         </Paper>
-        
       )}
-       <NutrientControllers />
-
-    </Container>
+      </Container>
   );
 }
 
-export default PlantedCrops;
+export default Sales;

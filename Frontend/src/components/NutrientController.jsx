@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Alert,
   Typography,
@@ -31,11 +31,10 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DateRangeIcon from "@mui/icons-material/DateRange";
 import EventIcon from "@mui/icons-material/Event";
 import HarvestSkeliton from "../skelitons/HarvestSkeliton";
-import { useFilteredPlantedCrops } from "../hooks/PlantedCropHooks";
+import { useFilteredNutrientControllers } from "../hooks/NutrientControllerHooks";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import NutrientControllers from "../components/NutrientController";
 
 // Modal styling
 const modalStyle = {
@@ -124,7 +123,7 @@ const filterOptions = [
   { value: "custom", label: "SELECT DATE", icon: <EventIcon fontSize="small" sx={{ mr: 1 }} /> },
 ];
 
-function PlantedCrops() {
+function NutrientControllers() {
   const [page, setPage] = useState(0);
   const rowsPerPage = 10;
   // Search term
@@ -197,8 +196,8 @@ function PlantedCrops() {
   // Disable APPLY button if custom dates are not both selected or if FROM is after TO
   const isApplyDisabled = !tempCustomFrom || !tempCustomTo || new Date(tempCustomFrom) > new Date(tempCustomTo);
 
-  // Get filtered planted crops data from hook (using applied values)
-  const { filteredPlantedCrops, loading } = useFilteredPlantedCrops({
+  // Get filtered nutrient controllers data from hook (using applied values)
+  const { filteredNutrientControllers, loading } = useFilteredNutrientControllers({
     filterOption: appliedFilter,
     customFrom,
     customTo,
@@ -207,19 +206,20 @@ function PlantedCrops() {
   });
 
   // Additional search filtering (searching across several fields)
-  const searchFilteredCrops = filteredPlantedCrops.filter((item) => {
+  const searchFilteredControllers = filteredNutrientControllers.filter((item) => {
     const term = searchTerm.toLowerCase();
-    const inCount = String(item.count || "").toLowerCase().includes(term);
-    const inDaysGrown = String(item.days_grown || "").toLowerCase().includes(term);
-    const inGreenhouseId = String(item.greenhouse_id || "").toLowerCase().includes(term);
-    const inPlantId = String(item.plant_id || "").toLowerCase().includes(term);
-    const inPlantingDate = (item.planting_date || "").toLowerCase().includes(term);
-    return inCount || inDaysGrown || inGreenhouseId || inPlantId || inPlantingDate;
+    const inGreenhouse = String(item.greenhouse_id || "").toLowerCase().includes(term);
+    const inControllerId = String(item.controller_id || "").toLowerCase().includes(term);
+    const inSolutionType = (item.solution_type || "").toLowerCase().includes(term);
+    const inDispensedAmount = String(item.dispensed_amount || "").toLowerCase().includes(term);
+    const inDispensedTime = (item.dispensed_time || "").toLowerCase().includes(term);
+    const inActivatedBy = (item.activated_by || "").toLowerCase().includes(term);
+    return inGreenhouse || inControllerId || inSolutionType || inDispensedAmount || inDispensedTime || inActivatedBy;
   });
 
-  // Sort crops by planting_date descending
-  const sortedCrops = [...searchFilteredCrops].sort(
-    (a, b) => new Date(b.planting_date) - new Date(a.planting_date)
+  // Sort controllers by dispensed_time descending
+  const sortedControllers = [...searchFilteredControllers].sort(
+    (a, b) => new Date(b.dispensed_time) - new Date(a.dispensed_time)
   );
 
   // Compute the filter description text for header
@@ -231,8 +231,16 @@ function PlantedCrops() {
     selectedYear
   );
 
+  // Compute total dispensed amount based on the filtered (and searched) controllers
+  const totalDispensedAmount = useMemo(() => {
+    return searchFilteredControllers.reduce(
+      (total, controller) => total + parseFloat(controller.dispensed_amount || 0),
+      0
+    );
+  }, [searchFilteredControllers]);
+
   return (
-    <Container maxWidth="xl" sx={{ p: { xs: 2, sm: 3 } }}>
+    <>
       {loading ? (
         <HarvestSkeliton />
       ) : (
@@ -247,7 +255,7 @@ function PlantedCrops() {
             mt: { xs: 2, sm: 3 },
           }}
         >
-          {/* Header with title and search/filter controls */}
+          {/* Header with title, total amount, and search/filter controls */}
           <Box
             sx={{
               display: "flex",
@@ -258,14 +266,19 @@ function PlantedCrops() {
               mb: { xs: 2, sm: 3, md: 2 },
             }}
           >
-            <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-              PLANTED CROPS{" "}
-              {filterDescription && (
-                <span style={{ fontSize: "0.8rem", fontWeight: "normal", marginLeft: "10px" }}>
-                  ({filterDescription})
-                </span>
-              )}
-            </Typography>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+                NUTRIENT CONTROLS{" "}
+                {filterDescription && (
+                  <span style={{ fontSize: "0.8rem", fontWeight: "normal", marginLeft: "10px" }}>
+                    ({filterDescription})
+                  </span>
+                )}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                Total Dispensed Amount: {totalDispensedAmount.toFixed(2)}
+              </Typography>
+            </Box>
             <Box
               sx={{
                 display: "flex",
@@ -277,7 +290,7 @@ function PlantedCrops() {
             >
               <TextField
                 fullWidth
-                label="Search Crops"
+                label="Search Controllers"
                 variant="outlined"
                 size="small"
                 value={searchTerm}
@@ -324,15 +337,11 @@ function PlantedCrops() {
               <TableHead>
                 <TableRow sx={{ backgroundColor: "#06402B", borderRadius: "10px" }}>
                   {[
-                     "GREENHOUSE ",
-                    "CROPS COUNT",
-                    "DAYS OLD",
-                    "DAYS INSIDE GREENHOUSE",           
-                    "PH READING",
-                    "TDS READING",
-                    "DAYS GROWN",
-                    "PLANTED DATE",
-                    "STATUS"
+                    "GREENHOUSE",
+                    "TYPE",
+                    "DISPENSED AMOUNT",
+                    "DISPENSED TIME",
+                    "ACTIVATED BY",
                   ].map((header) => (
                     <TableCell
                       key={header}
@@ -351,21 +360,17 @@ function PlantedCrops() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {sortedCrops.length > 0 ? (
-                  sortedCrops
+                {sortedControllers.length > 0 ? (
+                  sortedControllers
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((item, index) => (
-                      <TableRow key={`${item.plant_id}-${index}`} hover sx={{ borderRadius: "10px" }}>
+                      <TableRow key={`${item.controller_id}-${index}`} hover sx={{ borderRadius: "10px" }}>
                         {[
                           item.greenhouse_id,
-                          item.count,
-                          item.seedlings_daysOld,
-                          item.greenhouse_daysOld,
-                          item.ph_reading,
-                          item.tds_reading,
-                          item.total_days_grown,
-                            item.planting_date,
-                              item.status.toUpperCase(),
+                          item.solution_type.toUpperCase(),
+                          item.dispensed_amount,
+                          item.dispensed_time,
+                          item.activated_by.toUpperCase(),
                         ].map((value, idx) => (
                           <TableCell
                             key={idx}
@@ -379,7 +384,7 @@ function PlantedCrops() {
                     ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={9}>
+                    <TableCell colSpan={6}>
                       <Alert variant="filled" severity="warning">
                         {getNoDataAlertText(appliedFilter, customFrom, customTo, selectedMonth, selectedYear)}
                       </Alert>
@@ -394,15 +399,13 @@ function PlantedCrops() {
           <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", mt: { xs: 2, sm: 3 } }}>
             <TablePagination
               component="div"
-              count={sortedCrops.length}
+              count={sortedControllers.length}
               rowsPerPage={rowsPerPage}
               page={page}
               onPageChange={(event, newPage) => setPage(newPage)}
               rowsPerPageOptions={[rowsPerPage]}
             />
           </Box>
-           
-           
 
           {/* Custom Date Range Modal */}
           <Modal
@@ -443,17 +446,17 @@ function PlantedCrops() {
           </Modal>
 
           {/* Select Month Modal */}
-          <Modal open={openMonthModal} onClose={() => setOpenMonthModal(false)} aria-labelledby="planted-crops-month-modal">
+          <Modal open={openMonthModal} onClose={() => setOpenMonthModal(false)} aria-labelledby="nutrient-controllers-month-modal">
             <Box sx={modalStyle}>
               <Typography variant="h6" sx={{ mb: 2, textTransform: "uppercase" }}>
                 SELECT MONTH AND YEAR
               </Typography>
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel id="planted-crops-month-label" sx={{ textTransform: "uppercase" }}>
+                <InputLabel id="controllers-month-label" sx={{ textTransform: "uppercase" }}>
                   MONTH
                 </InputLabel>
                 <Select
-                  labelId="planted-crops-month-label"
+                  labelId="controllers-month-label"
                   value={tempSelectedMonth}
                   label="MONTH"
                   onChange={(e) => setTempSelectedMonth(e.target.value)}
@@ -467,11 +470,11 @@ function PlantedCrops() {
                 </Select>
               </FormControl>
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel id="planted-crops-year-label" sx={{ textTransform: "uppercase" }}>
+                <InputLabel id="controllers-year-label" sx={{ textTransform: "uppercase" }}>
                   YEAR
                 </InputLabel>
                 <Select
-                  labelId="planted-crops-year-label"
+                  labelId="controllers-year-label"
                   value={tempSelectedYear}
                   label="YEAR"
                   onChange={(e) => setTempSelectedYear(e.target.value)}
@@ -503,12 +506,9 @@ function PlantedCrops() {
             </Box>
           </Modal>
         </Paper>
-        
       )}
-       <NutrientControllers />
-
-    </Container>
+    </>
   );
 }
 
-export default PlantedCrops;
+export default NutrientControllers;

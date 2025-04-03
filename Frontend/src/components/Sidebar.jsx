@@ -26,8 +26,10 @@ import BuildIcon from "@mui/icons-material/Build";
 import SettingsIcon from "@mui/icons-material/Settings";
 import DevicesIcon from "@mui/icons-material/Devices";
 import InventoryIcon from "@mui/icons-material/Inventory";
- 
+import OpacityIcon from '@mui/icons-material/Opacity';
+import DescriptionIcon from '@mui/icons-material/Description';
 import LocalFloristIcon from "@mui/icons-material/LocalFlorist";
+import InsertChartIcon from '@mui/icons-material/InsertChart';
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import MenuPopupState from "./UserLogout";
@@ -97,8 +99,9 @@ const DrawerHeader = styled("div")(({ theme }) => ({
 const menuItems = [
   { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
   { text: "Graphs", icon: <BarChartIcon />, path: "/graphs" },
+  { text: "Sales", icon: <InsertChartIcon />, path: "/crop-sales" },
   { text: "Planted Crops", icon: <LocalFloristIcon />, path: "/planted-crops" },
-  { text: "Inventory", icon: <InventoryIcon />, path: "/inventory" },
+  { text: "Inventory Item", path: "/inventory", icon: <InventoryIcon /> },
   { text: "User Management", icon: <GroupIcon />, path: "/userManagement" },
   { text: "Activity Logs", icon: <EventNoteIcon />, path: "/activitylogs" },
 ];
@@ -108,6 +111,12 @@ const harvestSubItems = [
   { label: "Harvested", path: "/harvests", icon: <CheckCircleIcon /> },
   { label: "Rejected", path: "/rejected", icon: <CancelIcon /> },
 ];
+
+const InventorySubItems = [
+  { label: "Inventory Item", path: "/inventory", icon: <DescriptionIcon /> },
+  { label: "Inventory Container", path: "/inventory-container", icon: <OpacityIcon /> },
+];
+
 
 const maintenanceSubItems = [
   { label: "Reports", path: "/reports", icon: <ReportIcon /> },
@@ -156,6 +165,8 @@ const Sidebar = ({ open, setOpen }) => {
   const [harvestAnchorEl, setHarvestAnchorEl] = useState(null);
   const [maintenanceOpen, setMaintenanceOpen] = useState(false);
   const [maintenanceAnchorEl, setMaintenanceAnchorEl] = useState(null);
+  const [inventoryOpen, setInventoryOpen] = useState(false);
+  const [inventoryAnchorEl, setInventoryAnchorEl] = useState(null);
 
   useEffect(() => {
     const storedItem = localStorage.getItem("selectedMenuItem");
@@ -187,6 +198,8 @@ const Sidebar = ({ open, setOpen }) => {
 
   const isHarvestActive =
     selectedItem === "/harvests" || selectedItem === "/rejected";
+    const isInventoryAactive =
+    selectedItem === "/inventory" || selectedItem === "/inventory-container";
   const isMaintenanceActive =
     selectedItem === "/reports" ||
     selectedItem === "/hardware-components" ||
@@ -364,7 +377,11 @@ const Sidebar = ({ open, setOpen }) => {
       ? setHarvestOpen(!harvestOpen)
       : setHarvestAnchorEl(event.currentTarget);
   };
-
+  const handleInventoryClick = (event) => {
+    open
+      ? setInventoryOpen(!inventoryOpen)
+      : setInventoryAnchorEl(event.currentTarget);
+  };
   const handleMaintenanceClick = (event) => {
     open
       ? setMaintenanceOpen(!maintenanceOpen)
@@ -398,10 +415,20 @@ const Sidebar = ({ open, setOpen }) => {
 
         <List sx={{ mx: 2, display: "flex", flexDirection: "column", height: "100%" }}>
           <div style={{ flexGrow: 1 }}>
-            {/* Top group: Dashboard, Graphs, Greenhouse, Inventory */}
-            {menuItems.slice(0, 4).map(renderMenuItem)}
+            {/* Top group: Dashboard, Graphs, Planted crops, Inventory */}
+            {menuItems.slice(0, 5).map(renderMenuItem)}
 
-            {/* Dropdown menus remain as before */}
+            {/* Dropdown menus remain as before  
+            {renderDropdownButton({
+              label: "Inventory",
+              icon: <InventoryIcon />,
+              active: isInventoryAactive,
+              openState: inventoryOpen,
+              onClick: handleInventoryClick,
+            })}
+            {open && renderDropdownCollapse(InventorySubItems, inventoryOpen)}*/}
+
+
             {renderDropdownButton({
               label: "Harvests Items",
               icon: <GrainIcon />,
@@ -421,7 +448,7 @@ const Sidebar = ({ open, setOpen }) => {
             {open && renderDropdownCollapse(maintenanceSubItems, maintenanceOpen)}
 
             {/* Remaining items */}
-            {menuItems.slice(4).map(renderMenuItem)}
+            {menuItems.slice(5).map(renderMenuItem)}
           </div>
 
           <Divider sx={{ my: 1, backgroundColor: "#FFFFFF" }} />
@@ -443,6 +470,9 @@ const Sidebar = ({ open, setOpen }) => {
       {/* Collapsed dropdown menus */}
       {renderCollapsedMenu(harvestAnchorEl, harvestSubItems, () =>
         setHarvestAnchorEl(null)
+      )}
+        {renderCollapsedMenu(inventoryAnchorEl, InventorySubItems, () =>
+        setInventoryAnchorEl(null)
       )}
       {renderCollapsedMenu(maintenanceAnchorEl, maintenanceSubItems, () =>
         setMaintenanceAnchorEl(null)

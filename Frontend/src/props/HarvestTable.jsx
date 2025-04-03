@@ -35,10 +35,10 @@ const HarvestTable = ({
                 "Accepted",
                 "Total Rejected",
                 "Total Yield",
-                "Plant Type",
+               // "Plant Type",
                 "Name",
                 "Notes",
-                "Harvest Date",
+                "Harvested Date",
               ].map((header) => (
                 <TableCell
                   key={header}
@@ -73,7 +73,7 @@ const HarvestTable = ({
                       item.accepted,
                       item.total_rejected,
                       item.total_yield,
-                      item.plant_type,
+                  //    item.plant_type,
                       item.full_name,
                       item.notes,
                       item.harvest_date,
