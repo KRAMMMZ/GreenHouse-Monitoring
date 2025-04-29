@@ -1,7 +1,5 @@
-//SALES
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import {
-    Alert,
     Typography,
     Table,
     TableBody,
@@ -15,17 +13,14 @@ import {
     TextField,
     InputAdornment,
     FormControl,
-    Grid,
     Select,
     MenuItem,
     InputLabel,
+    Container,
     Modal,
     Divider,
     Button,
-    Container,
-    useMediaQuery,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import ViewListIcon from "@mui/icons-material/ViewList";
@@ -33,14 +28,9 @@ import TodayIcon from "@mui/icons-material/Today";
 import HistoryIcon from "@mui/icons-material/History";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DateRangeIcon from "@mui/icons-material/DateRange";
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney'; // Revenue
-import MoneyOffIcon from '@mui/icons-material/MoneyOff'; // Expenses
-import AssessmentIcon from '@mui/icons-material/Assessment'; // Profit
-import Metric from "../props/MetricSection";
+import EventIcon from "@mui/icons-material/Event";
 import HarvestSkeliton from "../skelitons/HarvestSkeliton";
-import { useFilteredSales } from "../hooks/SalesHooks";
-import { useFilteredInventoryItems } from "../hooks/InventoryItemsHooks";
-import { useItemInventory } from "../hooks/ItemInventoryHooks"; // Import the Item Inventory hook
+import { useFilteredSensorReadings } from "../hooks/SensorReadingHooks"; // adapted hook import
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -64,9 +54,9 @@ function formatDate(date) {
 }
 
 // Function to generate filter description text (for the header)
-function getFilterDescription(filter, customFrom, customTo, selectedMonth, selectedYear, selectedYearly) {
-    if (filter === "all" || filter === "none") return "";
+function getFilterDescription(filter, customFrom, customTo, selectedMonth, selectedYear) {
     const today = new Date();
+    if (filter === "all" || filter === "none") return "";
     if (filter === "currentDay") {
         return `CURRENT DAY: ${formatDate(today)}`;
     }
@@ -87,7 +77,7 @@ function getFilterDescription(filter, customFrom, customTo, selectedMonth, selec
         return `SELECT MONTH: ${formatDate(firstDay)} - ${formatDate(lastDay)}`;
     }
     if (filter === "yearly") {
-        return `YEARLY: ${selectedYearly}`;
+        return `YEARLY: ${selectedYear}`;
     }
     if (filter === "custom" && customFrom && customTo) {
         return `CUSTOM: ${formatDate(new Date(customFrom))} - ${formatDate(new Date(customTo))}`;
@@ -95,8 +85,8 @@ function getFilterDescription(filter, customFrom, customTo, selectedMonth, selec
     return "";
 }
 
-// Function to generate no-data alert text (for the header)
-function getNoDataAlertText(filter, customFrom, customTo, selectedMonth, selectedYear, selectedYearly) {
+// Function to generate no-data alert text based on active filter
+function getNoDataAlertText(filter, customFrom, customTo, selectedMonth, selectedYear) {
     const today = new Date();
     if (filter === "currentDay") {
         return `NO DATA FOR CURRENT DAY (${formatDate(today)})`;
@@ -118,12 +108,12 @@ function getNoDataAlertText(filter, customFrom, customTo, selectedMonth, selecte
         return `NO DATA FOR SELECT MONTH (${formatDate(firstDay)} - ${formatDate(lastDay)})`;
     }
     if (filter === "yearly") {
-        return `NO DATA FOR YEARLY (${selectedYearly})`;
+        return `NO DATA FOR YEAR (${selectedYear})`;
     }
     if (filter === "custom" && customFrom && customTo) {
         return `NO DATA FOR CUSTOM (${formatDate(new Date(customFrom))} - ${formatDate(new Date(customTo))})`;
     }
-    return "NO DATA AVAILABLE";
+    return "NO READINGS AVAILABLE";
 }
 
 // Define filter options with corresponding icons.
@@ -135,11 +125,11 @@ const filterOptions = [
     { value: "last7Days", label: "LAST 7 DAYS", icon: <HistoryIcon fontSize="small" sx={{ mr: 1 }} /> },
     { value: "currentMonth", label: "CURRENT MONTH", icon: <CalendarMonthIcon fontSize="small" sx={{ mr: 1 }} /> },
     { value: "selectMonth", label: "SELECT MONTH", icon: <DateRangeIcon fontSize="small" sx={{ mr: 1 }} /> },
-    { value: "yearly", label: "SELECT YEAR", icon: <DateRangeIcon fontSize="small" sx={{ mr: 1 }} /> },
-    { value: "custom", label: "SELECT DATE", icon: <DateRangeIcon fontSize="small" sx={{ mr: 1 }} /> },
+    { value: "yearly", label: "SELECT YEAR", icon: <TodayIcon fontSize="small" sx={{ mr: 1 }} /> },
+    { value: "custom", label: "SELECT CUSTOM DATE", icon: <EventIcon fontSize="small" sx={{ mr: 1 }} /> },
 ];
 
-function Sales() {
+function SensorReadings() {
     const [page, setPage] = useState(0);
     const rowsPerPage = 10;
     // Search term
@@ -147,17 +137,17 @@ function Sales() {
     // Separate UI filter (dropdown) and applied filter (active filtering)
     const [uiFilter, setUiFilter] = useState("all");
     const [appliedFilter, setAppliedFilter] = useState("all");
-    // Actual filter values applied for custom and month filters
+    // Actual filter values applied for custom, month, and yearly filters
     const [customFrom, setCustomFrom] = useState(null);
     const [customTo, setCustomTo] = useState(null);
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-    const [selectedYearly, setSelectedYearly] = useState(new Date().getFullYear());
-    // Temporary states for modal changes
+    // Temporary states for modal changes for date and month filters
     const [tempCustomFrom, setTempCustomFrom] = useState(null);
     const [tempCustomTo, setTempCustomTo] = useState(null);
     const [tempSelectedMonth, setTempSelectedMonth] = useState(new Date().getMonth() + 1);
     const [tempSelectedYear, setTempSelectedYear] = useState(new Date().getFullYear());
+    // Temporary state for yearly filter
     const [tempYear, setTempYear] = useState(new Date().getFullYear());
     // Modal open states
     const [openDateModal, setOpenDateModal] = useState(false);
@@ -170,7 +160,7 @@ function Sales() {
         setPage(0);
     };
 
-    // Handle filter changes: for selectMonth and custom, open modal without auto‑applying filter.
+    // Handle filter changes: for selectMonth, yearly, and custom, open modal without auto‑applying filter.
     const handleFilterChange = (e) => {
         const value = e.target.value;
         setPage(0);
@@ -186,15 +176,14 @@ function Sales() {
             setOpenDateModal(true);
         } else if (value === "yearly") {
             setUiFilter(value);
-            setTempYear(selectedYearly);
+            setTempYear(selectedYear);
             setOpenYearModal(true);
-        }
-        else {
+        } else {
             setUiFilter(value);
             setAppliedFilter(value);
+            // Reset extra filters for non‑modal options
             setCustomFrom(null);
             setCustomTo(null);
-            setSelectedYearly(null);
         }
     };
 
@@ -218,9 +207,10 @@ function Sales() {
         setPage(0);
     };
 
+    // Apply yearly filter when Apply is clicked
     const handleApplyYearlyFilter = () => {
         setOpenYearModal(false);
-        setSelectedYearly(tempYear);
+        setSelectedYear(tempYear);
         setAppliedFilter("yearly");
         setUiFilter("none");
         setPage(0);
@@ -229,81 +219,30 @@ function Sales() {
     // Disable APPLY button if custom dates are not both selected or if FROM is after TO
     const isApplyDisabled = !tempCustomFrom || !tempCustomTo || new Date(tempCustomFrom) > new Date(tempCustomTo);
 
-    // Get filtered sales data from hook (using applied values)
-    const { filteredSales, loading: salesLoading } = useFilteredSales({
+    // Get filtered sensor readings data from hook (using applied values)
+    const { filteredSensorReadings, loading } = useFilteredSensorReadings({
         filterOption: appliedFilter,
         customFrom,
         customTo,
-        selectedMonth,
-        selectedYear,
-        selectedYearly,
+        selectedMonth: appliedFilter === "selectMonth" ? selectedMonth : null,
+        selectedYear: (appliedFilter === "selectMonth" || appliedFilter === "yearly") ? selectedYear : null,
     });
 
-    const { filteredInventoryItems, loading: inventoryItemsLoading } = useFilteredInventoryItems({
-        filterOption: appliedFilter,
-        customFrom,
-        customTo,
-        selectedMonth,
-        selectedYear,
-        selectedYearly,
+    // Additional search filtering (searching across several fields)
+    const searchFilteredReadings = filteredSensorReadings.filter((item) => {
+        const term = searchTerm.toLowerCase();
+        const inComponent = String(item.component_id || "").toLowerCase().includes(term);
+        const inReadingId = String(item.reading_id || "").toLowerCase().includes(term);
+        const inReadingTime = (item.reading_time || "").toLowerCase().includes(term);
+        const inReadingValue = String(item.reading_value || "").toLowerCase().includes(term);
+        const inUnit = (item.unit || "").toLowerCase().includes(term);
+        return inComponent || inReadingId || inReadingTime || inReadingValue || inUnit;
     });
 
-    const { itemInventory, loading: itemInventoryLoading } = useItemInventory({
-        filterOption: appliedFilter,
-        customFrom,
-        customTo,
-        selectedMonth,
-        selectedYear,
-        selectedYearly,
-    });
-
-    // Combine loading states
-    const loading = salesLoading || inventoryItemsLoading || itemInventoryLoading;
-
-    // Calculate total expenses from Nutrient Inventory and Item Inventory
-    const totalNutrientInventoryExpenses = useMemo(() => {
-        if (!filteredInventoryItems) return 0;
-        return filteredInventoryItems.reduce((total, item) => total + parseFloat(item.total_price || 0), 0);
-    }, [filteredInventoryItems]);
-
-    const totalItemInventoryExpenses = useMemo(() => {
-        if (!itemInventory) return 0;
-        return itemInventory.reduce((total, item) => total + parseFloat(item.total_price || 0), 0);
-    }, [itemInventory]);
-
-    const totalExpenses = totalNutrientInventoryExpenses + totalItemInventoryExpenses;
-
-    // Calculate total revenue from sales
-    const totalRevenue = useMemo(() => {
-        if (!filteredSales) return 0;
-        return filteredSales.reduce(
-            (total, sale) => total + parseFloat(sale.total_price || 0),
-            0
-        );
-    }, [filteredSales]);
-
-     // Apply search filtering
-     const searchFilteredSales = useMemo(() => {
-        if (!filteredSales) return []; // Return an empty array if filteredSales is undefined or null
-
-        return filteredSales.filter((item) => {
-            const term = searchTerm.toLowerCase();
-            const inSaleId = String(item.sale_id || "").toLowerCase().includes(term);
-            const inCropDescription = String(item.cropDescription || "").toLowerCase().includes(term);
-            const inHarvestId = String(item.harvestId || "").toLowerCase().includes(term);
-            const inCurrentPrice = String(item.currentPrice || "").toLowerCase().includes(term);
-            const inOriginalPrice = String(item.originalPrice || "").toLowerCase().includes(term);
-            const inSalesDate = String(item.salesDate || "").toLowerCase().includes(term); // Ensure salesDate is converted to string
-            return inSaleId || inCropDescription || inHarvestId || inCurrentPrice || inOriginalPrice || inSalesDate;
-        });
-    }, [filteredSales, searchTerm]);
-
-    // Sort sales by salesDate descending
-    const sortedSales = useMemo(() => {
-        return [...searchFilteredSales].sort(
-            (a, b) => new Date(b.salesDate) - new Date(a.salesDate)
-        );
-    }, [searchFilteredSales]);
+    // Sort sensor readings by reading_time descending
+    const sortedReadings = [...searchFilteredReadings].sort(
+        (a, b) => new Date(b.reading_time) - new Date(a.reading_time)
+    );
 
     // Compute the filter description text for header
     const filterDescription = getFilterDescription(
@@ -311,42 +250,19 @@ function Sales() {
         customFrom,
         customTo,
         selectedMonth,
-        selectedYear,
-        selectedYearly
+        selectedYear
     );
 
-    const theme = useTheme();
-    const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
-    const iconSize = isSmallScreen ? "3rem" : "4rem";
+    // Compute total reading value based on the filtered (and searched) readings.
+    const totalReadingValue = useMemo(() => {
+        return searchFilteredReadings.reduce(
+            (total, reading) => total + parseFloat(reading.reading_value || 0),
+            0
+        );
+    }, [searchFilteredReadings]);
 
     return (
-        <Container maxWidth="xxl" sx={{ p: { xs: 2, sm: 3 } }}>
-            <Grid container spacing={3}>
-                <Grid item xs={12} sm={6} md={4}>
-                    <Metric
-                        title="Total Revenue"
-                        value={totalRevenue.toFixed(2)}
-                        loading={loading}
-                        icon={<AttachMoneyIcon sx={{ fontSize: iconSize, color: "#0A6644" }} />}
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                    <Metric
-                        title="Total Expenses"
-                        value={totalExpenses.toFixed(2)}
-                        loading={loading}
-                        icon={<MoneyOffIcon sx={{ fontSize: iconSize, color: "#0A6644" }} />}
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                    <Metric
-                        title="Total Profit"
-                        value={(totalRevenue - totalExpenses).toFixed(2)}
-                        loading={loading}
-                        icon={<AssessmentIcon sx={{ fontSize: iconSize, color: "#0A6644" }} />}
-                    />
-                </Grid>
-            </Grid>
+        <>
             {loading ? (
                 <HarvestSkeliton />
             ) : (
@@ -362,7 +278,7 @@ function Sales() {
                         mt: { xs: 2, sm: 3 },
                     }}
                 >
-                    {/* Header with title, total amount, and search/filter controls */}
+                    {/* Header with title, total reading value, and search/filter controls */}
                     <Box
                         sx={{
                             display: "flex",
@@ -375,17 +291,15 @@ function Sales() {
                     >
                         <Box>
                             <Typography variant="h5" sx={{ fontWeight: "bold", color: "#000" }}>
-                                SALES{" "}
+                                SENSOR READINGS{" "}
                                 {filterDescription && (
                                     <span style={{ fontSize: "0.8rem", fontWeight: "normal", marginLeft: "10px", color: "#000" }}>
                                         ({filterDescription})
                                     </span>
                                 )}
                             </Typography>
-                            {/* <Typography variant="subtitle1" sx={{ mt: 1, color: "#fff" }}>
-                                Total Sales: {totalRevenue.toFixed(2)}
-                            </Typography> */}
                         </Box>
+
                         <Box
                             sx={{
                                 display: "flex",
@@ -397,7 +311,7 @@ function Sales() {
                         >
                             <TextField
                                 fullWidth
-                                label="Search Sales"
+                                label="Search Readings"
                                 variant="outlined"
                                 size="small"
                                 value={searchTerm}
@@ -412,8 +326,12 @@ function Sales() {
                                 InputLabelProps={{
                                     style: { color: '#000' },
                                 }}
-                                sx={{ maxWidth: { xs: "100%", sm: "250px" }, }}
+                                sx={{
+                                    maxWidth: { xs: "100%", sm: "250px" },
+                                   
+                                }}
                             />
+
                             <FormControl variant="outlined" size="small" sx={{ width: { xs: "100%", sm: "auto" } }}>
                                 <InputLabel id="filter-label" sx={{ textTransform: "uppercase", color: '#000' }}>
                                     FILTER
@@ -424,10 +342,9 @@ function Sales() {
                                     label="FILTER"
                                     onChange={handleFilterChange}
                                     sx={{
-                                        textTransform: "uppercase", color: "#O00",
-
+                                        textTransform: "uppercase", color: "#000",
+                                     
                                     }}
-
                                     MenuProps={{
                                         PaperProps: {
                                             style: {
@@ -456,19 +373,14 @@ function Sales() {
                     </Box>
 
                     {/* Table */}
-                    <TableContainer sx={{ overflowX: "auto", borderBottom: "1px solid #999" }}>
-                        <Table sx={{ minWidth: 650, backgroundColor: "#fff", borderSpacing: "0 10px", }}>
+                    <TableContainer sx={{ overflowX: "auto", borderBottom:"1px solid #999" }}>
+                        <Table sx={{ minWidth: 650, backgroundColor: "#fff" , borderSpacing: "0 10px", }}>
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: "#06402B", borderRadius: "10px" }}>
                                     {[
-                                        "Plant Name",
-                                        "Crop Description",
-                                        "Quantity",
-                                        "Sold Price",
-                                        "Original Price(pcs)",
-                                        "Total Price",
-                                        "User Name",
-                                        "Sales Date",
+                                        "READING VALUE",
+                                        "UNIT",
+                                        "READING TIME",
                                     ].map((header) => (
                                         <TableCell
                                             key={header}
@@ -478,8 +390,8 @@ function Sales() {
                                                 color: "#fff",
                                                 fontSize: { xs: "0.9rem", sm: "1rem" },
                                                 py: { xs: 2, sm: 2 },
-
-                                                borderBottom: 'none'
+                                                textTransform: "uppercase",
+                                                
                                             }}
                                         >
                                             {header}
@@ -488,20 +400,15 @@ function Sales() {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {sortedSales.length > 0 ? (
-                                    sortedSales
+                                {sortedReadings.length > 0 ? (
+                                    sortedReadings
                                         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                         .map((item, index) => (
-                                            <TableRow key={`${item.sale_id}-${index}`}   >
+                                            <TableRow key={`${item.reading_id}-${index}`}>
                                                 {[
-                                                    item.plant_name,
-                                                    (item.cropDescription || "N/A"),
-                                                    item.quantity,
-                                                    item.currentPrice,
-                                                    item.originalPrice,
-                                                    item.total_price,
-                                                    item.name,
-                                                    item.created_at,
+                                                    item.reading_value,
+                                                    item.unit.toUpperCase(),
+                                                    item.reading_time,
                                                 ].map((value, idx) => (
                                                     <TableCell key={idx} align="center" sx={{ fontSize: { xs: "0.8rem", sm: "1rem" }, py: { xs: 1, sm: 1.5 }, color: '#000' }}>
                                                         {value}
@@ -512,13 +419,13 @@ function Sales() {
                                 ) : (
                                     <TableRow
                                         sx={{
-
+                                             
                                             borderRadius: "10px",
                                         }}
                                     >
-                                        <TableCell colSpan={9} align="center" sx={{ borderBottom: 'none' }}>
-                                            <Typography variant="h7" color="#000" >
-                                                {getNoDataAlertText(appliedFilter, customFrom, customTo, selectedMonth, selectedYear, selectedYearly)}
+                                        <TableCell colSpan={5} align="center" sx={{borderBottom: 'none'}}>
+                                            <Typography variant="h7" color="#000">
+                                                {getNoDataAlertText(appliedFilter, customFrom, customTo, selectedMonth, selectedYear)}
                                             </Typography>
                                         </TableCell>
                                     </TableRow>
@@ -531,14 +438,14 @@ function Sales() {
                     <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", mt: { xs: 2, sm: 3 } }}>
                         <TablePagination
                             component="div"
-                            count={sortedSales.length}
+                            count={sortedReadings.length}
                             rowsPerPage={rowsPerPage}
                             page={page}
                             onPageChange={(event, newPage) => setPage(newPage)}
                             rowsPerPageOptions={[rowsPerPage]}
                             sx={{
                                 color: '#000', // Color of the pagination text
-
+                               
                             }}
                         />
                     </Box>
@@ -578,46 +485,94 @@ function Sales() {
                                     APPLY
                                 </Button>
                             </Box>
-                        </Box>
+                       </ Box>
                     </Modal>
 
                     {/* Select Month Modal */}
-                    <Modal open={openMonthModal} onClose={() => setOpenMonthModal(false)} aria-labelledby="sales-month-modal">
+                    <Modal open={openMonthModal} onClose={() => { setOpenMonthModal(false); setUiFilter("all"); }} aria-labelledby="sensor-readings-month-modal">
                         <Box sx={modalStyle}>
                             <Typography variant="h6" sx={{ mb: 2, textTransform: "uppercase" }}>
                                 SELECT MONTH AND YEAR
                             </Typography>
                             <FormControl fullWidth sx={{ mb: 2 }}>
-                                <InputLabel id="sales-month-label" sx={{ textTransform: "uppercase" }}>
+                                <InputLabel id="readings-month-label" sx={{ textTransform: "uppercase" }}>
                                     MONTH
                                 </InputLabel>
                                 <Select
-                                    labelId="sales-month-label"
+                                    labelId="readings-month-label"
                                     value={tempSelectedMonth}
                                     label="MONTH"
                                     onChange={(e) => setTempSelectedMonth(e.target.value)}
-                                    sx={{ textTransform: "uppercase" }}
+                                    sx={{
+                                        textTransform: "uppercase", color: "#fff",
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#fff', // Default border color
+                                        },
+                                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#fff', // Hovered border color
+                                        },
+                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#fff', // Focused border color
+                                        },
+                                        '& .MuiSvgIcon-root': { // Adjust the color of the dropdown arrow
+                                            color: '#fff',
+                                        },
+                                    }}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            style: {
+                                                backgroundColor: '#fff', // Background color of the dropdown
+                                            },
+                                        },
+                                    }}
+                                    inputProps={{
+                                        style: { color: '#fff' },
+                                    }}
                                 >
                                     {Array.from({ length: 12 }, (_, i) => (
-                                        <MenuItem key={i + 1} value={i + 1} sx={{ textTransform: "uppercase" }}>
+                                        <MenuItem key={i + 1} value={i + 1} sx={{ textTransform: "uppercase", color: "#000" }}>
                                             {new Date(0, i).toLocaleString("default", { month: "long" }).toUpperCase()}
                                         </MenuItem>
                                     ))}
                                 </Select>
                             </FormControl>
                             <FormControl fullWidth sx={{ mb: 2 }}>
-                                <InputLabel id="sales-year-label" sx={{ textTransform: "uppercase" }}>
+                                <InputLabel id="readings-year-label" sx={{ textTransform: "uppercase" }}>
                                     YEAR
                                 </InputLabel>
                                 <Select
-                                    labelId="sales-year-label"
+                                    labelId="readings-year-label"
                                     value={tempSelectedYear}
                                     label="YEAR"
                                     onChange={(e) => setTempSelectedYear(e.target.value)}
-                                    sx={{ textTransform: "uppercase" }}
+                                    sx={{
+                                        textTransform: "uppercase", color: "#fff",
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#fff', // Default border color
+                                        },
+                                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#fff', // Hovered border color
+                                        },
+                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#fff', // Focused border color
+                                        },
+                                        '& .MuiSvgIcon-root': { // Adjust the color of the dropdown arrow
+                                            color: '#fff',
+                                        },
+                                    }}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            style: {
+                                                backgroundColor: '#fff', // Background color of the dropdown
+                                            },
+                                        },
+                                    }}
+                                    inputProps={{
+                                        style: { color: '#fff' },
+                                    }}
                                 >
                                     {Array.from({ length: 11 }, (_, i) => 2020 + i).map((year) => (
-                                        <MenuItem key={year} value={year} sx={{ textTransform: "uppercase" }}>
+                                        <MenuItem key={year} value={year} sx={{ textTransform: "uppercase", color: "#000" }}>
                                             {year}
                                         </MenuItem>
                                     ))}
@@ -715,8 +670,8 @@ function Sales() {
                     </Modal>
                 </Paper>
             )}
-        </Container>
+        </>
     );
 }
 
-export default Sales;
+export default SensorReadings;

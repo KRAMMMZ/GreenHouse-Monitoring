@@ -11,7 +11,7 @@ const PlantedCrops = async (req,res ) => {
           'x-api-key': process.env.API_KEY, // Ensure the API key is correctly set isn your environment variables
         },
       });
-      const plantedCropsTable  = response.data || [];
+      const plantedCropsTable  = response.data.planted_crops || [];
     
       res.json({ 
         

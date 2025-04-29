@@ -9,7 +9,7 @@ export const InventoryItem = async (req, res) => {
           'x-api-key': process.env.API_KEY,  
         },
       });
-      const itemInventoryTable  = response.data || [];
+      const itemInventoryTable  = response.data.inventory_records || [];
     
       res.json({ 
         
@@ -34,7 +34,7 @@ export const InventoryContainer = async (req, res) => {
           'x-api-key': process.env.API_KEY,  
         },
       });
-      const containerInventoryTable  = response.data || [];
+      const containerInventoryTable  = response.data.inventory_containers || [];
     
       res.json({ 
         

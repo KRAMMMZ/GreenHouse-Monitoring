@@ -14,9 +14,9 @@ export const useActivityLogs = () => {
   const [rejectionLogs, setRejectionLogs] = useState([]);
   const [maintenanceLogs, setMaintenanceLogs] = useState([]);
   const [hardwareComponentsLogs, setHardwareComponentsLogs] = useState([]);
-  // const [hardwareStatusLogs, setHardwareStatusLogs] = useState([]); //hardwareStatusLogs REMOVED
   const [controlsLog, setControlsLog] = useState([]);
   const [inventoryLogs, setInventoryLogs] = useState([]);
+  const [nutrientInventoryLogs, setNutrientInventoryLogs] = useState([]); // NEW STATE
   const [plantedCropsLogs, setPlantedCropsLogs] = useState([]);
   const [logsLoading, setLogsLoading] = useState(true);
   // Store errors as an object to keep track of which route failed
@@ -38,13 +38,13 @@ export const useActivityLogs = () => {
         axios.get(`${baseUrl}/logs/hardware_components`, {
           signal: controller.signal,
         }),
-        // axios.get(`${baseUrl}/logs/hardware_status`, { //hardwareStatusLogs REMOVED
-        //   signal: controller.signal,
-        // }),
         axios.get(`${baseUrl}/logs/control/logsd`, {
           signal: controller.signal,
         }),
-        axios.get(`${baseUrl}/logs/inventory`, { signal: controller.signal }),
+        axios.get(`${baseUrl}/logs/inventory_item`, {
+          signal: controller.signal,
+        }),
+        axios.get(`${baseUrl}/logs/inventory`, { signal: controller.signal }), // NEW ENDPOINT
         axios.get(`${baseUrl}/logs/planted_crops`, {
           signal: controller.signal,
         }),
@@ -92,14 +92,14 @@ export const useActivityLogs = () => {
         setHardwareComponentsLogs,
         "hardwareComponentsLogsTable"
       );
-      // processResult( //hardwareStatusLogs REMOVED
-      //   results[6],
-      //   setHardwareStatusLogs,
-      //   "hardwareStatusLogsTable"
-      // );
       processResult(results[6], setControlsLog, "controlsLogTable");
       processResult(results[7], setInventoryLogs, "itemInventoryLogsTable");
-      processResult(results[8], setPlantedCropsLogs, "plantedCropsLogsTable");
+      processResult(
+        results[8],
+        setNutrientInventoryLogs,
+        "NutrientInventoryLogsTable"
+      ); // NEW LINE
+      processResult(results[9], setPlantedCropsLogs, "plantedCropsLogsTable");
     };
 
     fetchLogs()
@@ -119,9 +119,9 @@ export const useActivityLogs = () => {
         setMaintenanceLogs(data.MaintenanceTable || []);
         setHarvestLogs(data.harvestLogsTable || []);
         setHardwareComponentsLogs(data.hardwareComponentsLogsTable || []);
-        // setHardwareStatusLogs(data.hardwareStatusLogsTable || []); //hardwareStatusLogs REMOVED
         setControlsLog(data.controlsLogTable || []);
         setInventoryLogs(data.itemInventoryLogsTable || []);
+        setNutrientInventoryLogs(data.NutrientInventoryLogsTable || []); // NEW LINE
         setPlantedCropsLogs(data.plantedCropsLogsTable || []);
       }
     };
@@ -143,12 +143,12 @@ export const useActivityLogs = () => {
     maintenanceLogs,
     harvestLogs,
     hardwareComponentsLogs,
-    // hardwareStatusLogs, //hardwareStatusLogs REMOVED
     controlsLog,
     inventoryLogs,
+    nutrientInventoryLogs, // NEW LINE
     plantedCropsLogs,
     logsLoading,
     error,
     emptyData, // Add emptyData to the return value
   };
-};
+};  

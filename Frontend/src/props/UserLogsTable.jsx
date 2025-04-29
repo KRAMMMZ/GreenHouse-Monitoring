@@ -20,16 +20,28 @@ function ActivityLogs() {
     rejectionLogs = [],
     maintenanceLogs = [],
     harvestLogs = [],
-    logsLoading,
+    plantedCropsLogs = [],
+    hardwareComponentsLogs = [],
+    logsLoading, 
+     error,
+    emptyData, // Get the emptyData state
   } = useActivityLogs();
 
   // Combine all logs into a single array and add type identifiers
   const allLogs = [
-    ...adminActivityLogs.map((log) => ({ ...log, logType: "ADMIN" })),
+   ...adminActivityLogs.map((log) => ({ ...log, logType: "ADMIN" })),
     ...userActivityLogs.map((log) => ({ ...log, logType: "USERS" })),
     ...rejectionLogs.map((log) => ({ ...log, logType: "REJECTION" })),
     ...maintenanceLogs.map((log) => ({ ...log, logType: "MAINTENANCE" })),
     ...harvestLogs.map((log) => ({ ...log, logType: "HARVESTS" })),
+    ...hardwareComponentsLogs.map((log) => ({
+      ...log,
+      logType: "HARDWARE COMPONENTS",
+    })),
+    ...plantedCropsLogs.map((log) => ({
+      ...log,
+      logType: "PLANTED CROPS",
+    })),
   ];
 
   // Sort logs by date (most recent first) and limit display to 5 entries
@@ -48,14 +60,14 @@ function ActivityLogs() {
         p: 1.7,
         
         
-        backgroundColor: "#FDFCFB",
+        backgroundColor: "#FFF",
         position: "relative",
-        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.3)"
+        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.35)"
       }}
     >
         <TableContainer>
           <Table sx={{ minWidth: 650 }}>
-            <TableHead sx={{ backgroundColor: "#06402B" }}>
+            <TableHead sx={{ backgroundColor: "#06402B",      }}>
               <TableRow>
                 {["Log Date", "Description", "Name"].map((header) => (
                   <TableCell
@@ -75,8 +87,8 @@ function ActivityLogs() {
             </TableHead>
             <TableBody>
               {displayLogs.map((log, index) => (
-                <TableRow key={`${log.log_id}-${index}`} hover>
-                  <TableCell align="center" sx={{  fontSize: { xs: ".5rem", sm: ".6rem", md: ".8rem" }}}>{log.log_date}</TableCell>
+                <TableRow key={`${log.log_id}-${index}`}   hover>
+                  <TableCell align="center" sx={{    fontSize: { xs: ".5rem", sm: ".6rem", md: ".8rem" }}}>{log.log_date}</TableCell>
                   <TableCell align="center" sx={{  fontSize: { xs: ".5rem", sm: ".6rem", md: ".8rem" }}}>{log.logs_description}</TableCell>
                   <TableCell align="center" sx={{  fontSize: { xs: ".5rem", sm: ".6rem", md: ".8rem" }}}>{log.name}</TableCell>
                 </TableRow>

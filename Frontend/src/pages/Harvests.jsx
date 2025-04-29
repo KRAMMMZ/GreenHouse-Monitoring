@@ -18,6 +18,8 @@ import HarvestSkeliton from "../skelitons/HarvestSkeliton";
 import FilterSearchSection from "../props/FilterSearchSection";
 import HarvestTable from "../props/HarvestTable";
 import CustomDateModal from "../props/CustomDateModal";
+import axios from "axios";
+import Swal from 'sweetalert2'; // Import SweetAlert2
 
 // Helper function to format dates
 function formatDate(date) {
@@ -55,7 +57,7 @@ function getFilterDescription(filter, customFrom, customTo, selectedMonth, selec
 }
 
 const Harvest = () => {
-  const { harvestItems, harvestLoading } = useHarvestItems();
+  const { harvestItems, harvestLoading,fetchHarvestItems  } = useHarvestItems(); // Make sure fetchHarvestItems is returned by the hook
   const [harvestPage, setHarvestPage] = useState(0);
   const rowsPerPage = 10;
   const [harvestSearchTerm, setHarvestSearchTerm] = useState("");
@@ -250,7 +252,7 @@ const Harvest = () => {
         return `No data for selected month (${formatted})`;
       }
       default:
-        return "No data";
+        return "No Harvest data";
     }
   }, [harvestFilter, appliedCustomFrom, appliedCustomTo, appliedSelectedMonth, appliedSelectedYear]);
 
@@ -266,9 +268,48 @@ const Harvest = () => {
     borderRadius: 2,
   };
 
+   const handlePriceUpdate = useCallback(async (id, newPrice) => {
+        try {
+            // Use PATCH to match backend
+            const response = await axios.patch(
+                `http://localhost:3001/harvests/${id}`,
+                { price: newPrice }, // Sending price as a property of an object
+                {
+                    headers: { "Content-Type": "application/json" },
+                    withCredentials: true,
+                }
+            );
+
+            if (response.status >= 200 && response.status < 300) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: 'Price updated successfully!',
+                }).then(() => {
+                  fetchHarvestItems(); // Call fetchHarvestItems directly
+                });
+            } else {
+                console.warn("Failed to update price:", response);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: `Failed to update price. Status: ${response.status}`,
+                });
+            }
+
+        } catch (err) {
+            console.error(err);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: `Failed to update price. Check console for details. ${err.message}`,
+            });
+        }
+    }, [fetchHarvestItems]); // Add fetchHarvestItems to the dependency array
+
   return (
     <Container maxWidth="xxl" sx={{ p: 3 }}>
-      <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 3, mt: 3 }}>
+      <Paper sx={{ p: 2, borderRadius: 2,   boxShadow: 15, mt: 3,    backgroundColor: "#FFF", }}>
         <FilterSearchSection
           harvestSearchTerm={harvestSearchTerm}
           setHarvestSearchTerm={setHarvestSearchTerm}
@@ -285,8 +326,9 @@ const Harvest = () => {
             harvestPage={harvestPage}
             rowsPerPage={rowsPerPage}
             noDataMessage={noDataMessage}
+            onPriceUpdate={handlePriceUpdate}
           />
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", mt: { xs: 2, sm: 3 } }}>
             <TablePagination
               component="div"
               count={filteredHarvestItems.length}
@@ -294,6 +336,7 @@ const Harvest = () => {
               page={harvestPage}
               onPageChange={(event, newPage) => setHarvestPage(newPage)}
               rowsPerPageOptions={[rowsPerPage]}
+              sx={{    color: '#000'  }}
             />
           </Box>
         </Box>

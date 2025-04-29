@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Typography,
   Table,
@@ -16,12 +16,9 @@ import {
   Select,
   MenuItem,
   InputLabel,
-  Container,
   Modal,
   Divider,
   Button,
-  useMediaQuery,
-  useTheme
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
@@ -32,12 +29,12 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DateRangeIcon from "@mui/icons-material/DateRange";
 import EventIcon from "@mui/icons-material/Event";
 import HarvestSkeliton from "../skelitons/HarvestSkeliton";
-import { useFilteredMaintenance } from "../hooks/MaintenanceHooks";
+import { useFilteredInventoryItems } from "../hooks/InventoryItemsHooks";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { styled } from '@mui/material/styles';
-import { useMemo } from "react";
+import { styled, useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
 
 // Modal styling
 const modalStyle = {
@@ -117,13 +114,13 @@ function getNoDataAlertText(filter, customFrom, customTo, selectedMonth, selecte
 // Define filter options with corresponding icons.
 // The "none" option is disabled.
 const filterOptions = [
-  { value: "none", label: "SELECT FILTER", icon: <FilterListIcon fontSize="small" sx={{ mr: 1 }}   />, disabled: true },
-  { value: "all", label: "ALL DATA", icon: <ViewListIcon fontSize="small" sx={{ mr: 1 }}  /> },
-  { value: "currentDay", label: "CURRENT DAY", icon: <TodayIcon fontSize="small"  sx={{ mr: 1 }} /> },
-  { value: "last7Days", label: "LAST 7 DAYS", icon: <HistoryIcon fontSize="small"  sx={{ mr: 1 }} /> },
-  { value: "currentMonth", label: "CURRENT MONTH", icon: <CalendarMonthIcon fontSize="small"  sx={{ mr: 1 }} /> },
-  { value: "selectMonth", label: "SELECT MONTH", icon: <DateRangeIcon fontSize="small"  sx={{ mr: 1 }} /> },
-  { value: "custom", label: "SELECT DATE", icon: <EventIcon fontSize="small" sx={{ mr: 1 }}  /> },
+  { value: "none", label: "SELECT FILTER", icon: <FilterListIcon fontSize="small" sx={{ mr: 1 }} />, disabled: true },
+  { value: "all", label: "ALL DATA", icon: <ViewListIcon fontSize="small" sx={{ mr: 1 }} /> },
+  { value: "currentDay", label: "CURRENT DAY", icon: <TodayIcon fontSize="small" sx={{ mr: 1 }} /> },
+  { value: "last7Days", label: "LAST 7 DAYS", icon: <HistoryIcon fontSize="small" sx={{ mr: 1 }} /> },
+  { value: "currentMonth", label: "CURRENT MONTH", icon: <CalendarMonthIcon fontSize="small" sx={{ mr: 1 }} /> },
+  { value: "selectMonth", label: "SELECT MONTH", icon: <DateRangeIcon fontSize="small" sx={{ mr: 1 }} /> },
+  { value: "custom", label: "SELECT DATE", icon: <EventIcon fontSize="small" sx={{ mr: 1 }} /> },
 ];
 
 // Styled TableCell component
@@ -144,7 +141,7 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-function Reports() {
+function InventoryItems() {
   const [page, setPage] = useState(0);
   const rowsPerPage = 10;
   // Search term
@@ -181,20 +178,17 @@ function Reports() {
     setPage(0);
     if (value === "selectMonth") {
       setUiFilter(value);
-      // Initialize temporary values with current ones
       setTempSelectedMonth(selectedMonth);
       setTempSelectedYear(selectedYear);
       setOpenMonthModal(true);
     } else if (value === "custom") {
       setUiFilter(value);
-      // Initialize temporary custom dates
       setTempCustomFrom(customFrom);
       setTempCustomTo(customTo);
       setOpenDateModal(true);
     } else {
       setUiFilter(value);
       setAppliedFilter(value);
-      // Clear custom date values when switching away
       setCustomFrom(null);
       setCustomTo(null);
     }
@@ -223,8 +217,8 @@ function Reports() {
   // Disable APPLY button if custom dates are not both selected or if FROM is after TO
   const isApplyDisabled = !tempCustomFrom || !tempCustomTo || new Date(tempCustomFrom) > new Date(tempCustomTo);
 
-  // Get filtered maintenance data from hook (applied values are used)
-  const { filteredMaintenance, loading } = useFilteredMaintenance({
+  // Get filtered inventory items data from hook using applied values
+  const { filteredInventoryItems, loading } = useFilteredInventoryItems({
     filterOption: appliedFilter,
     customFrom,
     customTo,
@@ -232,19 +226,34 @@ function Reports() {
     selectedYear: appliedFilter === "selectMonth" ? selectedYear : null,
   });
 
-  // Additional search filtering (by title, description, or email)
-  const searchFilteredMaintenance = filteredMaintenance.filter((item) => {
+  // Additional search filtering across several fields
+  const searchFilteredItems = filteredInventoryItems.filter((item) => {
     const term = searchTerm.toLowerCase();
+    const inGreenhouse = String(item.greenhouse_id || "").toLowerCase().includes(term);
+    const inInventoryId = String(item.inventory_item_id || "").toLowerCase().includes(term);
+    const inItemName = (item.item_name || "").toLowerCase().includes(term);
+    const inDescription = (item.description || "").toLowerCase().includes(term);
+    const inItemCount = String(item.item_count || "").toLowerCase().includes(term);
+    const inPrice = String(item.price || "").toLowerCase().includes(term);
+    const inTotalPrice = String(item.total_price || "").toLowerCase().includes(term);
+    const inUnit = (item.unit || "").toLowerCase().includes(term);
+    const inUserId = String(item.user_id || "").toLowerCase().includes(term);
     return (
-      item.title.toLowerCase().includes(term) ||
-      item.description.toLowerCase().includes(term) ||
-      item.email.toLowerCase().includes(term)
+      inGreenhouse ||
+      inInventoryId ||
+      inItemName ||
+      inDescription ||
+      inItemCount ||
+      inPrice ||
+      inTotalPrice ||
+      inUnit ||
+      inUserId
     );
   });
 
-  // Sort maintenance items by date_completed descending
-  const sortedMaintenance = [...searchFilteredMaintenance].sort(
-    (a, b) => new Date(b.date_completed) - new Date(a.date_completed)
+  // Sort inventory items by date_received descending
+  const sortedItems = [...searchFilteredItems].sort(
+    (a, b) => new Date(b.date_received) - new Date(a.date_received)
   );
 
   // Compute the filter description text for header
@@ -256,7 +265,15 @@ function Reports() {
     selectedYear
   );
 
-   const tableHeaderCellTypographyProps = useMemo(
+  // Compute total aggregated total price from filtered (and searched) items.
+  const totalAggregatedPrice = useMemo(() => {
+    return searchFilteredItems.reduce(
+      (total, item) => total + parseFloat(item.total_price || 0),
+      0
+    );
+  }, [searchFilteredItems]);
+
+  const tableHeaderCellTypographyProps = useMemo(
     () => ({
       fontSize: isSmallScreen ? "0.75rem" : "0.875rem",
       fontWeight: "bold",
@@ -265,7 +282,7 @@ function Reports() {
   );
 
   return (
-    <Container maxWidth="xl" sx={{ p: { xs: 2, sm: 3 } }}>
+    <>
       {loading ? (
         <HarvestSkeliton />
       ) : (
@@ -281,7 +298,7 @@ function Reports() {
             mt: { xs: 2, sm: 3 },
           }}
         >
-          {/* Header with title and search/filter controls */}
+          {/* Header with title, aggregated total, and search/filter controls */}
           <Box
             sx={{
               display: "flex",
@@ -292,18 +309,31 @@ function Reports() {
               mb: { xs: 2, sm: 3, md: 2 },
             }}
           >
-           <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-              MAINTENANCE{" "}
-              {filterDescription && (
-                <span style={{ fontSize: "0.8rem", fontWeight: "normal", marginLeft: "10px" }}>
-                  ({filterDescription})
-                </span>
-              )}
-            </Typography>
-            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: "bold", color: "#000" }}>
+                ITEMS INVENTORY{" "}
+                {filterDescription && (
+                  <span style={{ fontSize: "0.8rem", fontWeight: "normal", marginLeft: "10px", color: "#000" }}>
+                    ({filterDescription})
+                  </span>
+                )}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ mt: 1, color: "#000" }}>
+               {/*  Total Aggregated Price: {totalAggregatedPrice.toFixed(2)} */}
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                gap: 2,
+                width: { xs: "100%", sm: "auto" },
+              }}
+            >
               <TextField
                 fullWidth
-                label="Search Maintenance"
+                label="Search Inventory"
                 variant="outlined"
                 size="small"
                 value={searchTerm}
@@ -311,37 +341,20 @@ function Reports() {
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <SearchIcon />
+                      <SearchIcon sx={{ fontSize: { xs: "1rem", sm: "1.2rem" }, color: '#000' }} />
                     </InputAdornment>
                   ),
                 }}
                 InputLabelProps={{
-                  style: { color: "#000" },
+                  style: { color: '#000' },
                 }}
                 sx={{
-                  maxWidth: { xs: "100%", sm: "250px" }, textTransform: "uppercase",
-                   "& .MuiOutlinedInput-root": {
-                    "& fieldset": {
-                      borderColor: "#000",
-                    },
-                    "&:hover fieldset": {
-                      borderColor: "#000",
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: "#000",
-                    },
-                    "& input": {
-                      color: "#000", // Text color inside the input
-                    },
-                  },
+                  maxWidth: { xs: "100%", sm: "250px" },
+               
                 }}
               />
-               <FormControl
-              variant="outlined"
-              size="small"
-              sx={{ width: { xs: "100%", sm: "100%", md: "auto" } }}
-            >
-                <InputLabel id="filter-label"  sx={{ textTransform: "uppercase" }}>
+              <FormControl variant="outlined" size="small" sx={{ width: { xs: "100%", sm: "auto" } }}>
+                <InputLabel id="filter-label" sx={{ textTransform: "uppercase", color: '#000' }}>
                   FILTER
                 </InputLabel>
                 <Select
@@ -349,21 +362,12 @@ function Reports() {
                   value={uiFilter}
                   label="FILTER"
                   onChange={handleFilterChange}
-                   sx={{ textTransform: "uppercase", 
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#000', // Default border color
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#000', // Hovered border color
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#000', // Focused border color
-                    },
-                    '& .MuiSvgIcon-root': { // Adjust the color of the dropdown arrow
-                      color: '#000',
-                    },
+                  sx={{
+                    textTransform: "uppercase", color: "#000",
+                  
                   }}
-                   MenuProps={{
+
+                  MenuProps={{
                     PaperProps: {
                       style: {
                         backgroundColor: '#fff', // Background color of the dropdown
@@ -379,7 +383,7 @@ function Reports() {
                       key={option.value}
                       value={option.value}
                       disabled={option.disabled}
-                       sx={{ textTransform: "uppercase", color: "#000" }}
+                      sx={{ textTransform: "uppercase", color: "#000" }}
                     >
                       {option.icon}
                       {option.label}
@@ -395,35 +399,52 @@ function Reports() {
             <Table sx={{ minWidth: 650, backgroundColor: "#fff", borderSpacing: "0 10px", }}>
               <TableHead>
                 <TableRow sx={{ backgroundColor: "#06402B", borderRadius: "10px" }}>
-                  {["TITLE", "DESCRIPTION", "USER NAME", "DATE COMPLETED"].map((header) => (
+                  {[
+
+                    "GREENHOUSE",
+                    "ITEM NAME",
+                    "ITEM COUNT",
+                    "PRICE",
+                    "TOTAL PRICE",
+
+                    "UNIT",
+                    "User Name",
+                    "DATE CREATED",
+                  ].map((header) => (
                     <TableCell
                       key={header}
                       align="center"
                       sx={{
                         fontWeight: "bold",
                         color: "#fff",
-                        fontSize: { xs: "0.9rem", sm: "1.1rem" },
-                        py: { xs: 2, sm: 2.5 },
+
+                        py: { xs: 1.5, sm: 1.5, md: 1.5 },
                         textTransform: "uppercase",
                         borderBottom: 'none'
                       }}
                     >
-                      <Typography {...tableHeaderCellTypographyProps}>{header}</Typography>
+                       <Typography {...tableHeaderCellTypographyProps}>{header}</Typography>
                     </TableCell>
                   ))}
                 </TableRow>
               </TableHead>
               <TableBody>
-                {sortedMaintenance.length > 0 ? (
-                  sortedMaintenance
+                {sortedItems.length > 0 ? (
+                  sortedItems
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((item, index) => (
-                      <StyledTableRow key={`${item.maintenance_id}-${index}`}>
+                      <StyledTableRow key={`${item.inventory_item_id}-${index}`}>
                         {[
-                          item.title,
-                          item.description,
-                          item.name,
-                          new Date(item.date_completed).toLocaleDateString(),
+
+                          item.greenhouse_id,
+                          (item.item_name || "").toUpperCase(),
+                          item.item_count,
+                          item.price,
+                          item.total_price,
+
+                          (item.unit || "").toUpperCase(),
+                          "mark james aropon",
+                          new Date(item.date_received).toLocaleString(),
                         ].map((value, idx) => (
                           <StyledTableCell key={idx} align="center" >
                             {value}
@@ -433,8 +454,8 @@ function Reports() {
                     ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} align="center" sx={{ borderBottom: 'none' }}>
-                      <Typography variant="h8" severity="warning">
+                    <TableCell colSpan={9} align="center" sx={{ borderBottom: 'none' }}>
+                      <Typography variant="h7">
                         {getNoDataAlertText(appliedFilter, customFrom, customTo, selectedMonth, selectedYear)}
                       </Typography>
                     </TableCell>
@@ -448,26 +469,12 @@ function Reports() {
           <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", mt: { xs: 2, sm: 3 } }}>
             <TablePagination
               component="div"
-              count={sortedMaintenance.length}
+              count={sortedItems.length}
               rowsPerPage={rowsPerPage}
               page={page}
               onPageChange={(event, newPage) => setPage(newPage)}
               rowsPerPageOptions={[rowsPerPage]}
-              sx={{
-                 color: '#000', // Color of the pagination text
-                '& .MuiSvgIcon-root': { // Adjust the color of the pagination arrows
-                  color: '#000',
-                },
-                '& .MuiTablePagination-selectLabel': {
-                  color: '#000', // Color of the "Rows per page" label
-                },
-                '& .MuiTablePagination-displayedRows': {
-                  color: '#000', // Color of the displayed rows text
-                },
-                '& .MuiSelect-select': {
-                  color: '#000', // Color of the select text
-                },
-              }}
+              sx={{   color: '#000' }}
             />
           </Box>
 
@@ -479,7 +486,7 @@ function Reports() {
               setUiFilter("all");
             }}
           >
-            <Box sx={{ ...modalStyle, p: 3, width: 300, backgroundColor: "#fff" }}>
+            <Box sx={{ ...modalStyle, p: 3, width: 300 }}>
               <Typography variant="h6" sx={{ mb: 2, textTransform: "uppercase" }}>
                 CHOOSE DATE RANGE
               </Typography>
@@ -510,42 +517,62 @@ function Reports() {
           </Modal>
 
           {/* Select Month Modal */}
-          <Modal open={openMonthModal} onClose={() => setOpenMonthModal(false)} aria-labelledby="harvest-month-modal">
-            <Box sx={{ ...modalStyle, backgroundColor: "#fff" }}>
+          <Modal open={openMonthModal} onClose={() => setOpenMonthModal(false)} aria-labelledby="inventory-items-month-modal">
+            <Box sx={modalStyle}>
               <Typography variant="h6" sx={{ mb: 2, textTransform: "uppercase" }}>
                 SELECT MONTH AND YEAR
               </Typography>
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel id="harvest-month-label"  sx={{ textTransform: "uppercase" }}>
+                <InputLabel id="items-month-label" sx={{ textTransform: "uppercase" }}>
                   MONTH
                 </InputLabel>
                 <Select
-                  labelId="harvest-month-label"
+                  labelId="items-month-label"
                   value={tempSelectedMonth}
                   label="MONTH"
                   onChange={(e) => setTempSelectedMonth(e.target.value)}
-                   sx={{ textTransform: "uppercase" }}
+                  sx={{  textTransform: "uppercase", color: "#000",      }}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        backgroundColor: '#fff', // Background color of the dropdown
+                      },
+                    },
+                  }}
+                  inputProps={{
+                    style: { color: '#000' },
+                  }}
                 >
                   {Array.from({ length: 12 }, (_, i) => (
-                    <MenuItem key={i + 1} value={i + 1}  sx={{ textTransform: "uppercase" }}>
+                    <MenuItem key={i + 1} value={i + 1} sx={{ textTransform: "uppercase", color: "#000" }}>
                       {new Date(0, i).toLocaleString("default", { month: "long" }).toUpperCase()}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel id="harvest-year-label"  sx={{ textTransform: "uppercase" }}>
+                <InputLabel id="items-year-label" sx={{ textTransform: "uppercase" }}>
                   YEAR
                 </InputLabel>
                 <Select
-                  labelId="harvest-year-label"
+                  labelId="items-year-label"
                   value={tempSelectedYear}
                   label="YEAR"
                   onChange={(e) => setTempSelectedYear(e.target.value)}
-                   sx={{ textTransform: "uppercase" }}
+                  sx={{  textTransform: "uppercase", color: "#000",    }}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        backgroundColor: '#fff', // Background color of the dropdown
+                      },
+                    },
+                  }}
+                  inputProps={{
+                    style: { color: '#000' },
+                  }}
                 >
                   {Array.from({ length: 11 }, (_, i) => 2020 + i).map((year) => (
-                    <MenuItem key={year} value={year}  sx={{ textTransform: "uppercase" }}>
+                    <MenuItem key={year} value={year} sx={{ textTransform: "uppercase", color: "#000" }}>
                       {year}
                     </MenuItem>
                   ))}
@@ -571,8 +598,8 @@ function Reports() {
           </Modal>
         </Paper>
       )}
-    </Container>
+    </>
   );
 }
 
-export default Reports;
+export default InventoryItems;

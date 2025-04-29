@@ -232,8 +232,8 @@ const HarvestAnalytics = ({
       sx={{
         p: { xs: 2, md: 3 },
         mb: 4,
-        backgroundColor: "#FDFCFB",
-        boxShadow: "0px 4px 10px rgba(0,0,0,0.3)",
+        backgroundColor: "#FFF",
+        boxShadow: "0px 4px 10px rgba(0,0,0,0.35)",
         borderRadius: "15px",
       }}
     >
@@ -246,14 +246,24 @@ const HarvestAnalytics = ({
       >
         <Typography
           variant="h4"
-          sx={{ fontWeight: "bold", fontSize: "clamp(1.2rem, 1.7vw, 2rem)" }}
+          sx={{
+            fontWeight: "bold",
+            fontSize: "clamp(1.2rem, 1.7vw, 2rem)",
+            color: "#000",
+          }}
         >
           Harvest Analytics
         </Typography>
         <FormControl
           variant="outlined"
           size="small"
-          sx={{ minWidth: 150, mt: { xs: 2, md: 0 } }}
+          sx={{
+            minWidth: 150,
+            // give the control the same green, or switch to white for contrast:
+           
+            borderRadius: "4px",
+           
+          }}
         >
           <InputLabel id="harvest-filter-label">Filter Harvests</InputLabel>
           <Select
@@ -273,7 +283,11 @@ const HarvestAnalytics = ({
         </FormControl>
       </Box>
 
-      <Typography variant="h6" sx={{ fontSize: "clamp(0.875rem, 1.7vw, 2rem)" }} gutterBottom>
+      <Typography
+        variant="h6"
+        sx={{ fontSize: "clamp(0.875rem, 1.7vw, 2rem)", color: "#000" }}
+        gutterBottom
+      >
         {getChartTitle()}
       </Typography>
 
@@ -281,9 +295,9 @@ const HarvestAnalytics = ({
         <Grid item xs={12} md={8}>
           <Box
             sx={{
-              height: { xs: 250, md: 300 },
+              height: { xs: 250, md: 400 },
               width: "100%",
-              backgroundColor: "#FDFCFB",
+              backgroundColor: "#FFF",
               borderRadius: "20px",
             }}
           >
@@ -292,22 +306,38 @@ const HarvestAnalytics = ({
                 data={chartData}
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
               >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
+                <CartesianGrid stroke="#666" strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="date"
+                  stroke="#000"
+                  tick={{ fill: "#000", fontSize: 16 }}
+                />
+
+                <YAxis stroke="#000" tick={{ fill: "#000" }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#06402B",
+                    border: "1px solid #fff",
+                  }}
+                  labelStyle={{ color: "#fff" }}
+                />
+                <Legend
+                wrapperStyle={{ color: "#000" }}
+                formatter={(value) => (
+                  <span style={{ color: "#000" }}>{value}</span>
+                )}
+              />
                 <Line
                   type="monotone"
                   dataKey="accepted"
-                  stroke="#06402B"
+                  stroke="#00E676"
                   name="Accepted Items"
                   strokeWidth={7}
                 />
                 <Line
                   type="monotone"
                   dataKey="rejected"
-                  stroke="#FF0000"
+                  stroke="#FF6B6B"
                   name="Rejected Items"
                   strokeWidth={7}
                 />
@@ -331,11 +361,20 @@ const HarvestAnalytics = ({
             <Typography
               variant="h5"
               textAlign="center"
-              sx={{ color: "white", mb: 3, fontWeight: "bold", fontSize: { xs: "1.2rem", md: "1.5rem" } }}
+              sx={{
+                color: "white",
+                mb: 3,
+                fontWeight: "bold",
+                fontSize: { xs: "1.2rem", md: "1.5rem" },
+              }}
             >
               Summary
             </Typography>
-            <Grid container spacing={2} sx={{ flex: 1, "& .MuiGrid-item": { height: "45%" } }}>
+            <Grid
+              container
+              spacing={2}
+              sx={{ flex: 1, "& .MuiGrid-item": { height: "45%" } }}
+            >
               <Grid item xs={6}>
                 <Box
                   sx={{
@@ -360,7 +399,10 @@ const HarvestAnalytics = ({
                       Accepted
                     </Typography>
                   </Box>
-                  <CheckCircleIcon color="success" sx={{ fontSize: { xs: 30, sm: 40, md: 48 } }} />
+                  <CheckCircleIcon
+                    color="success"
+                    sx={{ fontSize: { xs: 30, sm: 40, md: 48 } }}
+                  />
                 </Box>
               </Grid>
               <Grid item xs={6}>
@@ -387,7 +429,10 @@ const HarvestAnalytics = ({
                       Rejected
                     </Typography>
                   </Box>
-                  <CancelIcon color="error" sx={{ fontSize: { xs: 30, sm: 40, md: 48 } }} />
+                  <CancelIcon
+                    color="error"
+                    sx={{ fontSize: { xs: 30, sm: 40, md: 48 } }}
+                  />
                 </Box>
               </Grid>
               <Grid item xs={6}>
@@ -413,7 +458,12 @@ const HarvestAnalytics = ({
                     </Typography>
                     <Typography variant="body2">Total</Typography>
                   </Box>
-                  <Grain sx={{ fontSize: { xs: 30, sm: 40, md: 48 }, color: "#2196f3" }} />
+                  <Grain
+                    sx={{
+                      fontSize: { xs: 30, sm: 40, md: 48 },
+                      color: "#2196f3",
+                    }}
+                  />
                 </Box>
               </Grid>
               <Grid item xs={6}>
@@ -440,7 +490,9 @@ const HarvestAnalytics = ({
                       Loss Rate
                     </Typography>
                   </Box>
-                  <TrendingUpIcon sx={{ fontSize: { xs: 30, sm: 40, md: 48 }, color: "red" }} />
+                  <TrendingUpIcon
+                    sx={{ fontSize: { xs: 30, sm: 40, md: 48 }, color: "red" }}
+                  />
                 </Box>
               </Grid>
             </Grid>
@@ -448,7 +500,11 @@ const HarvestAnalytics = ({
         </Grid>
       </Grid>
 
-      <Modal open={openMonthModal} onClose={() => setOpenMonthModal(false)} aria-labelledby="harvest-month-modal">
+      <Modal
+        open={openMonthModal}
+        onClose={() => setOpenMonthModal(false)}
+        aria-labelledby="harvest-month-modal"
+      >
         <Box sx={modalStyle}>
           <Typography variant="h6" sx={{ mb: 2 }}>
             Select Month and Year
@@ -485,17 +541,29 @@ const HarvestAnalytics = ({
           </FormControl>
           <Divider sx={{ my: 3 }} />
           <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-            <Button onClick={() => setOpenMonthModal(false)} variant="outlined" color="secondary">
+            <Button
+              onClick={() => setOpenMonthModal(false)}
+              variant="outlined"
+              color="secondary"
+            >
               CANCEL
             </Button>
-            <Button onClick={handleApplySelectedMonth} variant="contained" color="primary">
+            <Button
+              onClick={handleApplySelectedMonth}
+              variant="contained"
+              color="primary"
+            >
               APPLY
             </Button>
           </Box>
         </Box>
       </Modal>
 
-      <Modal open={openCustomModal} onClose={() => setOpenCustomModal(false)} aria-labelledby="harvest-custom-date-modal">
+      <Modal
+        open={openCustomModal}
+        onClose={() => setOpenCustomModal(false)}
+        aria-labelledby="harvest-custom-date-modal"
+      >
         <Box sx={modalStyle}>
           <Typography variant="h6" sx={{ mb: 2 }}>
             Choose Date Range
@@ -517,7 +585,9 @@ const HarvestAnalytics = ({
                     fullWidth: true,
                     size: "medium",
                     error: isDateError,
-                    helperText: isDateError ? "From date cannot be later than To date" : "",
+                    helperText: isDateError
+                      ? "From date cannot be later than To date"
+                      : "",
                   },
                 }}
               />
@@ -525,7 +595,11 @@ const HarvestAnalytics = ({
           </LocalizationProvider>
           <Divider sx={{ my: 3 }} />
           <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-            <Button onClick={() => setOpenCustomModal(false)} variant="outlined" color="secondary">
+            <Button
+              onClick={() => setOpenCustomModal(false)}
+              variant="outlined"
+              color="secondary"
+            >
               CANCEL
             </Button>
             <Button

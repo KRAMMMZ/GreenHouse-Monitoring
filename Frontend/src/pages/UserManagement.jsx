@@ -208,6 +208,7 @@ function UserManagement() {
             p: { xs: 1, sm: 2, md: 3 },
             mb: { xs: 3, sm: 5 },
             mt: { xs: 2, sm: 3 },
+            backgroundColor: "#fff",
           }}
         >
           {/* Top Controls */}
@@ -219,6 +220,7 @@ function UserManagement() {
               alignItems: "center",
               mb: { xs: 2, sm: 3 },
               gap: 2,
+              color:"#fff "
             }}
           >
             <Typography
@@ -227,6 +229,7 @@ function UserManagement() {
               sx={{
                 fontWeight: "bold",
                 fontSize: { xs: "1rem", sm: "1.3rem", md: "1.5rem" },
+                color: "#000",
               }}
             >
               USER MANAGEMENT{" "}
@@ -234,7 +237,7 @@ function UserManagement() {
                 component="span"
                 sx={{
                   fontSize: { xs: "0.8rem", sm: "0.9rem", md: "1rem" },
-                  color: filterActive ? "green" : "red",
+                  color: filterActive ? "#000" : "#0A6644",
                 }}
               >
                 {filterActive
@@ -253,7 +256,7 @@ function UserManagement() {
             >
               <Button
                 variant="contained"
-                startIcon={<EmailIcon sx={{ fontSize: { xs: "1rem", sm: "1.2rem" } }} />}
+                startIcon={<EmailIcon sx={{ fontSize: { xs: "1rem", sm: "1.2rem" }, color: '#fff' }} />}
                 onClick={() => setOpenEmailModal(true)}
                 sx={{
                   backgroundColor: "#06402B",
@@ -261,6 +264,7 @@ function UserManagement() {
                   fontSize: { xs: "0.8rem", sm: "0.9rem", md: "1rem" },
                   textTransform: "none",
                   px: { xs: 1, sm: 2 },
+                   color:"#fff"
                 }}
               >
                 Send Email
@@ -270,23 +274,21 @@ function UserManagement() {
                 variant="outlined"
                 size="small"
                 onChange={(e) => setSearchTerm(e.target.value)}
+                  InputLabelProps={{
+                  style: { color: '#000' },
+                }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <SearchIcon sx={{ fontSize: { xs: "1rem", sm: "1.2rem" } }} />
+                      <SearchIcon sx={{ fontSize: { xs: "1rem", sm: "1.2rem" }, color: '#000' }} />
                     </InputAdornment>
                   ),
                 }}
-                sx={{
-                  width: { xs: "100%", sm: "300px" },
-                  "& .MuiInputBase-root": {
-                    fontSize: { xs: "0.75rem", sm: "0.9rem" },
-                  },
-                }}
+                sx={{  width: { xs: "100%", sm: "300px" },  }}
               />
             </Box>
           </Box>
-          <TableContainer sx={{ overflowX: "auto" }}>
+          <TableContainer sx={{ overflowX: "auto", borderBottom: "1px solid #999" }}>
             <Table sx={{ minWidth: 650, backgroundColor: "#fff" }}>
               <TableHead>
                 <TableRow
@@ -303,6 +305,7 @@ function UserManagement() {
                         fontWeight: "bold",
                         color: "#fff",
                         fontSize: { xs: "0.7rem", sm: "0.9rem", md: "1.1rem" },
+                         borderBottom: 'none'
                       }}
                     >
                       {header === "Active" ? (
@@ -361,6 +364,10 @@ function UserManagement() {
               page={page}
               onPageChange={(event, newPage) => setPage(newPage)}
               rowsPerPageOptions={[rowsPerPage]}
+               sx={{
+                color: '#000', // Color of the pagination text
+               
+              }}
             />
           </Box>
         </Paper>

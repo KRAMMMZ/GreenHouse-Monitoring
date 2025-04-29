@@ -8,8 +8,8 @@ const totalHarvests = async (req, res) => {
       }
     });
 
-    // Assuming the external API returns an array of harvest itemssSs
-    const harvestTable = response.data || [];
+    // Extract the harvests array from the response data
+    const harvestTable = response.data.harvests || [];
     const totalHarvests = harvestTable.length;
 
     res.json({ 

@@ -36,15 +36,15 @@ const FilterSearchSection = ({
         gap: 2,
       }}
     >
-      <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+        <Typography variant="h5" sx={{ fontWeight: "bold", color: "#000" }}>
         HARVESTED ITEMS{" "}
         {filterDescription && (
-          <span style={{ fontSize: "0.8rem", fontWeight: "normal", marginLeft: "10px" }}>
+           <span style={{ fontSize: "0.8rem", fontWeight: "normal", marginLeft: "10px", color: "#000" }}>
             ({filterDescription})
           </span>
         )}
       </Typography>
-      <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+      <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap",     width: { xs: "100%", sm: "auto" }, }}>
         <TextField
           label="Search"
           variant="outlined"
@@ -54,19 +54,36 @@ const FilterSearchSection = ({
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
-                <SearchIcon />
-              </InputAdornment>
+              <SearchIcon sx={{ fontSize: { xs: "1rem", sm: "1.2rem" }, color: '#000' }} />
+            </InputAdornment>
             ),
           }}
-          sx={{ width: { xs: "100%", sm: "100%", md: "auto" } }}
+          InputLabelProps={{
+            style: { color: '#000' },
+          }}
+          sx={{   width: { xs: "100%", sm: "100%", md: "auto" }, }}
         />
-        <FormControl
-          variant="outlined"
-          size="small"
-          sx={{ width: { xs: "100%", sm: "100%", md: "auto" } }}
-        >
-          <InputLabel>Filter</InputLabel>
-          <Select label="Filter" value={harvestFilter} onChange={handleFilterChange}>
+       <FormControl variant="outlined" size="small" sx={{ width: { xs: "100%", sm: "auto" } }}>
+       <InputLabel id="filter-label" sx={{ textTransform: "uppercase", color: '#000' }}>
+          Filter
+          </InputLabel>
+          <Select label="Filter" value={harvestFilter} onChange={handleFilterChange}
+             sx={{
+              textTransform: "uppercase", color: "#000",
+              
+            }}
+
+            MenuProps={{
+              PaperProps: {
+                style: {
+                  backgroundColor: '#fff', // Background color of the dropdown
+                },
+              },
+            }}
+            inputProps={{
+              style: { color: '#fff' },
+            }}
+            >
             <MenuItem value="ALL">
               <ViewListIcon sx={{ mr: 1 }} />
               ALL

@@ -1,21 +1,21 @@
 import axios from 'axios';
 
-const Sales = async (req,res ) => {
+const AllInventory = async (req,res ) => {
 
     try{
 
    
      
-    const response = await axios.get('https://agreemo-api-v2.onrender.com/sales', {
+    const response = await axios.get('https://agreemo-api-v2.onrender.com/inventory_items', {
         headers: {
           'x-api-key': process.env.API_KEY, // Ensure the API key is correctly set isn your environment variables
         },
       });
-      const salesTable  = response.data.sales || [];
+      const all_inventoryTable  = response.data.inventory_items || [];
     
       res.json({ 
         
-        salesTable,
+        all_inventoryTable,
      
       });
       
@@ -27,4 +27,4 @@ const Sales = async (req,res ) => {
     }
 }
 
-export default Sales;
+export default AllInventory;

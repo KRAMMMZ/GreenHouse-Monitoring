@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { io } from "socket.io-client";
 
 // Create a single socket connection instance
 const socket = io("http://localhost:3001");
 
-// Helper function to get today's date in 'YYYY-MM-DD' format 
+// Helper function to get today's date in 'YYYY-MM-DD' format
 const getTodayDateString = () => {
   const date = new Date();
   const year = date.getFullYear();
@@ -22,7 +22,7 @@ const useHarvests = () => {
   const [harvestTable, setHarvestTable] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const response = await axios.get("http://localhost:3001/harvests");
       setHarvestTable(response.data.harvestTable || []);
@@ -32,8 +32,8 @@ const useHarvests = () => {
     } finally {
       setLoading(false);
     }
-  };
-
+  }, []); // Removed dependencies, as it shouldn't re-create unless axios changes (which is highly unlikely)
+ 
   useEffect(() => {
     // Initial fetch in case socket update takes a moment.
     fetchData();
@@ -50,9 +50,9 @@ const useHarvests = () => {
     return () => {
       socket.off("harvestData");
     };
-  }, []);
+  }, [fetchData]); // Dependencies include fetchData to re-run the effect if the function changes.
 
-  return { harvestTable, loading };
+  return { harvestTable, loading, fetchHarvests: fetchData }; // EXPOSE fetchData here.
 };
 
 /*
@@ -61,8 +61,8 @@ const useHarvests = () => {
 
 // Returns all harvest items.
 export const useHarvestItems = () => {
-  const { harvestTable, loading } = useHarvests();
-  return { harvestItems: harvestTable, harvestLoading: loading };
+  const { harvestTable, loading, fetchHarvests } = useHarvests(); // Include fetchHarvests
+  return { harvestItems: harvestTable, harvestLoading: loading, fetchHarvestItems: fetchHarvests }; // EXPOSE fetchHarvests here
 };
 
 // Returns the count of harvest items for today's date.
@@ -96,7 +96,7 @@ export const useHarvestHistory = () => {
     const groupedData = harvestTable.reduce((acc, item) => {
       // Extract only the date part (YYYY-MM-DD) from harvest_date
       const date = new Date(item.harvest_date).toISOString().split('T')[0];
-      
+
       // Only include data for today's date
       if (date === todayDate) {
         if (!acc[date]) {

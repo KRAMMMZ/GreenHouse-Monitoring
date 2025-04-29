@@ -4,8 +4,8 @@ import { PieChart } from "@mui/x-charts/PieChart";
 
 import { useRejectedChart, useYieldChart } from "../hooks/CardChartHooks";
 import "../../public/dashboard.css";
-import HarvestChart from "../components/HarvestBarCharts";
-import RejectionBarChart from "../components/RejectionPieChart";
+import HarvestChart from "../components/HarvestLineCharts";
+import RejectionBarChart from "../components/RejectionBarChart";
 
 import DashboardSkeliton from "../skelitons/DashboardSkeliton";
 import HarvestSkeliton from "../skelitons/HarvestSkeliton";
@@ -89,7 +89,7 @@ function Dashboard() {
               value={maintenanceToday}
               loading={maintenanceTodayLoading}
               icon={
-                <EngineeringIcon sx={{ fontSize: "4rem", color: "#fff" }} />
+                <EngineeringIcon sx={{ fontSize: "4rem", color: "#0A6644" }} />
               }
             />
           )}

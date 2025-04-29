@@ -11,7 +11,7 @@ const totalRejecteditems = async (req, res) => {
             }
         });
 
-        const rejectedTable = response.data || [];
+        const rejectedTable = response.data.reasons_for_rejection || [];
         const totalReject = rejectedTable.length;
         res.json({ rejectedTable, totalReject });
 

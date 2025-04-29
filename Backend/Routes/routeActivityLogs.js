@@ -9,6 +9,7 @@ import {
   //HardwareStatusLogs,
   ControlsLog,
   InventoryItemLogs,
+  NutrientInventoryLogs,
   PlantedCropsLogs
 } from '../Controller/LogsController.js';
 
@@ -22,7 +23,8 @@ router.get('/harvest', HarvestLogs);
 router.get('/hardware_components', HardwareComponentsLogs);
 //router.get('/hardware_status', HardwareStatusLogs);
 router.get('/control/logsd', ControlsLog);
-router.get('/inventory', InventoryItemLogs);
+router.get('/inventory_item', InventoryItemLogs);
+router.get('/inventory', NutrientInventoryLogs);
 router.get('/planted_crops', PlantedCropsLogs);
 
 export default router;

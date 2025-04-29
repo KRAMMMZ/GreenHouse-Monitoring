@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   Typography,
   Table,
@@ -205,7 +205,7 @@ function ActivityLogs() {
   ];
 
   return (
-    <Container maxWidth="xl" sx={{ p: { xs: 2, sm: 3 }, mt: { xs: 2, sm: 3 } }}>
+    <Container maxWidth="xxl" sx={{ p: { xs: 2, sm: 3 }, mt: { xs: 2, sm: 3 } }}>
       <Paper
         sx={{
           width: "100%",
@@ -214,6 +214,7 @@ function ActivityLogs() {
           boxShadow: 15,
           p: { xs: 2, sm: 3 },
           mb: { xs: 3, sm: 5 },
+          backgroundColor: "#fff", // MATCHED HEADER BACKGROUND
         }}
       >
         <Box
@@ -224,6 +225,7 @@ function ActivityLogs() {
             justifyContent: "space-between",
             mb: 2,
             gap: 2,
+            color: "#fff", // MATCHED TEXT COLOR
           }}
         >
           <Typography
@@ -231,6 +233,7 @@ function ActivityLogs() {
             sx={{
               fontWeight: "bold",
               fontSize: "clamp(0.875rem, 1.5vw, 1.5rem)",
+              color: "#000", // MATCHED TEXT COLOR
             }}
           >
             {headerText}
@@ -257,13 +260,19 @@ function ActivityLogs() {
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <SearchIcon />
+                    <SearchIcon sx={{ color: "#000  " }} />
                   </InputAdornment>
                 ),
               }}
+              InputLabelProps={{
+                style: { color: '#000' },
+              }}
+              sx={{  width: { xs: "100%", sm: "300px" },
+                
+              }}
             />
             <FormControl variant="outlined" size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Filter</InputLabel>
+              <InputLabel sx={{ color: '#000' }}>Filter</InputLabel>
               <Select
                 value={selectedFilter}
                 onChange={(e) => {
@@ -271,45 +280,59 @@ function ActivityLogs() {
                   setPage(0);
                 }}
                 label="Filter"
+                sx={{
+                   color: '#000',
+                    
+                  }}
+                 MenuProps={{
+                    PaperProps: {
+                      style: {
+                        backgroundColor: '#fff', // Background color of the dropdown
+                      },
+                    },
+                  }}
+                  inputProps={{
+                    style: { color: '#fff' },
+                  }}
               >
-                <MenuItem value="ALL">
+                <MenuItem value="ALL" sx={{ color:"#000" }}>
                   <Box display="flex" alignItems="center">
-                    <AllInboxIcon sx={{ mr: 1 }} /> ALL
+                    <AllInboxIcon sx={{ mr: 1, color:"#000" }} /> ALL
                   </Box>
                 </MenuItem>
-                <MenuItem value="ADMIN">
+                <MenuItem value="ADMIN" sx={{ color:"#000" }}>
                   <Box display="flex" alignItems="center">
-                    <AdminPanelSettingsIcon sx={{ mr: 1 }} /> ADMIN
+                    <AdminPanelSettingsIcon sx={{ mr: 1, color:"#000" }} /> ADMIN
                   </Box>
                 </MenuItem>
-                <MenuItem value="USERS">
+                <MenuItem value="USERS" sx={{ color:"#000" }}>
                   <Box display="flex" alignItems="center">
-                    <PeopleIcon sx={{ mr: 1 }} /> USERS
+                    <PeopleIcon sx={{ mr: 1, color:"#000" }} /> USERS
                   </Box>
                 </MenuItem>
-                <MenuItem value="PLANTED CROPS">
+                <MenuItem value="PLANTED CROPS" sx={{ color:"#000" }}>
                   <Box display="flex" alignItems="center">
-                    <LocalFloristIcon sx={{ mr: 1 }} /> PLANTED CROPS
+                    <LocalFloristIcon sx={{ mr: 1, color:"#000" }} /> PLANTED CROPS
                   </Box>
                 </MenuItem>
-                <MenuItem value="HARVEST">
+                <MenuItem value="HARVEST" sx={{ color:"#000" }}>
                   <Box display="flex" alignItems="center">
-                    <AgricultureIcon sx={{ mr: 1 }} /> HARVEST
+                    <AgricultureIcon sx={{ mr: 1, color:"#000" }} /> HARVEST
                   </Box>
                 </MenuItem>
-                <MenuItem value="REJECTION">
+                <MenuItem value="REJECTION" sx={{ color:"#000" }}>
                   <Box display="flex" alignItems="center">
-                    <CancelIcon sx={{ mr: 1 }} /> REJECTION
+                    <CancelIcon sx={{ mr: 1, color:"#000" }} /> REJECTION
                   </Box>
                 </MenuItem>
-                <MenuItem value="MAINTENANCE">
+                <MenuItem value="MAINTENANCE" sx={{ color:"#000" }}>
                   <Box display="flex" alignItems="center">
-                    <BuildIcon sx={{ mr: 1 }} /> MAINTENANCE
+                    <BuildIcon sx={{ mr: 1, color:"#000" }} /> MAINTENANCE
                   </Box>
                 </MenuItem>
-                <MenuItem value="HARDWARE COMPONENTS">
+                <MenuItem value="HARDWARE COMPONENTS" sx={{ color:"#000" }}>
                   <Box display="flex" alignItems="center">
-                    <DeveloperBoardIcon sx={{ mr: 1 }} /> HARDWARE COMPONENTS
+                    <DeveloperBoardIcon sx={{ mr: 1, color:"#000" }} /> HARDWARE COMPONENTS
                   </Box>
                 </MenuItem>
                 {/* <MenuItem value="HARDWARE STATUS">  //hardwareStatusLogs REMOVED
@@ -317,9 +340,9 @@ function ActivityLogs() {
                     <SettingsIcon sx={{ mr: 1 }} /> HARDWARE STATUS
                   </Box>
                 </MenuItem> */}
-                <MenuItem value="CONTROLS">
+                <MenuItem value="CONTROLS" sx={{ color:"#000" }}>
                   <Box display="flex" alignItems="center">
-                    <ControlCameraIcon sx={{ mr: 1 }} /> CONTROLS
+                    <ControlCameraIcon sx={{ mr: 1, color:"#000" }} /> NUTRIENT CONTROLS
                   </Box>
                 </MenuItem>
 
@@ -328,19 +351,20 @@ function ActivityLogs() {
           </Box>
         </Box>
 
-        <TableContainer sx={{ overflowX: "auto" }}>
-          <Table sx={{ minWidth: 650 }}>
-            <TableHead sx={{ backgroundColor: "#06402B" }}>
+        <TableContainer sx={{ overflowX: "auto", borderBottom: "1px solid #999" }}>
+          <Table sx={{ minWidth: 650, backgroundColor: "#fff" }}>
+            <TableHead sx={{ backgroundColor: "#06402B", borderRadius: "10px" }}>
               <TableRow>
                 {tableHeaders.map((header) => (
                   <TableCell
                     key={header}
                     align="center"
                     sx={{
-                      color: "white",
+                      color: "#fff",
                       fontWeight: "bold",
                       fontSize: "1.1rem",
                       py: 2,
+                      borderBottom: 'none'
                     }}
                   >
                     {header}
@@ -362,7 +386,7 @@ function ActivityLogs() {
                           ? `controls-${index}`
                           : `${log.log_id || index}-${index}`
                       }
-                      hover
+                       sx={{  backgroundColor: "#fff", }}
                     >
                       {/* {selectedFilter === "HARDWARE STATUS" ? (  //hardwareStatusLogs REMOVED
                         <>
@@ -375,44 +399,44 @@ function ActivityLogs() {
                       ) : */}
                        { selectedFilter === "CONTROLS" ? (
                         <>
-                          <TableCell align="center">{log.timestamp}</TableCell>
-                          <TableCell align="center">
+                          <TableCell align="center" sx={{ color: '#000' }}>{log.timestamp}</TableCell>
+                          <TableCell align="center" sx={{ color: '#000'  }}>
                             {log.logs_description}
                           </TableCell>
-                          <TableCell align="center">
+                          <TableCell align="center" sx={{ color: '#000'  }}>
                             {String(log.automode)}
                           </TableCell>
-                          <TableCell align="center">
+                          <TableCell align="center" sx={{ color: '#000' }}>
                             {String(log.exhaust)}
                           </TableCell>
-                          <TableCell align="center">
+                          <TableCell align="center" sx={{ color: '#000'}}>
                             {String(log.pump1)}
                           </TableCell>
-                          <TableCell align="center">
+                          <TableCell align="center" sx={{ color: '#000'  }}>
                             {String(log.pump2)}
                           </TableCell>
                         </>
                       ) : (
                         <>
-                          <TableCell align="center">{log.log_date}</TableCell>
-                          <TableCell align="center">
+                          <TableCell align="center" sx={{ color: '#000',   }}>{log.log_date}</TableCell>
+                          <TableCell align="center" sx={{ color: '#000'  }}>
                             {log.logs_description}
                           </TableCell>
-                          <TableCell align="center">{log.name}</TableCell>
+                          <TableCell align="center" sx={{ color: '#000'  }}>{log.name}</TableCell>
                         </>
                       )}
                     </TableRow>
                   ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={tableHeaders.length} align="center">
+                  <TableCell colSpan={tableHeaders.length} align="center" sx={{ borderBottom: 'none' }}>
                     {noDataMessage ? (
-                      <Typography variant="subtitle1" color="textSecondary">
-                        {noDataMessage}
+                      <Typography variant="h8" color="textSecondary" sx={{ color: '#000' }}>
+                        {noDataMessage.toUpperCase()}
                       </Typography>
                     ) : (
-                      <Typography variant="subtitle1" color="textSecondary">
-                        No logs available.
+                      <Typography variant="subtitle1" color="textSecondary" sx={{ color: '#000' }}>
+                       NO LOGS AVAILABLE.
                       </Typography>
                     )}
                   </TableCell>
@@ -430,7 +454,10 @@ function ActivityLogs() {
               page={page}
               onPageChange={(e, newPage) => setPage(newPage)}
               rowsPerPageOptions={[rowsPerPage]}
-              sx={{ mt: 2 }}
+               sx={{
+                color: '#000', // Color of the pagination text
+              
+              }}
             />
           </Box>
         )}

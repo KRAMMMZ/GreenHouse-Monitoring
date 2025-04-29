@@ -3,12 +3,14 @@ import React from "react";
 import { TableRow, TableCell, Button } from "@mui/material";
 
 const cellStyle = {
+  color:"#000",
   fontSize: { xs: "0.75rem", sm: "0.9rem", md: "1rem" },
   py: 1.5,
+ 
 };
 
 const UserRow = React.memo(({ user, formatDOB, onToggleUserStatus }) => (
-  <TableRow hover sx={{ borderRadius: "10px" }}>
+  <TableRow   sx={{ borderRadius: "10px", backgroundColor:"#fff" ,   color:"#000", borderBottom:'none'}}>
     <TableCell align="center" sx={cellStyle}>
       {user.first_name}
     </TableCell>
@@ -37,6 +39,7 @@ const UserRow = React.memo(({ user, formatDOB, onToggleUserStatus }) => (
           onToggleUserStatus(user.user_id, user.isActive, user.email)
         }
         sx={{
+         
           backgroundColor: user.isActive ? "red" : "primary.main",
           "&:hover": {
             backgroundColor: user.isActive ? "darkred" : "primary.dark",

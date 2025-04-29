@@ -77,11 +77,12 @@ const Drawer = styled(MuiDrawer, {
     position: "fixed",
     width: drawerWidth,
     height: "100vh",
-    overflowX: "hidden", 
+    overflowX: "hidden",
     transition: theme.transitions.create("width", {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.standard,
     }),
+    borderRight: "1px solid #666",
     ...(!open && closedMixin(theme)),
     ...(open && openedMixin(theme)),
   },
@@ -143,7 +144,7 @@ const commonButtonStyle = {
   py: 1,
   mb: 1,
   borderRadius: "16px",
-  "&:hover": { backgroundColor: "#2e6f40" },
+  "&:hover": { backgroundColor: "#0A6644" },
 };
 
 const getActiveStyle = (active) => ({
@@ -308,7 +309,7 @@ const Sidebar = ({ open, setOpen }) => {
                 justifyContent: "flex-start",
                 borderRadius: "16px",
                 ...getActiveStyle(selectedItem === item.path),
-                "&:hover": { backgroundColor: "#2e6f40" },
+                "&:hover": { backgroundColor: "#0A6644" },
               }}
             >
               <ListItemIcon
@@ -411,7 +412,7 @@ const Sidebar = ({ open, setOpen }) => {
           </IconButton>
         </DrawerHeader>
 
-        <Divider sx={{ my: 2, backgroundColor: "#FFFFFF" }} />
+        <Divider sx={{ my: 1, borderBottomWidth: "2px", borderColor: "#FFFFFF" }} />
 
         <List sx={{ mx: 2, display: "flex", flexDirection: "column", height: "100%" }}>
           <div style={{ flexGrow: 1 }}>
@@ -451,7 +452,8 @@ const Sidebar = ({ open, setOpen }) => {
             {menuItems.slice(5).map(renderMenuItem)}
           </div>
 
-          <Divider sx={{ my: 1, backgroundColor: "#FFFFFF" }} />
+          <Divider sx={{ my: 1, borderBottomWidth: "2px", borderColor: "#FFFFFF" }} />
+
 
           {/* Pass the new showProfileModal prop to MenuPopupState */}
           <MenuPopupState
@@ -480,5 +482,6 @@ const Sidebar = ({ open, setOpen }) => {
     </>
   );
 };
+
 
 export default Sidebar;

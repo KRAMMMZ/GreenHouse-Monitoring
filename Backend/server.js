@@ -28,6 +28,10 @@ import PlantedCrops from "./Routes/routePlantedCrops.js";
 import Inventories from "./Routes/routeInventory.js"
 import NutrientController from "./Routes/routeNutrient.js";
 import Sales from "./Routes/routeSales.js";
+import SensorReading from "./Controller/SensorReadingController.js";
+import AllInventory from "./Controller/InventoryItemController.js";
+import UpdatePrice from "./Routes/routeEditPrice.js";
+import  updateRejectPrice  from "./Routes/routeEditRejectPrice.js";
 
 import { authenticateUser } from "./middleware/authenticateUser.js";
 
@@ -70,7 +74,11 @@ app.use("/hardware_status", HardwareStatus);
 app.use("/planted_crops", PlantedCrops);
 app.use("/all-inventory", Inventories); 
 app.use("/nutrient_controllers", NutrientController); 
-app.use("/sales", Sales);
+app.use("/sales", Sales);  
+app.get("/sensor-readings", SensorReading); 
+app.get("/inventory_items", AllInventory); 
+app.use("/harvests",authenticateUser, UpdatePrice);   
+app.use("/reason_for_rejection",authenticateUser, updateRejectPrice); 
 
 // Centralized Data State Management
 const dataState = {
@@ -132,8 +140,9 @@ async function fetchLogs() {
     try {
         const logEndpoints = [
             "/logs/admin", "/logs/user", "/logs/rejection", "/logs/maintenance",
-            "/logs/harvest", "/logs/hardware_components", "/logs/hardware_status",
-            "/logs/control/logsd", "/logs/inventory","/logs/planted_crops"
+            "/logs/harvest", "/logs/hardware_components", 
+            "/logs/control/logsd", "/logs/inventory_item",
+            "/logs/inventory","/logs/planted_crops" //NEW ENDPOINT
         ];
 
         const results = await Promise.allSettled(logEndpoints.map(endpoint => api.get(endpoint)));
@@ -145,9 +154,9 @@ async function fetchLogs() {
             MaintenanceTable: results[3].status === "fulfilled" ? results[3].value.data.MaintenanceTable || [] : [],
             harvestLogsTable: results[4].status === "fulfilled" ? results[4].value.data.harvestLogsTable || [] : [],
             hardwareComponentsLogsTable: results[5].status === "fulfilled" ? results[5].value.data.hardwareComponentsLogsTable || [] : [],
-            hardwareStatusLogsTable: results[6].status === "fulfilled" ? results[6].value.data.hardwareStatusLogsTable || [] : [],
-            controlsLogTable: results[7].status === "fulfilled" ? results[7].value.data.controlsLogTable || [] : [],
-            itemInventoryLogsTable: results[8].status === "fulfilled" ? results[8].value.data.itemInventoryLogsTable || [] : [],
+            controlsLogTable: results[6].status === "fulfilled" ? results[7].value.data.controlsLogTable || [] : [],
+            itemInventoryLogsTable: results[7].status === "fulfilled" ? results[8].value.data.itemInventoryLogsTable || [] : [],
+            NutrientInventoryLogsTable: results[8].status === "fulfilled" ? results[9].value.data.NutrientInventoryLogsTable || [] : [], // NEW LINE
             plantedCropsLogsTable: results[9].status === "fulfilled" ? results[9].value.data.plantedCropsLogsTable || [] : [],
         };
 

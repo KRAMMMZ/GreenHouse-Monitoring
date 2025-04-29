@@ -22,15 +22,17 @@ function HarvestSkeliton() {
           width: "100%",
           overflow: "hidden",
           borderRadius: "10px",
+          backgroundColor:"#FFF",
           boxShadow: 3,
           padding: 2,
+          mt:2,
         }}
       >
         <TableContainer>
           <Table sx={{ minWidth: 650, backgroundColor: "#fff" }}>
             <TableHead>
               <TableRow
-                sx={{ backgroundColor: "#06402B", borderRadius: "10px" }}
+                sx={{ backgroundColor: "#FFF", borderRadius: "10px" }}
               >
                 {[
                   "Accepted",
@@ -69,7 +71,7 @@ function HarvestSkeliton() {
                     <TableCell
                       key={cellIndex}
                       align="center"
-                      sx={{ fontSize: "1.0rem", py: 1.5 }}
+                      sx={{ fontSize: "1.0rem", py: 1.5 , backgroundColor:"#FFF"}}
                     >
                       <Skeleton
                         variant="text"

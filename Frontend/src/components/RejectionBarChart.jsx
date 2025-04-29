@@ -63,28 +63,45 @@ const RejectionBarChart = () => {
         p: 3,
         mb: 2,
         borderRadius: "5px",
-        backgroundColor: "#FDFCFB",
+        backgroundColor: "#fff",
         position: "relative",
-        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.3)",
+        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.35)",
         height: "100%",
        
       }}
     >
-      <Typography variant="h6" gutterBottom>
+      <Typography variant="h6" gutterBottom sx={{color:"#000", fontWeight:"bold" }} >
         Rejection History (Last 7 Days)
       </Typography>
 
       <div style={{ height: 400, width: "100%", backgroundColor: "#fff"}}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={timeSeriesData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="diseased"  name="Diseased" fill="#ff6b35" />
-            <Bar dataKey="physically_damaged"   name="Physically Damaged"  fill="#1d3557" />
-            <Bar dataKey="too_small" name="Too small" fill="#4169E1" />
+           
+               <CartesianGrid stroke="#666" strokeDasharray="3 3" />
+               <XAxis
+              dataKey="date"
+              stroke="#000"
+              tick={{ fill: '#000' }}
+            />
+            <YAxis
+              stroke="#000"
+              tick={{ fill: '#000' }}
+            />
+             <Tooltip
+              contentStyle={{ backgroundColor: '#06402B', border: '1px solid #fff' }}
+              labelStyle={{ color: '#fff' }}
+            
+            />
+
+<Legend
+              wrapperStyle={{ color: '#000' }}
+              formatter={(value) => <span style={{ color: '#000' }}>{value}</span>}
+            />
+
+            <Bar dataKey="diseased"  name="Diseased" fill="#FFD700" />
+            <Bar dataKey="physically_damaged"   name="Physically Damaged"  fill="#FF6B6B" />
+            <Bar dataKey="too_small" name="Too small" fill="#00E676" />
           </BarChart>
         </ResponsiveContainer>
         </div>

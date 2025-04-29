@@ -144,7 +144,7 @@ const AuthRoutes = ({ open, setOpen, isMobile }) => {
               : "2rem"
             : "0rem",
           height: "100vh",
-          backgroundColor: "#ddd",
+          backgroundColor: "#f0f0f0",
           overflowY: "auto",
           transition: theme.transitions.create(["margin", "width"], {
             easing: theme.transitions.easing.sharp,

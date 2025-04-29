@@ -6,6 +6,8 @@ import RejectionAnalytics from "../components/RejectionAnalytics";
 import AnalyticsDashboardSkeleton from "../skelitons/AnalyticsSkeliton";
 import useHarvestHistory from "../hooks/HarvestBarChartHooks";
 import useRejectionData from "../hooks/RejectionLineChartHooks";
+import SensorAnalytics from "../components/SensorAnalytics";
+import SalesAnalytics from "../components/SalesGraph";
 
 const AnalyticsDashboard = () => {
   const {
@@ -36,6 +38,8 @@ const AnalyticsDashboard = () => {
   return (
     <ThemeProvider theme={theme}>
       <Container maxWidth="xxl" sx={{ paddingTop: 2 }}>
+        <SalesAnalytics/> 
+        
         <HarvestAnalytics
           harvestHistory={harvestHistory}
           getCurrentDayData={getCurrentDayData}
@@ -52,6 +56,7 @@ const AnalyticsDashboard = () => {
           getRejectionMonthData={getRejectionMonthData}
           filterRejectionData={filterRejectionData}
         />
+         <SensorAnalytics/>
       </Container>
     </ThemeProvider>
   );

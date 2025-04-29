@@ -47,13 +47,13 @@ const useRejectionReasons = () => {
     };
   }, []);
 
-  return { rejectedTable, loading };
+  return { rejectedTable, loading, fetchReject: fetchData  };
 };
 
 // Legacy hook: returns rejection table items and loading state
 export const useRejectedTableItems = () => {
-  const { rejectedTable, loading } = useRejectionReasons();
-  return { rejectItems: rejectedTable, rejectLoading: loading };
+  const { rejectedTable, loading, fetchReject } = useRejectionReasons();
+  return { rejectItems: rejectedTable, rejectLoading: loading, fetchRejectItems: fetchReject };
 };
 
 // Legacy hook: returns the total number of rejections for today

@@ -227,8 +227,8 @@ const RejectionAnalytics = ({
       sx={{
         p: { xs: 2, md: 3 },
         mb: 4,
-        backgroundColor: "#FDFCFB",
-        boxShadow: "0px 4px 10px rgba(0,0,0,0.3)",
+        backgroundColor: "#FFF",
+        boxShadow: "0px 4px 10px rgba(0,0,0,0.35)",
         borderRadius: "15px",
       }}
     >
@@ -239,16 +239,25 @@ const RejectionAnalytics = ({
         alignItems="center"
         mb={5}
       >
-        <Typography
+      <Typography
           variant="h4"
-          sx={{ fontWeight: "bold", fontSize: "clamp(1.2rem, 1.7vw, 2rem)" }}
+          sx={{
+            fontWeight: "bold",
+            fontSize: "clamp(1.2rem, 1.7vw, 2rem)",
+            color: "#000",
+          }}
         >
           Rejection Analytics
         </Typography>
         <FormControl
           variant="outlined"
           size="small"
-          sx={{ minWidth: 150, mt: { xs: 2, md: 0 } }}
+          sx={{
+            minWidth: 150,
+            // give the control the same green, or switch to white for contrast:
+             borderRadius: "4px",
+           
+          }}
         >
           <InputLabel id="rejection-filter-label">Filter Rejections</InputLabel>
           <Select
@@ -268,7 +277,7 @@ const RejectionAnalytics = ({
         </FormControl>
       </Box>
 
-      <Typography variant="h6" sx={{ fontSize: "clamp(0.875rem, 1.7vw, 2rem)" }} gutterBottom>
+      <Typography  variant="h6" sx={{ fontSize: "clamp(0.875rem, 1.7vw, 2rem)", color: "#000" }} gutterBottom  >
         {getChartTitle()}
       </Typography>
 
@@ -276,22 +285,26 @@ const RejectionAnalytics = ({
         <Grid item xs={12} md={8}>
           <Box
             sx={{
-              height: { xs: 250, md: 300 },
+              height: { xs: 250, md: 400 },
               width: "100%",
-              backgroundColor: "#FDFCFB",
+              backgroundColor: "#FFF",
               borderRadius: "20px",
             }}
           >
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="diseased" fill="#ff6b35" name="Diseased" />
-                <Bar dataKey="physically_damaged" fill="#1d3557" name="Physically Damaged" />
-                <Bar dataKey="too_small" fill="#4169E1" name="Too Small" />
+              <CartesianGrid stroke="#000" strokeDasharray="3 3" />
+              <XAxis  dataKey="date"     stroke="#000" tick={{ fill: '#000' }}/>
+              <YAxis stroke="#000"    tick={{ fill: '#000' }}  />
+             <Tooltip contentStyle={{ backgroundColor: '#06402B', border: '1px solid #fff' }}   labelStyle={{ color: '#fff' }} />
+             <Legend
+              wrapperStyle={{ color: '#000' }}
+              formatter={(value) => <span style={{ color: '#000' }}>{value}</span>}
+            />
+
+                <Bar dataKey="diseased" fill="#FFD700" name="Diseased" />
+                <Bar dataKey="physically_damaged" fill="#FF6B6B" name="Physically Damaged" />
+                <Bar dataKey="too_small" fill="#00E676" name="Too Small" />
               </BarChart>
             </ResponsiveContainer>
           </Box>

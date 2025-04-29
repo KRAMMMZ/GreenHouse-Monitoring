@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  Alert,
   Typography,
   Table,
   TableBody,
@@ -21,6 +20,8 @@ import {
   Modal,
   Divider,
   Button,
+  useMediaQuery,
+  useTheme
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
@@ -35,6 +36,8 @@ import { useFilteredHardwareComponents } from "../hooks/HarvestComponentsHooks";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { styled } from '@mui/material/styles';
+import { useMemo } from "react";
 
 // Modal styling
 const modalStyle = {
@@ -114,14 +117,32 @@ function getNoDataAlertText(filter, customFrom, customTo, selectedMonth, selecte
 // Define filter options with corresponding icons.
 // The "none" option is disabled.
 const filterOptions = [
-  { value: "none", label: "SELECT FILTER", icon: <FilterListIcon fontSize="small" sx={{ mr: 1 }} />, disabled: true },
-  { value: "all", label: "ALL DATA", icon: <ViewListIcon fontSize="small" sx={{ mr: 1 }} /> },
-  { value: "currentDay", label: "CURRENT DAY", icon: <TodayIcon fontSize="small" sx={{ mr: 1 }} /> },
-  { value: "last7Days", label: "LAST 7 DAYS", icon: <HistoryIcon fontSize="small" sx={{ mr: 1 }} /> },
-  { value: "currentMonth", label: "CURRENT MONTH", icon: <CalendarMonthIcon fontSize="small" sx={{ mr: 1 }} /> },
-  { value: "selectMonth", label: "SELECT MONTH", icon: <DateRangeIcon fontSize="small" sx={{ mr: 1 }} /> },
-  { value: "custom", label: "SELECT DATE", icon: <EventIcon fontSize="small" sx={{ mr: 1 }} /> },
+  { value: "none", label: "SELECT FILTER", icon: <FilterListIcon fontSize="small" sx={{ mr: 1 }}   />, disabled: true },
+  { value: "all", label: "ALL DATA", icon: <ViewListIcon fontSize="small"  sx={{ mr: 1 }} /> },
+  { value: "currentDay", label: "CURRENT DAY", icon: <TodayIcon fontSize="small"  sx={{ mr: 1 }}  /> },
+  { value: "last7Days", label: "LAST 7 DAYS", icon: <HistoryIcon fontSize="small"  sx={{ mr: 1 }} /> },
+  { value: "currentMonth", label: "CURRENT MONTH", icon: <CalendarMonthIcon fontSize="small" sx={{ mr: 1 }}  /> },
+  { value: "selectMonth", label: "SELECT MONTH", icon: <DateRangeIcon fontSize="small"  sx={{ mr: 1 }} /> },
+  { value: "custom", label: "SELECT DATE", icon: <EventIcon fontSize="small" sx={{ mr: 1 }}  /> },
 ];
+
+// Styled TableCell component
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  color: '#000',
+  borderBottom: 'none',
+  fontSize: '0.875rem', // Set a default font size
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '0.75rem', // Adjust font size for smaller screens
+  },
+}));
+
+// Styled TableRow component
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  backgroundColor: '#FFF',
+  '&:hover': {
+    backgroundColor: '#F5F5F5', // Lighter shade for hover effect
+  },
+}));
 
 function HardwareComponents() {
   const [page, setPage] = useState(0);
@@ -144,6 +165,9 @@ function HardwareComponents() {
   // Modal open states
   const [openDateModal, setOpenDateModal] = useState(false);
   const [openMonthModal, setOpenMonthModal] = useState(false);
+
+  const theme = useTheme();
+    const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
   // Handle search changes: reset page to 0
   const handleSearchChange = (e) => {
@@ -229,6 +253,14 @@ function HardwareComponents() {
     selectedYear
   );
 
+   const tableHeaderCellTypographyProps = useMemo(
+        () => ({
+            fontSize: isSmallScreen ? "0.75rem" : "0.875rem",
+            fontWeight: "bold",
+        }),
+        [isSmallScreen]
+    );
+
   return (
     <Container maxWidth="xl" sx={{ p: { xs: 2, sm: 3 } }}>
       {loading ? (
@@ -239,6 +271,7 @@ function HardwareComponents() {
             width: "100%",
             overflow: "hidden",
             borderRadius: "10px",
+            backgroundColor: "#fff",
             boxShadow: 15,
             p: { xs: 2, sm: 3 },
             mb: { xs: 3, sm: 5 },
@@ -283,18 +316,37 @@ function HardwareComponents() {
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <SearchIcon sx={{ fontSize: { xs: "1rem", sm: "1.2rem" } }} />
+                      <SearchIcon />
                     </InputAdornment>
                   ),
                 }}
-                sx={{ maxWidth: { xs: "100%", sm: "250px" }, textTransform: "uppercase" }}
+                InputLabelProps={{
+                  style: { color: "#000" },
+                }}
+                sx={{
+                  maxWidth: { xs: "100%", sm: "250px" }, textTransform: "uppercase",
+                   "& .MuiOutlinedInput-root": {
+                    "& fieldset": {
+                      borderColor: "#000",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#000",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#000",
+                    },
+                    "& input": {
+                      color: "#000", // Text color inside the input
+                    },
+                  },
+                }}
               />
               <FormControl
               variant="outlined"
               size="small"
               sx={{ width: { xs: "100%", sm: "100%", md: "auto" } }}
             >
-                <InputLabel id="filter-label" sx={{ textTransform: "uppercase" }}>
+                <InputLabel id="filter-label"  sx={{ textTransform: "uppercase" }}>
                   FILTER
                 </InputLabel>
                 <Select
@@ -302,14 +354,37 @@ function HardwareComponents() {
                   value={uiFilter}
                   label="FILTER"
                   onChange={handleFilterChange}
-                  sx={{ textTransform: "uppercase" }}
+                  sx={{ textTransform: "uppercase", 
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#000', // Default border color
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#000', // Hovered border color
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#000', // Focused border color
+                    },
+                    '& .MuiSvgIcon-root': { // Adjust the color of the dropdown arrow
+                      color: '#000',
+                    },
+                  }}
+                   MenuProps={{
+                    PaperProps: {
+                      style: {
+                        backgroundColor: '#fff', // Background color of the dropdown
+                      },
+                    },
+                  }}
+                  inputProps={{
+                    style: { color: '#000' },
+                  }}
                 >
                   {filterOptions.map((option) => (
                     <MenuItem
                       key={option.value}
                       value={option.value}
                       disabled={option.disabled}
-                      sx={{ textTransform: "uppercase" }}
+                       sx={{ textTransform: "uppercase", color: "#000" }}
                     >
                       {option.icon}
                       {option.label}
@@ -321,8 +396,8 @@ function HardwareComponents() {
           </Box>
 
           {/* Table */}
-          <TableContainer sx={{ overflowX: "auto" }}>
-            <Table sx={{ minWidth: 650, backgroundColor: "#fff" }}>
+          <TableContainer sx={{ overflowX: "auto", borderBottom: "1px solid #999" }}>
+            <Table sx={{ minWidth: 650, backgroundColor: "#fff", borderSpacing: "0 10px", }}>
               <TableHead>
                 <TableRow sx={{ backgroundColor: "#06402B", borderRadius: "10px" }}>
                   {["COMPONENT NAME", "MANUFACTURER", "MODEL NUMBER", "SERIAL NUMBER", "DATE OF INSTALLATION"].map(
@@ -336,9 +411,10 @@ function HardwareComponents() {
                           fontSize: { xs: "0.9rem", sm: "1.1rem" },
                           py: { xs: 2, sm: 2.5 },
                           textTransform: "uppercase",
+                          borderBottom: 'none'
                         }}
                       >
-                        {header}
+                       <Typography {...tableHeaderCellTypographyProps}>{header}</Typography>
                       </TableCell>
                     )
                   )}
@@ -349,7 +425,7 @@ function HardwareComponents() {
                   sortedComponents
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((item, index) => (
-                      <TableRow key={`${item.componentName}-${index}`} hover sx={{ borderRadius: "10px" }}>
+                      <StyledTableRow key={`${item.componentName}-${index}`}>
                         {[
                           item.componentName,
                           item.manufacturer,
@@ -357,18 +433,18 @@ function HardwareComponents() {
                           item.serial_number,
                           new Date(item.date_of_installation).toUTCString(),
                         ].map((value, idx) => (
-                          <TableCell key={idx} align="center" sx={{ fontSize: { xs: "0.8rem", sm: "1rem" }, py: { xs: 1, sm: 1.5 } }}>
+                          <StyledTableCell key={idx} align="center" >
                             {value}
-                          </TableCell>
+                          </StyledTableCell>
                         ))}
-                      </TableRow>
+                      </StyledTableRow>
                     ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5}>
-                      <Alert variant="filled" severity="warning">
+                    <TableCell colSpan={5} align="center" sx={{ borderBottom: 'none' }}>
+                      <Typography variant="h8" severity="warning">
                         {getNoDataAlertText(appliedFilter, customFrom, customTo, selectedMonth, selectedYear)}
-                      </Alert>
+                      </Typography>
                     </TableCell>
                   </TableRow>
                 )}
@@ -385,6 +461,10 @@ function HardwareComponents() {
               page={page}
               onPageChange={(event, newPage) => setPage(newPage)}
               rowsPerPageOptions={[rowsPerPage]}
+                sx={{
+                 color: '#000', // Color of the pagination text
+              
+              }}
             />
           </Box>
 
@@ -396,7 +476,7 @@ function HardwareComponents() {
               setUiFilter("all");
             }}
           >
-            <Box sx={{ ...modalStyle, p: 3, width: 300 }}>
+            <Box sx={{ ...modalStyle, p: 3, width: 300, backgroundColor: "#fff" }}>
               <Typography variant="h6" sx={{ mb: 2, textTransform: "uppercase" }}>
                 CHOOSE DATE RANGE
               </Typography>
@@ -428,12 +508,12 @@ function HardwareComponents() {
 
           {/* Select Month Modal */}
           <Modal open={openMonthModal} onClose={() => setOpenMonthModal(false)} aria-labelledby="harvest-month-modal">
-            <Box sx={modalStyle}>
+            <Box sx={{ ...modalStyle, backgroundColor: "#fff" }}>
               <Typography variant="h6" sx={{ mb: 2, textTransform: "uppercase" }}>
                 SELECT MONTH AND YEAR
               </Typography>
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel id="harvest-month-label" sx={{ textTransform: "uppercase" }}>
+                <InputLabel id="harvest-month-label"  sx={{ textTransform: "uppercase" }}>
                   MONTH
                 </InputLabel>
                 <Select
@@ -451,7 +531,7 @@ function HardwareComponents() {
                 </Select>
               </FormControl>
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel id="harvest-year-label" sx={{ textTransform: "uppercase" }}>
+                <InputLabel id="harvest-year-label"  sx={{ textTransform: "uppercase" }}>
                   YEAR
                 </InputLabel>
                 <Select

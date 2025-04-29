@@ -51,10 +51,10 @@ const MetricCard = ({ title, value, chartType, data }) => {
       className="d-flex flex-column flex-md-row align-items-center text-white p-3 w-100"
       style={{
         borderRadius: "8px",
-        backgroundColor: "#06402B",
+        backgroundColor: "#fff",
         overflow: "hidden",
         minHeight: "100px",
-        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.15)",
+        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.35)",
       }}
     >
       {/* Text Section */}
@@ -68,7 +68,7 @@ const MetricCard = ({ title, value, chartType, data }) => {
         <h2
           className="display-6 fw-bold mb-2 mb-md-0"
           style={{
-            color: "#fff",
+            color: "#000",
             fontSize: "clamp(2.5rem, 4vw, 3rem)",
           }}
         >
@@ -77,7 +77,7 @@ const MetricCard = ({ title, value, chartType, data }) => {
         <p
           className="medium fw-bold mb-0"
           style={{
-            color: "#fff",
+            color: "#000",
             fontSize: "clamp(0.675rem, 1.7vw, .9rem)",
           }}
         >
@@ -103,7 +103,7 @@ const MetricCard = ({ title, value, chartType, data }) => {
               <Tooltip
                 contentStyle={{
                   backgroundColor: "#333",
-                  color: "#fff",
+                  color: "#000",
                   borderRadius: "5px",
                 }}
               />
@@ -118,9 +118,9 @@ const MetricCard = ({ title, value, chartType, data }) => {
           ) : chartType === "bar" ? (
             <BarChart data={chartData}>
               <Tooltip contentStyle={{ fontSize: "12px" }} itemStyle={{ fontSize: "12px" }} />
-              <Bar dataKey="accepted" fill="#ff6b35" name="Accepted Items" />
-              <Bar dataKey="rejected" fill="#82D682" name="Rejected Items" />
-              <Bar dataKey="totalYield" fill="#4169E1" name="Total Yield" />
+              <Bar dataKey="accepted" fill="#FFD700" name="Accepted Items" />
+              <Bar dataKey="rejected" fill="#FF6B6B" name="Rejected Items" />
+              <Bar dataKey="totalYield" fill="#00E676" name="Total Yield" />
             </BarChart>
           ) : chartType === "area" ? (
             <AreaChart
