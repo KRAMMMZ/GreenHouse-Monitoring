@@ -22,6 +22,7 @@ const HardwareStatus= async (req,res ) => {
       res.status(error.response?.status || 500).json({
         error: error.response?.data?.error || 'Internal Server Error'
       });
+      t
     }
 }
 
