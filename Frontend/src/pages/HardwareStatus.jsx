@@ -289,7 +289,7 @@ function HardwareStatus() {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ p: { xs: 2, sm: 3 } }}>
+    <Container maxWidth="xxl" sx={{ p: { xs: 2, sm: 3 } }}>
       <Paper
         sx={{
           width: "100%",
@@ -356,20 +356,7 @@ function HardwareStatus() {
               sx={{
                 maxWidth: { xs: "100%", sm: "250px" },
                 textTransform: "uppercase",
-                 "& .MuiOutlinedInput-root": {
-                    "& fieldset": {
-                      borderColor: "#000",
-                    },
-                    "&:hover fieldset": {
-                      borderColor: "#000",
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: "#000",
-                    },
-                    "& input": {
-                      color: "#000", // Text color inside the input
-                    },
-                  },
+                 
               }}
             />
             <FormControl
@@ -386,18 +373,7 @@ function HardwareStatus() {
                 label="FILTER"
                 onChange={handleFilterChange}
                 sx={{ textTransform: "uppercase", 
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#000', // Default border color
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#000', // Hovered border color
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#000', // Focused border color
-                    },
-                    '& .MuiSvgIcon-root': { // Adjust the color of the dropdown arrow
-                      color: '#000',
-                    },
+                    
                   }}
                  MenuProps={{
                     PaperProps: {

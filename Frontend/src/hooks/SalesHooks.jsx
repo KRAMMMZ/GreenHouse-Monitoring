@@ -1,3 +1,5 @@
+// SalesHooks.js
+
 import axios from "axios";
 import { useState, useEffect, useMemo } from "react";
 import { io } from "socket.io-client";
@@ -24,9 +26,9 @@ const useSalesData = () => {
 
     // Fetch data from API
     const fetchData = async () => {
+        setLoading(true); // Set loading to true before fetching
         try {
             const response = await axios.get("http://localhost:3001/sales");
-            // Assume the API returns an array of sales records directly
             setSalesData(response.data.salesTable || []);
         } catch (error) {
             console.error("Error fetching sales data:", error);
@@ -39,11 +41,10 @@ const useSalesData = () => {
     useEffect(() => {
         fetchData();
 
-        // Listen for real-time updates on "salesData"
         socket.on("salesData", (data) => {
             if (data && data.salesTable) {
                 setSalesData(data.salesTable);
-                setLoading(false);
+                // setLoading(false); // Initial loading is handled by fetchData
             }
         });
 
@@ -67,20 +68,21 @@ const useSales = () => {
 /**
  * useSalesToday
  * Returns the count of sales records with a salesDate of today.
- * Assumes each record has a "salesDate" field.
  */
 const useSalesToday = () => {
     const { salesData, loading } = useSalesData();
 
     const salesToday = useMemo(() => {
-        const todayDate = getTodayDateString();
+        const todayDateStr = getTodayDateString();
+        if (!salesData) return 0;
         const todaySales = salesData.filter((item) => {
-            if (!item.salesDate) return false;
-            const salesTime = new Date(item.salesDate);
+            if (!item.created_at) return false; // Use created_at
+            const salesTime = new Date(item.created_at); // Use created_at
+            if (isNaN(salesTime.getTime())) return false; // Invalid date
             const salesDateString = `${salesTime.getFullYear()}-${String(
                 salesTime.getMonth() + 1
             ).padStart(2, "0")}-${String(salesTime.getDate()).padStart(2, "0")}`;
-            return salesDateString === todayDate;
+            return salesDateString === todayDateStr;
         });
         return todaySales.length;
     }, [salesData]);
@@ -91,16 +93,6 @@ const useSalesToday = () => {
 /**
  * useFilteredSales
  * Returns filtered sales data based on provided filter options.
- *
- * @param {object} options - Filtering options:
- *    filterOption: "all" | "currentDay" | "last7Days" | "currentMonth" | "selectMonth" | "custom"
- *    customFrom: start date for custom filtering.
- *    customTo: end date for custom filtering.
- *    selectedMonth: month number for "selectMonth".
- *    selectedYear: year number for "selectMonth".
- *    selectedYearly: year number for "yearly".
- *
- * Assumes each record has a "salesDate" field.
  */
 const useFilteredSales = ({
     filterOption = "all",
@@ -110,103 +102,99 @@ const useFilteredSales = ({
     selectedYear = null,
     selectedYearly = null,
 } = {}) => {
-    const [salesData, setSalesData] = useState([]);
-    const [loading, setLoading] = useState(true);
+    // Use useSalesData to ensure data is fetched and updated consistently
+    const { salesData: allSalesData, loading: dataLoading } = useSalesData();
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await axios.get("http://localhost:3001/sales");
-                setSalesData(response.data.salesTable || []);
-            } catch (error) {
-                console.error("Error fetching sales data:", error);
-                setSalesData([]);
-            } finally {
-                setLoading(false);
-            }
+    const filteredSales = useMemo(() => {
+        if (!allSalesData || allSalesData.length === 0) return [];
+        let filtered = allSalesData;
+
+        const getSaleDate = (item) => {
+            if (!item.created_at) return null;
+            const date = new Date(item.created_at);
+            return isNaN(date.getTime()) ? null : date;
         };
 
-        fetchData();
+        if (filterOption === "currentDay") {
+            const today = new Date();
+            const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+            const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+            
+            filtered = filtered.filter(item => {
+                const salesTime = getSaleDate(item);
+                if (!salesTime) return false;
+                return salesTime >= todayStart && salesTime <= todayEnd;
+            });
+        } else if (filterOption === "last7Days") {
+            const todayEnd = new Date();
+            todayEnd.setHours(23, 59, 59, 999);
 
-        socket.on("salesData", (data) => {
-            if (data && data.salesTable) {
-                setSalesData(data.salesTable);
-                setLoading(false);
-              }
-          });
+            const sevenDaysAgoStart = new Date();
+            // Includes today as the 7th day. So, today and 6 previous days.
+            sevenDaysAgoStart.setDate(sevenDaysAgoStart.getDate() - 6); 
+            sevenDaysAgoStart.setHours(0, 0, 0, 0);
+            
+            filtered = filtered.filter(item => {
+                const salesTime = getSaleDate(item);
+                if (!salesTime) return false;
+                return salesTime >= sevenDaysAgoStart && salesTime <= todayEnd;
+            });
+        } else if (filterOption === "currentMonth") {
+            const today = new Date();
+            const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1, 0, 0, 0, 0);
+            const currentMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+
+            filtered = filtered.filter(item => {
+                const salesTime = getSaleDate(item);
+                if (!salesTime) return false;
+                return salesTime >= currentMonthStart && salesTime <= currentMonthEnd;
+            });
+        } else if (filterOption === "selectMonth" && selectedMonth && selectedYear) {
+            // Ensure selectedMonth and selectedYear are numbers
+            const month = Number(selectedMonth);
+            const year = Number(selectedYear);
+
+            const monthStart = new Date(year, month - 1, 1, 0, 0, 0, 0);
+            const monthEnd = new Date(year, month, 0, 23, 59, 59, 999); // Day 0 of next month is last day of current
+
+            filtered = filtered.filter(item => {
+                const salesTime = getSaleDate(item);
+                if (!salesTime) return false;
+                return salesTime >= monthStart && salesTime <= monthEnd;
+            });
+        } else if (filterOption === "custom" && customFrom && customTo) {
+            const fromDate = new Date(customFrom);
+            fromDate.setHours(0, 0, 0, 0); 
+            const toDate = new Date(customTo);
+            toDate.setHours(23, 59, 59, 999);
+
+            if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) return filtered;
+
+            filtered = filtered.filter(item => {
+                const salesTime = getSaleDate(item);
+                if (!salesTime) return false;
+                return salesTime >= fromDate && salesTime <= toDate;
+            });
+        } else if (filterOption === "yearly" && selectedYearly) {
+            const year = Number(selectedYearly);
+            const yearStart = new Date(year, 0, 1, 0, 0, 0, 0); 
+            const yearEnd = new Date(year, 11, 31, 23, 59, 59, 999);
+
+            filtered = filtered.filter(item => {
+                const salesTime = getSaleDate(item);
+                if (!salesTime) return false;
+                return salesTime >= yearStart && salesTime <= yearEnd;
+            });
+        }
   
-          return () => {
-              socket.off("salesData");
-          };
-      }, []);
+        return filtered;
+    }, [allSalesData, filterOption, customFrom, customTo, selectedMonth, selectedYear, selectedYearly]);
   
-      const filteredSales = useMemo(() => {
-          let filtered = salesData;
+    return { filteredSales, loading: dataLoading }; // Use loading from useSalesData
+};
   
-          const filterDate = (item, date) => {
-              if (!item.salesDate) return false;
-              const salesTime = new Date(item.salesDate);
-              return (
-                  salesTime.getFullYear() === date.getFullYear() &&
-                  salesTime.getMonth() === date.getMonth() &&
-                  salesTime.getDate() === date.getDate()
-              );
-          };
-  
-          if (filterOption === "currentDay") {
-              filtered = filtered.filter(item => filterDate(item, new Date()));
-          } else if (filterOption === "last7Days") {
-              const sevenDaysAgo = new Date();
-              sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-              filtered = filtered.filter(item => {
-                  if (!item.salesDate) return false;
-                  const salesTime = new Date(item.salesDate);
-                  return salesTime >= sevenDaysAgo && salesTime <= new Date();
-              });
-          } else if (filterOption === "currentMonth") {
-              const today = new Date();
-              filtered = filtered.filter(item => {
-                  if (!item.salesDate) return false;
-                  const salesTime = new Date(item.salesDate);
-                  return (
-                      salesTime.getMonth() === today.getMonth() &&
-                      salesTime.getFullYear() === today.getFullYear()
-                  );
-              });
-          } else if (filterOption === "selectMonth" && selectedMonth && selectedYear) {
-              filtered = filtered.filter(item => {
-                  if (!item.salesDate) return false;
-                  const salesTime = new Date(item.salesDate);
-                  return (
-                      salesTime.getMonth() + 1 === Number(selectedMonth) &&
-                      salesTime.getFullYear() === Number(selectedYear)
-                  );
-              });
-          } else if (filterOption === "custom" && customFrom && customTo) {
-              const fromDate = new Date(customFrom);
-              const toDate = new Date(customTo);
-              toDate.setHours(23, 59, 59, 999); // Include the entire end day
-              filtered = filtered.filter(item => {
-                  if (!item.salesDate) return false;
-                  const salesTime = new Date(item.salesDate);
-                  return salesTime >= fromDate && salesTime <= toDate;
-              });
-          } else if (filterOption === "yearly" && selectedYearly) {
-              filtered = filtered.filter(item => {
-                  if (!item.salesDate) return false;
-                  const salesTime = new Date(item.salesDate);
-                  return salesTime.getFullYear() === Number(selectedYearly);
-              });
-          }
-  
-          return filtered;
-      }, [salesData, filterOption, customFrom, customTo, selectedMonth, selectedYear, selectedYearly]);
-  
-      return { filteredSales, loading };
-  };
-  
-  export {
-      useSales,
-      useSalesToday,
-      useFilteredSales
-  };
+export {
+    useSales,
+    useSalesToday,
+    useFilteredSales
+};

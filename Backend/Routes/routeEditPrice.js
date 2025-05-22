@@ -1,5 +1,5 @@
 import express from "express";
-import { updateHarvestPrice } from "../Controller/EditHarvestPriceController"
+import { updateHarvestPrice } from "../Controller/EditHarvestPriceController.js"
 
 
 

@@ -11,6 +11,7 @@ import {
   Grid,
   Modal,
   Divider,
+  TextField, // Import TextField
 } from "@mui/material";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -27,13 +28,15 @@ import {
 import SickIcon from "@mui/icons-material/Sick";
 import BrokenImageIcon from "@mui/icons-material/BrokenImage";
 import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
-// Icons for filter options
+
+import FilterListIcon from "@mui/icons-material/FilterList";
+import ViewListIcon from "@mui/icons-material/ViewList";
 import TodayIcon from "@mui/icons-material/Today";
+import HistoryIcon from "@mui/icons-material/History";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DateRangeIcon from "@mui/icons-material/DateRange";
-import CalendarViewMonthIcon from "@mui/icons-material/CalendarViewMonth";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import TimelapseIcon from "@mui/icons-material/Timelapse";
-import AllInclusiveIcon from "@mui/icons-material/AllInclusive";
+import EventIcon from "@mui/icons-material/Event";
+
 
 const modalStyle = {
   position: "absolute",
@@ -43,183 +46,241 @@ const modalStyle = {
   width: 400,
   bgcolor: "background.paper",
   borderRadius: 2,
-  boxShadow: 24,
+  boxShadow: 24, 
   p: 4,
 };
 
 const filterOptions = [
-  { value: "overallTotal", label: "ALL DATA", icon: <AllInclusiveIcon sx={{ mr: 1 }} /> },
+   { value: "none", label: "SELECT FILTER", icon: <FilterListIcon  fontSize="small" sx={{ mr: 1 }} />, disabled: true },
+  { value: "overallTotal", label: "ALL DATA", icon: <ViewListIcon sx={{ mr: 1 }} /> },
   { value: "currentDay", label: "CURRENT DAY", icon: <TodayIcon sx={{ mr: 1 }} /> },
-  { value: "last7", label: "LAST 7 DAYS", icon: <DateRangeIcon sx={{ mr: 1 }} /> },
-  { value: "currentMonth", label: "CURRENT MONTH", icon: <CalendarViewMonthIcon sx={{ mr: 1 }} /> },
-  { value: "selectedMonth", label: "SELECTED MONTH", icon: <CalendarTodayIcon sx={{ mr: 1 }} /> },
-  { value: "custom", label: "CHOOSE DATE", icon: <TimelapseIcon sx={{ mr: 1 }} /> },
+  { value: "last7", label: "LAST 7 DAYS", icon: <HistoryIcon sx={{ mr: 1 }} /> },
+  { value: "currentMonth", label: "CURRENT MONTH", icon: <CalendarMonthIcon sx={{ mr: 1 }} /> },
+  { value: "selectedMonth", label: "SELECTED MONTH", icon: <DateRangeIcon sx={{ mr: 1 }} /> },
+  { value: "yearly", label: "SELECT YEAR", icon: <TodayIcon    sx={{ mr: 1 }} /> }, // Added
+  { value: "custom", label: "SELECT DATE", icon: <EventIcon sx={{ mr: 1 }} /> },
 ];
 
 const RejectionAnalytics = ({
-  timeSeriesData,
+  timeSeriesData, // Default last 7 days
   getCurrentDayDataRejection,
   getOverallTotalRejectionData,
   getRejectionCurrentMonthData,
   getRejectionMonthData,
   filterRejectionData,
+  getRejectionYearlyData, // New prop
 }) => {
-  const [filter, setFilter] = useState("last7");
-  const [dropdownValue, setDropdownValue] = useState("none");
+  const [filter, setFilter] = useState("last7"); // Active filter
+  const [dropdownValue, setDropdownValue] = useState("none"); // Controls the Select display
   const [chartData, setChartData] = useState([]);
-  const [chartTitle, setChartTitle] = useState("");
+  const [chartTitleSuffix, setChartTitleSuffix] = useState(""); // For specific parts of title like "Jan 2023"
 
   // Modal states for Selected Month
   const [openMonthModal, setOpenMonthModal] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedYearForMonth, setSelectedYearForMonth] = useState(new Date().getFullYear()); // Renamed to avoid clash
+  const [tempSelectedMonth, setTempSelectedMonth] = useState(selectedMonth);
+  const [tempSelectedYearForMonth, setTempSelectedYearForMonth] = useState(selectedYearForMonth);
+
+  // Modal states for Yearly
+  const [openYearModal, setOpenYearModal] = useState(false);
+  const [selectedYearly, setSelectedYearly] = useState(null);
+  const [tempYear, setTempYear] = useState(new Date().getFullYear());
 
   // Modal states for Custom Date Range
   const [openCustomModal, setOpenCustomModal] = useState(false);
   const [customFrom, setCustomFrom] = useState(null);
   const [customTo, setCustomTo] = useState(null);
+  const [tempCustomFrom, setTempCustomFrom] = useState(null);
+  const [tempCustomTo, setTempCustomTo] = useState(null);
   const [isDateError, setIsDateError] = useState(false);
 
   useEffect(() => {
-    if (customFrom && customTo) {
-      setIsDateError(new Date(customFrom) > new Date(customTo));
+    if (tempCustomFrom && tempCustomTo) {
+      setIsDateError(new Date(tempCustomFrom) > new Date(tempCustomTo));
+    } else {
+      setIsDateError(false);
     }
-  }, [customFrom, customTo]);
+  }, [tempCustomFrom, tempCustomTo]);
 
+  // Update chart data based on the active filter
   useEffect(() => {
+    let data;
+    let suffix = "";
     switch (filter) {
       case "last7":
-        setChartData(timeSeriesData);
+        data = timeSeriesData; // This is already processed for last 7 days by the hook
         break;
       case "currentDay":
-        setChartData(getCurrentDayDataRejection());
+        data = getCurrentDayDataRejection();
         break;
       case "currentMonth":
-        setChartData(getRejectionCurrentMonthData());
+        data = getRejectionCurrentMonthData();
         break;
       case "overallTotal":
-        setChartData([getOverallTotalRejectionData()]);
+        data = [getOverallTotalRejectionData()]; // Wrap in array for BarChart
+        break;
+      case "selectedMonth":
+        // This case is handled by handleApplySelectedMonth directly setting chartData
+        // but if selectedMonth/selectedYearForMonth changes, this could re-trigger
+        if (selectedMonth && selectedYearForMonth) {
+            data = getRejectionMonthData(selectedMonth, selectedYearForMonth);
+            suffix = `${new Date(selectedYearForMonth, selectedMonth - 1).toLocaleString("default", { month: "long" })} ${selectedYearForMonth}`;
+        } else {
+            data = timeSeriesData; // Fallback
+        }
+        break;
+      case "yearly":
+        if (selectedYearly) {
+            data = getRejectionYearlyData(selectedYearly);
+            suffix = String(selectedYearly);
+        } else {
+            data = timeSeriesData; // Fallback
+        }
+        break;
+      case "custom":
+        if (customFrom && customTo) {
+            const fromString = getDateString(new Date(customFrom));
+            const toString = getDateString(new Date(customTo));
+            data = filterRejectionData(fromString, toString);
+            suffix = `${new Date(customFrom).toLocaleDateString()} - ${new Date(customTo).toLocaleDateString()}`;
+        } else {
+            data = timeSeriesData; // Fallback
+        }
         break;
       default:
+        data = timeSeriesData; // Default to last7
         break;
     }
+    setChartData(data || []); // Ensure data is always an array
+    setChartTitleSuffix(suffix);
   }, [
     filter,
     timeSeriesData,
     getCurrentDayDataRejection,
     getOverallTotalRejectionData,
     getRejectionCurrentMonthData,
+    getRejectionMonthData, // For selectedMonth case
+    getRejectionYearlyData, // For yearly case
+    filterRejectionData, // For custom case
+    selectedMonth, selectedYearForMonth, // Dependencies for selectedMonth
+    selectedYearly, // Dependency for yearly
+    customFrom, customTo // Dependencies for custom
   ]);
 
   const handleFilterChange = (event) => {
-    const selected = event.target.value;
-    if (selected === "selectedMonth") {
+    const selectedValue = event.target.value;
+    setDropdownValue(selectedValue); 
+
+    if (selectedValue === "selectedMonth") {
+      setTempSelectedMonth(selectedMonth || new Date().getMonth() + 1);
+      setTempSelectedYearForMonth(selectedYearForMonth || new Date().getFullYear());
       setOpenMonthModal(true);
-    } else if (selected === "custom") {
+    } else if (selectedValue === "yearly") {
+      setTempYear(selectedYearly || new Date().getFullYear());
+      setOpenYearModal(true);
+    } else if (selectedValue === "custom") {
+      setTempCustomFrom(customFrom);
+      setTempCustomTo(customTo);
       setOpenCustomModal(true);
     } else {
-      setFilter(selected);
+      setFilter(selectedValue);
+      // Reset other specific filter states
+      setSelectedMonth(null);
+      setSelectedYearForMonth(null);
+      setSelectedYearly(null);
+      setCustomFrom(null);
+      setCustomTo(null);
+      setDropdownValue("none"); // Reset select to placeholder for direct filters
     }
-    setDropdownValue("none");
+  };
+
+  const handleModalClose = () => {
+    setOpenMonthModal(false);
+    setOpenYearModal(false);
+    setOpenCustomModal(false);
+    setDropdownValue("none"); // Reset dropdown if modal is cancelled
   };
 
   const handleApplySelectedMonth = () => {
-    const data = getRejectionMonthData(selectedMonth, selectedYear);
-    setChartData(data);
-    const monthName = new Date(selectedYear, selectedMonth - 1).toLocaleString("default", {
-      month: "long",
-    });
-    setChartTitle(`${monthName} ${selectedYear}`);
-    setOpenMonthModal(false);
+    setSelectedMonth(tempSelectedMonth);
+    setSelectedYearForMonth(tempSelectedYearForMonth);
     setFilter("selectedMonth");
+    // Reset others
+    setSelectedYearly(null);
+    setCustomFrom(null);
+    setCustomTo(null);
+    setOpenMonthModal(false);
+    setDropdownValue("none");
+  };
+  
+  const handleApplyYearlyFilter = () => {
+    setSelectedYearly(tempYear);
+    setFilter("yearly");
+    // Reset others
+    setSelectedMonth(null);
+    setSelectedYearForMonth(null);
+    setCustomFrom(null);
+    setCustomTo(null);
+    setOpenYearModal(false);
+    setDropdownValue("none");
   };
 
-  // *** CHANGED FUNCTION: handleApplyCustomDates ***
   const handleApplyCustomDates = () => {
-    if (customFrom && customTo && !isDateError) {
-      // 1) Convert to Date objects
-      const fromDate = new Date(customFrom);
-      const toDate = new Date(customTo);
-
-      // 2) Adjust to local start/end of day
-      fromDate.setHours(0, 0, 0, 0);
-      toDate.setHours(23, 59, 59, 999);
-
-      // 3) Create local YYYY-MM-DD strings
-      const fromString = [
-        fromDate.getFullYear(),
-        String(fromDate.getMonth() + 1).padStart(2, "0"),
-        String(fromDate.getDate()).padStart(2, "0"),
-      ].join("-");
-
-      const toString = [
-        toDate.getFullYear(),
-        String(toDate.getMonth() + 1).padStart(2, "0"),
-        String(toDate.getDate()).padStart(2, "0"),
-      ].join("-");
-
-      // 4) Filter data
-      const data = filterRejectionData(fromString, toString);
-
-      // 5) Update chart
-      setChartData(data);
-      setChartTitle(
-        `${fromDate.toLocaleDateString()} - ${toDate.toLocaleDateString()}`
-      );
-      setOpenCustomModal(false);
+    if (tempCustomFrom && tempCustomTo && !isDateError) {
+      setCustomFrom(new Date(tempCustomFrom));
+      setCustomTo(new Date(tempCustomTo));
       setFilter("custom");
+      // Reset others
+      setSelectedMonth(null);
+      setSelectedYearForMonth(null);
+      setSelectedYearly(null);
+      setOpenCustomModal(false);
+      setDropdownValue("none");
     }
   };
 
-  const getChartTitle = () => {
+  const getFullChartTitle = () => {
+    let baseTitle = "Rejection History";
     switch (filter) {
-      case "currentDay": {
-        const currentDate = new Date().toLocaleDateString("en-US", {
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        });
-        return `Rejection History (CURRENT DAY: ${currentDate})`;
-      }
-      case "last7": {
+      case "currentDay": 
+        return `${baseTitle} (Current Day: ${new Date().toLocaleDateString()})`;
+      case "last7": 
         const endDate = new Date();
         const startDate = new Date();
         startDate.setDate(endDate.getDate() - 6);
-        const formattedStart = startDate.toLocaleDateString("en-US", {
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        });
-        const formattedEnd = endDate.toLocaleDateString("en-US", {
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        });
-        return `Rejection History (LAST 7 DAYS: ${formattedStart} - ${formattedEnd})`;
-      }
-      case "currentMonth": {
-        const currentMonth = new Date().toLocaleString("default", {
-          month: "long",
-          year: "numeric",
-        });
-        return `Rejection History (CURRENT MONTH: ${currentMonth})`;
-      }
+        return `${baseTitle} (Last 7 Days: ${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()})`;
+      case "currentMonth":
+        return `${baseTitle} (Current Month: ${new Date().toLocaleString("default", { month: "long", year: "numeric" })})`;
       case "selectedMonth":
-        return `Rejection History (SELECTED MONTH: ${chartTitle})`;
+        return `${baseTitle} (Month: ${chartTitleSuffix})`;
+      case "yearly":
+        return `${baseTitle} (Year: ${chartTitleSuffix})`;
       case "custom":
-        return `Rejection History (CUSTOM: ${chartTitle})`;
-      case "overallTotal": {
-        const today = new Date().toLocaleDateString("en-US", {
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        });
-        return `Overall Rejection Totals (AS OF: ${today})`;
-      }
+        return `${baseTitle} (Custom: ${chartTitleSuffix})`;
+      case "overallTotal":
+        return `Overall Rejection Totals (As of: ${new Date().toLocaleDateString()})`;
       default:
-        return "Rejection History";
+        return baseTitle;
     }
   };
+  
+  // Sync temp modal states with actual selected values if they change externally
+  // or to reset them when a different filter type makes them irrelevant.
+  useEffect(() => {
+    setTempSelectedMonth(selectedMonth || new Date().getMonth() + 1);
+    setTempSelectedYearForMonth(selectedYearForMonth || new Date().getFullYear());
+  }, [selectedMonth, selectedYearForMonth]);
+
+  useEffect(() => {
+    setTempYear(selectedYearly || new Date().getFullYear());
+  }, [selectedYearly]);
+  
+  useEffect(() => {
+    setTempCustomFrom(customFrom); // Will be null if not active
+    setTempCustomTo(customTo);     // Will be null if not active
+  }, [customFrom, customTo]);
+
 
   return (
     <Paper
@@ -239,7 +300,7 @@ const RejectionAnalytics = ({
         alignItems="center"
         mb={5}
       >
-      <Typography
+        <Typography
           variant="h4"
           sx={{
             fontWeight: "bold",
@@ -252,12 +313,7 @@ const RejectionAnalytics = ({
         <FormControl
           variant="outlined"
           size="small"
-          sx={{
-            minWidth: 150,
-            // give the control the same green, or switch to white for contrast:
-             borderRadius: "4px",
-           
-          }}
+          sx={{ minWidth: 180, borderRadius: "4px" }} // Increased minWidth slightly
         >
           <InputLabel id="rejection-filter-label">Filter Rejections</InputLabel>
           <Select
@@ -266,9 +322,8 @@ const RejectionAnalytics = ({
             label="Filter Rejections"
             onChange={handleFilterChange}
           >
-            <MenuItem value="none">SELECT FILTER</MenuItem>
-            {filterOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
+             {filterOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value} disabled={option.disabled}>
                 {option.icon}
                 {option.label}
               </MenuItem>
@@ -277,40 +332,47 @@ const RejectionAnalytics = ({
         </FormControl>
       </Box>
 
-      <Typography  variant="h6" sx={{ fontSize: "clamp(0.875rem, 1.7vw, 2rem)", color: "#000" }} gutterBottom  >
-        {getChartTitle()}
+      <Typography  variant="h6" sx={{ fontSize: "clamp(0.875rem, 1.2rem, 1.5rem)", color: "#000",   mb: 2 }} gutterBottom  >
+        {getFullChartTitle()}
       </Typography>
 
       <Grid container spacing={2}>
         <Grid item xs={12} md={8}>
           <Box
             sx={{
-              height: { xs: 250, md: 400 },
+              height: { xs: 300, md: 400 }, // Adjusted height
               width: "100%",
               backgroundColor: "#FFF",
-              borderRadius: "20px",
+              borderRadius: "8px", // Adjusted
             }}
           >
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid stroke="#000" strokeDasharray="3 3" />
-              <XAxis  dataKey="date"     stroke="#000" tick={{ fill: '#000' }}/>
-              <YAxis stroke="#000"    tick={{ fill: '#000' }}  />
-             <Tooltip contentStyle={{ backgroundColor: '#06402B', border: '1px solid #fff' }}   labelStyle={{ color: '#fff' }} />
-             <Legend
-              wrapperStyle={{ color: '#000' }}
-              formatter={(value) => <span style={{ color: '#000' }}>{value}</span>}
-            />
-
-                <Bar dataKey="diseased" fill="#FFD700" name="Diseased" />
-                <Bar dataKey="physically_damaged" fill="#FF6B6B" name="Physically Damaged" />
-                <Bar dataKey="too_small" fill="#00E676" name="Too Small" />
-              </BarChart>
-            </ResponsiveContainer>
+            {chartData && chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid stroke="#ccc" strokeDasharray="3 3" />
+                <XAxis  dataKey="date" stroke="#000" tick={{ fill: '#000', fontSize: 12 }}/>
+                <YAxis stroke="#000" tick={{ fill: '#000', fontSize: 12 }}  />
+                <Tooltip 
+                    contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', border: '1px solid #ccc', color: '#000' }}
+                    labelStyle={{ color: '#06402B', fontWeight: 'bold' }}
+                />
+                <Legend
+                    wrapperStyle={{ color: '#000', paddingTop: '10px' }}
+                    formatter={(value) => <span style={{ color: '#000' }}>{value}</span>}
+                />
+                  <Bar dataKey="diseased" fill="#FFD700" name="Diseased" />
+                  <Bar dataKey="physically_damaged" fill="#FF6B6B" name="Physically Damaged" />
+                  <Bar dataKey="too_small" fill="#00E676" name="Too Small" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <Typography sx={{ textAlign: 'center', pt: 5 }}>No data available for the selected period.</Typography>
+            )}
           </Box>
         </Grid>
 
         <Grid item xs={12} md={4}>
+          {/* Summary unchanged */}
           <Paper
             elevation={2}
             sx={{
@@ -443,7 +505,7 @@ const RejectionAnalytics = ({
                     </Typography>
                   </Box>
                   <Typography variant="h4" sx={{ color: "#000", fontSize: { xs: "1.5rem", md: "2rem" } }}>
-                    &#x1F4C8;
+                    
                   </Typography>
                 </Box>
               </Grid>
@@ -452,18 +514,17 @@ const RejectionAnalytics = ({
         </Grid>
       </Grid>
 
-      <Modal open={openMonthModal} onClose={() => setOpenMonthModal(false)} aria-labelledby="rejection-month-modal">
+      {/* Month Modal */}
+      <Modal open={openMonthModal} onClose={handleModalClose} aria-labelledby="rejection-month-modal">
         <Box sx={modalStyle}>
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            Select Month and Year
-          </Typography>
+          <Typography variant="h6" sx={{ mb: 2 }}> Select Month and Year </Typography>
           <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel id="rejection-month-label">Month</InputLabel>
             <Select
               labelId="rejection-month-label"
-              value={selectedMonth}
+              value={tempSelectedMonth}
               label="Month"
-              onChange={(e) => setSelectedMonth(e.target.value)}
+              onChange={(e) => setTempSelectedMonth(e.target.value)}
             >
               {Array.from({ length: 12 }, (_, i) => (
                 <MenuItem key={i + 1} value={i + 1}>
@@ -473,70 +534,79 @@ const RejectionAnalytics = ({
             </Select>
           </FormControl>
           <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel id="rejection-year-label">Year</InputLabel>
+            <InputLabel id="rejection-year-month-label">Year</InputLabel>
             <Select
-              labelId="rejection-year-label"
-              value={selectedYear}
+              labelId="rejection-year-month-label"
+              value={tempSelectedYearForMonth}
               label="Year"
-              onChange={(e) => setSelectedYear(e.target.value)}
+              onChange={(e) => setTempSelectedYearForMonth(e.target.value)}
             >
-              {Array.from({ length: 11 }, (_, i) => 2020 + i).map((year) => (
-                <MenuItem key={year} value={year}>
-                  {year}
-                </MenuItem>
+              {Array.from({ length: 11 }, (_, i) => new Date().getFullYear() - 5 + i).map((yearVal) => (
+                <MenuItem key={yearVal} value={yearVal}>{yearVal}</MenuItem>
               ))}
             </Select>
           </FormControl>
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: 2 }} />
           <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-            <Button onClick={() => setOpenMonthModal(false)} variant="outlined" color="secondary">
-              CANCEL
-            </Button>
-            <Button onClick={handleApplySelectedMonth} variant="contained" color="primary">
-              APPLY
-            </Button>
+            <Button onClick={handleModalClose} variant="outlined" color="secondary"> CANCEL </Button>
+            <Button onClick={handleApplySelectedMonth} variant="contained" color="primary"> APPLY </Button>
           </Box>
         </Box>
       </Modal>
 
-      <Modal open={openCustomModal} onClose={() => setOpenCustomModal(false)} aria-labelledby="rejection-custom-date-modal">
+      {/* Year Modal (New) */}
+      <Modal open={openYearModal} onClose={handleModalClose} aria-labelledby="rejection-yearly-modal">
+          <Box sx={modalStyle}>
+            <Typography variant="h6" sx={{ mb: 2 }}>Select Year</Typography>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel id="rejection-yearly-select-label">Year</InputLabel>
+              <Select
+                labelId="rejection-yearly-select-label"
+                value={tempYear}
+                label="Year"
+                onChange={(e) => setTempYear(e.target.value)}
+              >
+                {Array.from({ length: 11 }, (_, i) => new Date().getFullYear() - 5 + i).map((yearVal) => (
+                  <MenuItem key={yearVal} value={yearVal}>{yearVal}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Divider sx={{ my: 2 }} />
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+              <Button onClick={handleModalClose} variant="outlined" color="secondary">CANCEL</Button>
+              <Button onClick={handleApplyYearlyFilter} variant="contained" color="primary">APPLY</Button>
+            </Box>
+          </Box>
+        </Modal>
+
+      {/* Custom Date Modal */}
+      <Modal open={openCustomModal} onClose={handleModalClose} aria-labelledby="rejection-custom-date-modal">
         <Box sx={modalStyle}>
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            Choose Date Range
-          </Typography>
+          <Typography variant="h6" sx={{ mb: 2 }}> Choose Date Range </Typography>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               <DatePicker
                 label="FROM"
-                value={customFrom}
-                onChange={(newValue) => setCustomFrom(newValue)}
-                slotProps={{ textField: { fullWidth: true, size: "medium" } }}
+                value={tempCustomFrom}
+                onChange={(newValue) => setTempCustomFrom(newValue)}
+                renderInput={(params) => <TextField {...params} fullWidth size="medium" error={isDateError && !!tempCustomFrom && !!tempCustomTo} helperText={isDateError && !!tempCustomFrom && !!tempCustomTo ? "From date cannot be after To date" : ""} />}
               />
               <DatePicker
                 label="TO"
-                value={customTo}
-                onChange={(newValue) => setCustomTo(newValue)}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    size: "medium",
-                    error: isDateError,
-                    helperText: isDateError ? "From date cannot be later than To date" : "",
-                  },
-                }}
+                value={tempCustomTo}
+                onChange={(newValue) => setTempCustomTo(newValue)}
+                renderInput={(params) => <TextField {...params} fullWidth size="medium" />}
               />
             </Box>
           </LocalizationProvider>
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: 2 }} />
           <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-            <Button onClick={() => setOpenCustomModal(false)} variant="outlined" color="secondary">
-              CANCEL
-            </Button>
+            <Button onClick={handleModalClose} variant="outlined" color="secondary"> CANCEL </Button>
             <Button
               onClick={handleApplyCustomDates}
               variant="contained"
               color="primary"
-              disabled={isDateError || !customFrom || !customTo}
+              disabled={isDateError || !tempCustomFrom || !tempCustomTo}
             >
               APPLY
             </Button>

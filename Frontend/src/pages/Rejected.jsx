@@ -45,7 +45,7 @@ import { useRejectedTableItems } from "../hooks/RejectionHooks";
 import { styled } from '@mui/material/styles';
 import RejectionDetailsModal from "../components/RejectionDetailsModal"; // Import the modal
 
-// Helper function to format a date into a short, readable format.
+// Helper function to format a date into a short, readable format. 
 const formatDate = (date) =>
   date.toLocaleDateString("default", { month: "short", day: "numeric", year: "numeric" });
 

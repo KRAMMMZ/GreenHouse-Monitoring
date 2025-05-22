@@ -33,7 +33,7 @@ import TodayIcon from "@mui/icons-material/Today";
 import HistoryIcon from "@mui/icons-material/History";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DateRangeIcon from "@mui/icons-material/DateRange";
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney'; // Revenue
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney'; // Reven ue
 import MoneyOffIcon from '@mui/icons-material/MoneyOff'; // Expenses
 import AssessmentIcon from '@mui/icons-material/Assessment'; // Profit
 import Metric from "../props/MetricSection";
@@ -299,11 +299,20 @@ function Sales() {
     }, [filteredSales, searchTerm]);
 
     // Sort sales by salesDate descending
-    const sortedSales = useMemo(() => {
-        return [...searchFilteredSales].sort(
-            (a, b) => new Date(b.salesDate) - new Date(a.salesDate)
-        );
-    }, [searchFilteredSales]);
+   const sortedSales = useMemo(() => {
+    if (!searchFilteredSales) return [];
+    return [...searchFilteredSales].sort(
+        (a, b) => {
+            // Handle cases where created_at might be null or invalid
+            const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+            const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+            if (isNaN(dateA) || isNaN(dateB)) { // Fallback for invalid dates
+                return isNaN(dateA) ? (isNaN(dateB) ? 0 : 1) : -1;
+            }
+            return dateB - dateA; // Descending
+        }
+    );
+}, [searchFilteredSales]);
 
     // Compute the filter description text for header
     const filterDescription = getFilterDescription(
